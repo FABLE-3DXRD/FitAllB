@@ -1,0 +1,203 @@
+
+ 	
+**********euler********** 
+	
+Tolerance, 1.000000e-001 
+Time 100 s 
+Value 5.200098e+007 
+ 	
+Grain data file: al20_90_euler.txt 
+wx 0.000000
+wy 0.000000
+tx 0.000000
+ty 0.000000
+tz 0.000000
+py 50.000000
+pz 50.000000
+L 180000.000000
+cy 1024.000000
+cz 1024.000000
+
+Poor grains: []
+Poor grains values: []
+Poor grains nrefl: []
+
+Skip grains: []
+
+Number of refined grains: 20
+Number of rejected outliers using limit 10.000000 (new, total): (6 , 197)
+Number of assigned peaks: 1222
+
+ 	
+**********xyz********** 
+	
+Tolerance, 1.000000e-001 
+Time 98 s 
+Value 1.126459e+007 
+ 	
+Grain data file: al20_90_xyz.txt 
+wx 0.000000
+wy 0.000000
+tx 0.000000
+ty 0.000000
+tz 0.000000
+py 50.000000
+pz 50.000000
+L 180000.000000
+cy 1024.000000
+cz 1024.000000
+
+Poor grains: []
+Poor grains values: []
+Poor grains nrefl: []
+
+Skip grains: []
+
+Number of refined grains: 20
+Number of rejected outliers using limit 10.000000 (new, total): (5 , 202)
+Number of assigned peaks: 1217
+
+ 	
+**********eps********** 
+	
+Tolerance, 1.000000e-002 
+Time 271 s 
+Value 4.337898e+006 
+ 	
+Grain data file: al20_90_eps.txt 
+wx 0.000000
+wy 0.000000
+tx 0.000000
+ty 0.000000
+tz 0.000000
+py 50.000000
+pz 50.000000
+L 180000.000000
+cy 1024.000000
+cz 1024.000000
+
+Poor grains: []
+Poor grains values: []
+Poor grains nrefl: []
+
+Skip grains: []
+
+Number of refined grains: 20
+Number of rejected outliers using limit 10.000000 (new, total): (4 , 206)
+Number of assigned peaks: 1213
+
+ 	
+**********grain********** 
+	
+Tolerance, 1.000000e-003 
+Time 715 s 
+Value 1.873848e+003 
+ 	
+Grain data file: al20_90_grain.txt 
+wx 0.000000
+wy 0.000000
+tx 0.000000
+ty 0.000000
+tz 0.000000
+py 50.000000
+pz 50.000000
+L 180000.000000
+cy 1024.000000
+cz 1024.000000
+
+Poor grains: []
+Poor grains values: []
+Poor grains nrefl: []
+
+Skip grains: []
+
+Number of refined grains: 20
+Number of rejected outliers using limit 10.000000 (new, total): (16 , 222)
+Number of assigned peaks: 1197
+
+ 	
+**********final********** 
+	
+Tolerance, 1.000000e-004 
+Time 126 s 
+Value 1.185334e+003 
+ 	
+Grain data file: al20_90_final.txt 
+wx 0.000000
+wy 0.000000
+tx 0.000000
+ty 0.000000
+tz 0.000000
+py 50.000000
+pz 50.000000
+L 180000.000000
+cy 1024.000000
+cz 1024.000000
+
+Poor grains: []
+Poor grains values: []
+Poor grains nrefl: []
+
+Skip grains: []
+
+Number of refined grains: 20
+Number of rejected outliers using limit 10.000000 (new, total): (17 , 239)
+Number of assigned peaks: 1180
+
+ 	
+**********final********** 
+	
+Tolerance, 1.000000e-004 
+Time 156 s 
+Value 9.941224e+002 
+ 	
+Grain data file: al20_90_final.txt 
+wx 0.000000
+wy 0.000000
+tx 0.000000
+ty 0.000000
+tz 0.000000
+py 50.000000
+pz 50.000000
+L 180000.000000
+cy 1024.000000
+cz 1024.000000
+
+Poor grains: []
+Poor grains values: []
+Poor grains nrefl: []
+
+Skip grains: []
+
+Number of refined grains: 20
+Number of rejected outliers using limit 10.000000 (new, total): (1 , 240)
+Number of assigned peaks: 1179
+
+ 	
+**********final********** 
+	
+Tolerance, 1.000000e-001 
+Time 0 s 
+Value 9.848152e+002 
+ 	
+Grain data file: al20_90_final.txt 
+wx 0.000000
+wy 0.000000
+tx 0.000000
+ty 0.000000
+tz 0.000000
+py 50.000000
+pz 50.000000
+L 180000.000000
+cy 1024.000000
+cz 1024.000000
+
+Poor grains: []
+Poor grains values: []
+Poor grains nrefl: []
+
+Skip grains: []
+
+Number of refined grains: 20
+Number of rejected outliers using limit 10.000000 (new, total): (0 , 240)
+Number of assigned peaks: 1179

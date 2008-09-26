@@ -1,0 +1,267 @@
+
+
+Al20
+
+check_input
+Skip grains: []
+1 Rejected peak id 752 from grain 1 (hkl: 2 -2 2 ): intensity
+2 Rejected peak id 794 from grain 1 (hkl: 1 -1 1 ): intensity
+3 Rejected peak id 2214 from grain 1 (hkl: -1 1 -1 ): intensity
+4 Rejected peak id 752 from grain 2 (hkl: 2 -2 2 ): intensity
+5 Rejected peak id 2169 from grain 2 (hkl: -2 2 -2 ): intensity
+6 Rejected peak id 794 from grain 2 (hkl: 1 -1 1 ): intensity
+7 Rejected peak id 2214 from grain 2 (hkl: -1 1 -1 ): intensity
+8 Rejected peak id 719 from grain 3 (hkl: -3 1 -3 ): intensity
+9 Rejected peak id 1939 from grain 3 (hkl: -3 1 -3 ): intensity
+10 Rejected peak id 1706 from grain 4 (hkl: 4 2 2 ): intensity
+11 Rejected peak id 284 from grain 4 (hkl: -4 -2 -2 ): intensity
+12 Rejected peak id 139 from grain 4 (hkl: -2 0 4 ): intensity
+13 Rejected peak id 2134 from grain 4 (hkl: 3 -1 3 ): intensity
+14 Rejected peak id 1750 from grain 4 (hkl: 3 -1 -3 ): intensity
+15 Rejected peak id 140 from grain 4 (hkl: 3 -1 -3 ): intensity
+16 Rejected peak id 332 from grain 4 (hkl: -3 1 3 ): intensity
+17 Rejected peak id 1602 from grain 8 (hkl: 4 0 2 ): intensity
+18 Rejected peak id 1914 from grain 9 (hkl: 0 0 2 ): intensity
+19 Rejected peak id 323 from grain 9 (hkl: 0 0 2 ): intensity
+20 Rejected peak id 490 from grain 9 (hkl: 0 0 -2 ): intensity
+21 Rejected peak id 1744 from grain 9 (hkl: 0 0 -2 ): intensity
+22 Rejected peak id 407 from grain 9 (hkl: 1 1 1 ): intensity
+23 Rejected peak id 1928 from grain 9 (hkl: 1 1 -1 ): intensity
+24 Rejected peak id 399 from grain 9 (hkl: 1 1 -1 ): intensity
+25 Rejected peak id 510 from grain 9 (hkl: -1 -1 1 ): intensity
+26 Rejected peak id 1822 from grain 9 (hkl: -1 -1 1 ): intensity
+27 Rejected peak id 1823 from grain 9 (hkl: -1 -1 -1 ): intensity
+28 Rejected peak id 2030 from grain 11 (hkl: -2 2 4 ): intensity
+29 Rejected peak id 1563 from grain 12 (hkl: 1 1 -1 ): intensity
+30 Rejected peak id 364 from grain 12 (hkl: 1 -1 1 ): intensity
+31 Rejected peak id 1781 from grain 12 (hkl: -1 1 -1 ): intensity
+32 Rejected peak id 148 from grain 12 (hkl: -1 -1 1 ): intensity
+33 Rejected peak id 652 from grain 13 (hkl: 3 -3 -1 ): intensity
+34 Rejected peak id 2076 from grain 13 (hkl: -3 3 1 ): intensity
+35 Rejected peak id 1859 from grain 13 (hkl: 1 -1 -3 ): intensity
+36 Rejected peak id 1859 from grain 13 (hkl: 1 -1 -3 ): intensity
+37 Rejected peak id 769 from grain 14 (hkl: 4 0 -2 ): intensity
+38 Rejected peak id 2211 from grain 14 (hkl: -4 0 2 ): intensity
+39 Rejected peak id 2105 from grain 14 (hkl: 1 -3 3 ): intensity
+40 Rejected peak id 267 from grain 14 (hkl: -3 -3 -1 ): intensity
+41 Rejected peak id 212 from grain 14 (hkl: 0 0 -4 ): intensity
+42 Rejected peak id 789 from grain 15 (hkl: 4 -2 0 ): intensity
+43 Rejected peak id 2145 from grain 15 (hkl: 0 2 4 ): intensity
+44 Rejected peak id 488 from grain 15 (hkl: 0 2 4 ): intensity
+45 Rejected peak id 328 from grain 15 (hkl: 0 -4 -2 ): intensity
+46 Rejected peak id 1555 from grain 15 (hkl: 0 -4 -2 ): intensity
+47 Rejected peak id 2211 from grain 15 (hkl: -4 2 0 ): intensity
+48 Rejected peak id 1617 from grain 16 (hkl: 4 0 -2 ): intensity
+49 Rejected peak id 203 from grain 16 (hkl: -4 0 2 ): intensity
+50 Rejected peak id 2124 from grain 16 (hkl: 3 -3 -1 ): intensity
+51 Rejected peak id 462 from grain 16 (hkl: 3 -3 -1 ): intensity
+52 Rejected peak id 706 from grain 16 (hkl: -3 3 1 ): intensity
+53 Rejected peak id 1888 from grain 16 (hkl: -3 3 1 ): intensity
+54 Rejected peak id 593 from grain 16 (hkl: 0 0 4 ): intensity
+55 Rejected peak id 267 from grain 19 (hkl: 1 -3 3 ): intensity
+56 Rejected peak id 1681 from grain 19 (hkl: -1 3 -3 ): intensity
+57 Rejected peak id 2060 from grain 20 (hkl: 2 -2 4 ): intensity
+58 Rejected peak id 403 from grain 20 (hkl: 2 -2 4 ): intensity
+59 Rejected peak id 640 from grain 20 (hkl: -2 2 -4 ): intensity
+60 Rejected peak id 1818 from grain 20 (hkl: -2 2 -4 ): intensity
+61 Rejected peak id 1721 from grain 20 (hkl: 4 0 -2 ): intensity
+62 Rejected peak id 1799 from grain 20 (hkl: 2 0 4 ): intensity
+63 Rejected peak id 376 from grain 20 (hkl: -2 0 -4 ): intensity
+64 Rejected peak id 308 from grain 20 (hkl: -4 0 2 ): intensity
+65 Rejected peak id 2243 from grain 20 (hkl: 1 -3 3 ): intensity
+66 Rejected peak id 144 from grain 20 (hkl: -3 -1 3 ): intensity
+67 Rejected peak id 596 from grain 1 (hkl: 3 -1 -3 ): residual
+68 Rejected peak id 604 from grain 1 (hkl: 3 -1 -1 ): residual
+69 Rejected peak id 1625 from grain 1 (hkl: 2 2 0 ): residual
+70 Rejected peak id 2241 from grain 1 (hkl: -2 2 0 ): residual
+71 Rejected peak id 1960 from grain 1 (hkl: 2 0 0 ): residual
+72 Rejected peak id 543 from grain 1 (hkl: -2 0 0 ): residual
+73 Rejected peak id 1887 from grain 1 (hkl: -2 0 0 ): residual
+74 Rejected peak id 2150 from grain 2 (hkl: -2 2 0 ): residual
+75 Rejected peak id 389 from grain 2 (hkl: 2 0 0 ): residual
+76 Rejected peak id 453 from grain 2 (hkl: -2 0 0 ): residual
+77 Rejected peak id 1808 from grain 2 (hkl: -2 0 0 ): residual
+78 Rejected peak id 2204 from grain 3 (hkl: 2 -2 0 ): residual
+79 Rejected peak id 782 from grain 3 (hkl: -2 2 0 ): residual
+80 Rejected peak id 1835 from grain 3 (hkl: 2 0 0 ): residual
+81 Rejected peak id 352 from grain 3 (hkl: 2 0 0 ): residual
+82 Rejected peak id 2218 from grain 4 (hkl: -1 3 -1 ): residual
+83 Rejected peak id 2028 from grain 5 (hkl: 2 -2 2 ): residual
+84 Rejected peak id 482 from grain 5 (hkl: 2 -2 2 ): residual
+85 Rejected peak id 605 from grain 5 (hkl: -2 2 -2 ): residual
+86 Rejected peak id 1902 from grain 5 (hkl: -2 2 -2 ): residual
+87 Rejected peak id 721 from grain 5 (hkl: 1 -3 1 ): residual
+88 Rejected peak id 2141 from grain 5 (hkl: -1 3 -1 ): residual
+89 Rejected peak id 628 from grain 5 (hkl: 2 -2 0 ): residual
+90 Rejected peak id 322 from grain 5 (hkl: -2 0 -2 ): residual
+91 Rejected peak id 1648 from grain 5 (hkl: -2 0 -2 ): residual
+92 Rejected peak id 2002 from grain 5 (hkl: 1 -1 1 ): residual
+93 Rejected peak id 515 from grain 5 (hkl: 1 -1 1 ): residual
+94 Rejected peak id 587 from grain 5 (hkl: -1 1 -1 ): residual
+95 Rejected peak id 1935 from grain 5 (hkl: -1 1 -1 ): residual
+96 Rejected peak id 1547 from grain 6 (hkl: 1 3 1 ): residual
+97 Rejected peak id 129 from grain 6 (hkl: -1 -3 -1 ): residual
+98 Rejected peak id 725 from grain 6 (hkl: 2 0 -2 ): residual
+99 Rejected peak id 834 from grain 6 (hkl: -2 0 2 ): residual
+100 Rejected peak id 2147 from grain 6 (hkl: -2 0 2 ): residual
+101 Rejected peak id 679 from grain 7 (hkl: 2 -2 -2 ): residual
+102 Rejected peak id 2100 from grain 7 (hkl: -2 2 2 ): residual
+103 Rejected peak id 2025 from grain 7 (hkl: 3 1 1 ): residual
+104 Rejected peak id 486 from grain 7 (hkl: 3 1 1 ): residual
+105 Rejected peak id 1776 from grain 7 (hkl: 2 2 0 ): residual
+106 Rejected peak id 254 from grain 7 (hkl: 2 2 0 ): residual
+107 Rejected peak id 359 from grain 7 (hkl: -2 -2 0 ): residual
+108 Rejected peak id 1676 from grain 7 (hkl: -2 -2 0 ): residual
+109 Rejected peak id 2196 from grain 8 (hkl: 2 -2 -2 ): residual
+110 Rejected peak id 773 from grain 8 (hkl: -2 2 2 ): residual
+111 Rejected peak id 2094 from grain 8 (hkl: 1 -1 3 ): residual
+112 Rejected peak id 2216 from grain 8 (hkl: 1 -1 -3 ): residual
+113 Rejected peak id 801 from grain 8 (hkl: -1 1 3 ): residual
+114 Rejected peak id 671 from grain 8 (hkl: -1 1 -3 ): residual
+115 Rejected peak id 2174 from grain 8 (hkl: 2 -2 0 ): residual
+116 Rejected peak id 747 from grain 8 (hkl: -2 2 0 ): residual
+117 Rejected peak id 2161 from grain 8 (hkl: 1 -1 -1 ): residual
+118 Rejected peak id 740 from grain 8 (hkl: -1 1 1 ): residual
+119 Rejected peak id 2116 from grain 9 (hkl: 3 1 1 ): residual
+120 Rejected peak id 586 from grain 9 (hkl: 3 1 1 ): residual
+121 Rejected peak id 2199 from grain 9 (hkl: 3 1 -1 ): residual
+122 Rejected peak id 631 from grain 9 (hkl: 3 1 -1 ): residual
+123 Rejected peak id 787 from grain 9 (hkl: -3 -1 1 ): residual
+124 Rejected peak id 2053 from grain 9 (hkl: -3 -1 1 ): residual
+125 Rejected peak id 699 from grain 9 (hkl: -3 -1 -1 ): residual
+126 Rejected peak id 2003 from grain 9 (hkl: -3 -1 -1 ): residual
+127 Rejected peak id 2180 from grain 9 (hkl: 2 0 2 ): residual
+128 Rejected peak id 780 from grain 9 (hkl: 2 0 0 ): residual
+129 Rejected peak id 1877 from grain 9 (hkl: 1 1 1 ): residual
+130 Rejected peak id 585 from grain 10 (hkl: -3 1 -1 ): residual
+131 Rejected peak id 1876 from grain 10 (hkl: -3 1 -1 ): residual
+132 Rejected peak id 2187 from grain 10 (hkl: 2 -2 0 ): residual
+133 Rejected peak id 767 from grain 10 (hkl: -2 2 0 ): residual
+134 Rejected peak id 390 from grain 10 (hkl: -2 0 0 ): residual
+135 Rejected peak id 1746 from grain 10 (hkl: -2 0 0 ): residual
+136 Rejected peak id 758 from grain 10 (hkl: -1 1 -1 ): residual
+137 Rejected peak id 2115 from grain 10 (hkl: -1 1 -1 ): residual
+138 Rejected peak id 2201 from grain 11 (hkl: 2 -2 -2 ): residual
+139 Rejected peak id 785 from grain 11 (hkl: -2 2 2 ): residual
+140 Rejected peak id 653 from grain 11 (hkl: 1 -1 -3 ): residual
+141 Rejected peak id 2075 from grain 11 (hkl: -1 1 3 ): residual
+142 Rejected peak id 638 from grain 11 (hkl: 2 -2 0 ): residual
+143 Rejected peak id 2056 from grain 11 (hkl: -2 2 0 ): residual
+144 Rejected peak id 1788 from grain 11 (hkl: 2 0 0 ): residual
+145 Rejected peak id 296 from grain 11 (hkl: 2 0 0 ): residual
+146 Rejected peak id 2164 from grain 11 (hkl: 1 -1 -1 ): residual
+147 Rejected peak id 685 from grain 11 (hkl: 1 -1 -1 ): residual
+148 Rejected peak id 745 from grain 11 (hkl: -1 1 1 ): residual
+149 Rejected peak id 1700 from grain 12 (hkl: -3 1 -1 ): residual
+150 Rejected peak id 1951 from grain 12 (hkl: -2 2 0 ): residual
+151 Rejected peak id 142 from grain 13 (hkl: -2 -2 0 ): residual
+152 Rejected peak id 781 from grain 13 (hkl: 1 -1 1 ): residual
+153 Rejected peak id 1842 from grain 14 (hkl: 2 0 2 ): residual
+154 Rejected peak id 336 from grain 14 (hkl: 2 0 2 ): residual
+155 Rejected peak id 806 from grain 14 (hkl: 2 -2 0 ): residual
+156 Rejected peak id 2227 from grain 14 (hkl: -2 2 0 ): residual
+157 Rejected peak id 320 from grain 14 (hkl: 1 1 -1 ): residual
+158 Rejected peak id 2233 from grain 15 (hkl: 2 0 2 ): residual
+159 Rejected peak id 708 from grain 15 (hkl: 2 0 2 ): residual
+160 Rejected peak id 813 from grain 15 (hkl: -2 0 -2 ): residual
+161 Rejected peak id 2127 from grain 15 (hkl: -2 0 -2 ): residual
+162 Rejected peak id 1871 from grain 15 (hkl: -1 -1 -1 ): residual
+163 Rejected peak id 2123 from grain 16 (hkl: 2 -2 2 ): residual
+164 Rejected peak id 588 from grain 16 (hkl: 2 -2 2 ): residual
+165 Rejected peak id 704 from grain 16 (hkl: -2 2 -2 ): residual
+166 Rejected peak id 2001 from grain 16 (hkl: -2 2 -2 ): residual
+167 Rejected peak id 2095 from grain 16 (hkl: 1 -1 1 ): residual
+168 Rejected peak id 611 from grain 16 (hkl: 1 -1 1 ): residual
+169 Rejected peak id 678 from grain 16 (hkl: -1 1 -1 ): residual
+170 Rejected peak id 2027 from grain 16 (hkl: -1 1 -1 ): residual
+171 Rejected peak id 1993 from grain 17 (hkl: 2 -2 -2 ): residual
+172 Rejected peak id 445 from grain 17 (hkl: 2 -2 -2 ): residual
+173 Rejected peak id 572 from grain 17 (hkl: -2 2 2 ): residual
+174 Rejected peak id 1864 from grain 17 (hkl: -2 2 2 ): residual
+175 Rejected peak id 1957 from grain 17 (hkl: 1 -1 -1 ): residual
+176 Rejected peak id 475 from grain 17 (hkl: 1 -1 -1 ): residual
+177 Rejected peak id 536 from grain 17 (hkl: -1 1 1 ): residual
+178 Rejected peak id 1893 from grain 17 (hkl: -1 1 1 ): residual
+179 Rejected peak id 1710 from grain 18 (hkl: 2 2 0 ): residual
+180 Rejected peak id 194 from grain 18 (hkl: 2 2 0 ): residual
+181 Rejected peak id 289 from grain 18 (hkl: -2 -2 0 ): residual
+182 Rejected peak id 1612 from grain 18 (hkl: -2 -2 0 ): residual
+183 Rejected peak id 363 from grain 19 (hkl: 2 2 -2 ): residual
+184 Rejected peak id 1662 from grain 19 (hkl: 1 3 -1 ): residual
+185 Rejected peak id 128 from grain 19 (hkl: 1 3 -1 ): residual
+186 Rejected peak id 2166 from grain 19 (hkl: 2 0 -2 ): residual
+187 Rejected peak id 648 from grain 19 (hkl: 2 0 -2 ): residual
+188 Rejected peak id 2098 from grain 19 (hkl: 0 0 2 ): residual
+189 Rejected peak id 1860 from grain 19 (hkl: 1 1 -1 ): residual
+190 Rejected peak id 384 from grain 19 (hkl: 1 1 -1 ): residual
+191 Rejected peak id 313 from grain 20 (hkl: 3 -1 1 ): residual
+
+euler
+Skip grains: []
+192 Rejected peak id 1575 from grain 4 (hkl: 3 1 -1 ): 10.6935350361
+193 Rejected peak id 2229 from grain 7 (hkl: -1 1 1 ): 11.8042523833
+194 Rejected peak id 528 from grain 13 (hkl: 3 -1 1 ): 10.0440695647
+195 Rejected peak id 454 from grain 15 (hkl: 1 1 1 ): 10.2596756533
+196 Rejected peak id 514 from grain 15 (hkl: -1 -1 -1 ): 16.5963907692
+197 Rejected peak id 1886 from grain 19 (hkl: 2 2 -2 ): 14.3395490784
+
+xyz
+Skip grains: []
+198 Rejected peak id 822 from grain 1 (hkl: 2 -2 0 ): 13.0736330429
+199 Rejected peak id 733 from grain 2 (hkl: 2 -2 0 ): 23.5156084553
+200 Rejected peak id 458 from grain 10 (hkl: 3 -1 1 ): 12.3290655516
+201 Rejected peak id 1564 from grain 20 (hkl: 3 1 1 ): 10.5917019397
+202 Rejected peak id 1839 from grain 20 (hkl: 3 -1 1 ): 11.4888827935
+
+eps
+Skip grains: []
+203 Rejected peak id 811 from grain 6 (hkl: -3 1 -1 ): 10.0181613135
+204 Rejected peak id 1622 from grain 14 (hkl: 1 1 3 ): 10.6003722817
+205 Rejected peak id 2181 from grain 17 (hkl: 3 -3 1 ): 11.6933814841
+206 Rejected peak id 756 from grain 17 (hkl: -3 3 -1 ): 11.839684287
+
+grain
+Skip grains: []
+207 Rejected peak id 415 from grain 3 (hkl: -2 0 0 ): 11.1570810757
+208 Rejected peak id 799 from grain 4 (hkl: 1 -3 1 ): 11.6079721536
+209 Rejected peak id 741 from grain 5 (hkl: -2 2 0 ): 14.0824271626
+210 Rejected peak id 199 from grain 8 (hkl: 3 1 -1 ): 11.446583061
+211 Rejected peak id 312 from grain 8 (hkl: -3 -1 1 ): 12.9454798778
+212 Rejected peak id 1621 from grain 8 (hkl: -3 -1 1 ): 22.0407935328
+213 Rejected peak id 2215 from grain 10 (hkl: 2 -2 2 ): 12.7686986803
+214 Rejected peak id 2077 from grain 10 (hkl: -1 1 -3 ): 19.5725100535
+215 Rejected peak id 2071 from grain 11 (hkl: -2 2 2 ): 13.4721257675
+216 Rejected peak id 800 from grain 12 (hkl: -1 1 1 ): 13.2404665773
+217 Rejected peak id 2148 from grain 12 (hkl: -1 1 1 ): 13.9236191013
+218 Rejected peak id 1946 from grain 13 (hkl: -3 1 -1 ): 12.174859539
+219 Rejected peak id 561 from grain 14 (hkl: 3 -1 1 ): 19.0138300849
+220 Rejected peak id 1546 from grain 16 (hkl: -3 -1 -1 ): 13.4712910247
+221 Rejected peak id 798 from grain 17 (hkl: -1 3 1 ): 19.9509858479
+222 Rejected peak id 626 from grain 20 (hkl: 1 -3 3 ): 10.3617540613
+
+final
+Skip grains: []
+223 Rejected peak id 2048 from grain 5 (hkl: -2 2 0 ): 10.4397350221
+224 Rejected peak id 793 from grain 10 (hkl: -2 2 -2 ): 12.3519770924
+225 Rejected peak id 659 from grain 10 (hkl: 1 -1 3 ): 12.521672781
+226 Rejected peak id 751 from grain 10 (hkl: -1 1 1 ): 10.2488342562
+227 Rejected peak id 727 from grain 12 (hkl: 1 -1 -1 ): 22.279771726
+228 Rejected peak id 428 from grain 14 (hkl: -2 0 -2 ): 12.4998025561
+229 Rejected peak id 1753 from grain 14 (hkl: -2 0 -2 ): 10.5854853684
+230 Rejected peak id 2223 from grain 17 (hkl: 1 -3 -1 ): 15.7969615442
+231 Rejected peak id 1954 from grain 7 (hkl: 4 0 -2 ): intensity
+232 Rejected peak id 319 from grain 7 (hkl: 4 0 -2 ): intensity
+233 Rejected peak id 540 from grain 7 (hkl: -4 0 2 ): intensity
+234 Rejected peak id 1749 from grain 7 (hkl: -4 0 2 ): intensity
+235 Rejected peak id 1704 from grain 7 (hkl: 3 1 -3 ): intensity
+236 Rejected peak id 1980 from grain 7 (hkl: 1 3 3 ): intensity
+237 Rejected peak id 559 from grain 7 (hkl: -1 -3 -3 ): intensity
+238 Rejected peak id 1739 from grain 7 (hkl: -1 -3 -3 ): intensity
+239 Rejected peak id 286 from grain 7 (hkl: -3 -1 3 ): intensity
+
+final
+Skip grains: []
+240 Rejected peak id 779 from grain 5 (hkl: 0 2 -2 ): 11.9761645991
+
+final
+Skip grains: []

@@ -1,0 +1,27 @@
+title 'Al20'
+log_file al20_90_grainspotter.log
+flt_file al20_90_t25.flt
+par_file al20_40keV_detector.par
+structure_file Al.cif
+w_step 0.5
+w_limit -135 -45 45 135
+dety_size 2048
+detz_size 2048
+crystal_system cubic
+c11 10.82e10
+c12 6.13e10
+c44 2.85e10
+w 0            # Fit omega stage tilt parameters wx and wy
+tilt 0         # Fit detector tilt parameters tx, ty, tx
+pixel 0        # Fit pixel size py and pz
+center 0       # Fit detector centre 
+L 0            # Fit sample-to-detector distance
+euler 1        # Fit orientations and thus Euler angles
+xyz 1          # Fit cms positions
+eps 1          # Fit B matrix and thus strain tensors
+limit 5 10     # outlier rejection limits in terms of average peak contribution
+tol_start 1e-1
+tol_euler 1e-1
+tol_xyz 1e-1
+tol_eps 1e-2
+tol_grain 1e-3
