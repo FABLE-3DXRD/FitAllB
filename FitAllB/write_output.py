@@ -82,7 +82,7 @@ def write_cor(lsqr,i):
 
 def write_global(lsqr):
     """
-    Calculate and save the covariance matrix for the global parameters
+    Calculate and save the correlation and covariance matrices for the global parameters
     Jette Oddershede August 20th 2008
     """
     
