@@ -131,9 +131,9 @@ def intensity(inp):
         """
         
         if  inp.files['structure_file'] != None:
-            inp.param['structure_file'] = inp.files['structure_file']
-            xtal_structure = reflections.open_structure(inp.param)
-            hkl = reflections.gen_miller(inp.param)
+            inp.param['structure_phase_0'] = inp.files['structure_file']
+            xtal_structure = reflections.open_structure(inp.param,0)
+            hkl = reflections.gen_miller(inp.param,0)
             hkl = reflections.calc_intensity(hkl,xtal_structure)
 #            print hkl
             
