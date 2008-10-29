@@ -5,6 +5,7 @@ import reject
 import sys
 import logging
 import conversion
+from copy import deepcopy
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
 		
@@ -15,8 +16,8 @@ def write_cov(lsqr,i):
     """
     
     # clear cov file at first visit 
-    filename = '%s/%s_cov.txt' %(lsqr.inp.fit['stem'],lsqr.inp.fit['stem'])
-    if lsqr.inp.fit['goon'] == 'grain' and i == 0:
+    filename = '%s/%s_%s_cov.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
+    if i == 0:
         f = open(filename,'w')
         f.close()
     # now open for appending
@@ -51,8 +52,8 @@ def write_cor(lsqr,i):
     """
     
     # clear cor file at first visit
-    filename = '%s/%s_cor.txt' %(lsqr.inp.fit['stem'],lsqr.inp.fit['stem'])
-    if lsqr.inp.fit['goon'] == 'grain' and i == 0:
+    filename = '%s/%s_%s_cor.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
+    if i == 0:
         f = open(filename,'w')
         f.close()
     # now open for appending
@@ -87,8 +88,8 @@ def write_global(lsqr):
     """
     
     # clear cor file at first visit
-    filename = '%s/%s_global.txt' %(lsqr.inp.fit['stem'],lsqr.inp.fit['stem'])
-    if lsqr.fit['goon'] == 'start':
+    filename = '%s/%s_global.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
+    if lsqr.inp.fit['goon'] == 'start':
         f = open(filename,'w')
         f.write('NB! The beam center coordinates refer to the internal coordinate system \n')
         f.write('    unlike the values of cy and cz output in the log file \n')
@@ -149,7 +150,7 @@ def write_values(lsqr):
     """
 
 
-    filename = '%s/%s_%s.txt' %(lsqr.inp.fit['stem'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
+    filename = '%s/%s_%s.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
     f = open(filename,'w')
     format = "%d "*1 + "%f "*17 + "%e "*24 +"\n"
     out = "# grainno grainsize grainvolume x y z phi1 PHI phi2 U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
@@ -227,7 +228,8 @@ def write_errors(lsqr,i):
 
     # error transformation into other coordinate system and from strain to stress under construction
     U = tools.euler2U(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
-    cov_eps = n.array([[lsqr.mg.covariance[('epsaa%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epscc%s' %i)],
+    try:
+        cov_eps = n.array([[lsqr.mg.covariance[('epsaa%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epscc%s' %i)],
                         lsqr.mg.covariance[('epsaa%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsab%s' %i)]],
                        [lsqr.mg.covariance[('epsbb%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epscc%s' %i)],
                         lsqr.mg.covariance[('epsbb%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epsab%s' %i)]],
@@ -239,15 +241,28 @@ def write_errors(lsqr,i):
                         lsqr.mg.covariance[('epsac%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsac%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsac%s' %i, 'epsab%s' %i)]],
                        [lsqr.mg.covariance[('epsab%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epscc%s' %i)],
                         lsqr.mg.covariance[('epsab%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epsab%s' %i)]]])
+    except:
+        cov_eps = n.zeros((6,6))
     cov_eps_s = conversion.CovarianceRotation(cov_eps,U)
     cov_sig = conversion.CovarianceTransformation(cov_eps,lsqr.inp.C)
     cov_sig_s = conversion.CovarianceRotation(cov_sig,U)
     
-    
-    filename = '%s/%s_errors.txt' %(lsqr.inp.fit['stem'],lsqr.inp.fit['stem'])
-    # clear error file at first visit
-    if lsqr.inp.fit['goon'] == 'grain' and i == 0:
-        f = open(filename,'w')
+    filename = '%s/%s_%s_errors.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
+    #create grainlist containing numbers of refined grains
+    grainlist = range(lsqr.inp.no_grains)
+    skip = deepcopy(lsqr.inp.fit['skip'])
+    skip.sort()
+    skip.reverse()
+    for j in range(len(skip)):
+        if j > 0 and skip[j] == skip[j-1]:
+            pass
+        else:
+            grainlist.pop(grainlist.index(skip[j]-1))
+    if  i == grainlist[0]:
+        if 'final' in lsqr.inp.fit['goon']:
+            f = open(filename,'a')
+        else:
+            f = open(filename,'w')        
         out = "# grainno grainsize grainvolume x y z phi1 PHI phi2 U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
         out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s\n"
         f.write(out)
@@ -308,9 +323,9 @@ def write_log(lsqr):
     Write fitting and rejection info in the log file
     """
 
-    filename = '%s/%s_log.log' %(lsqr.inp.fit['stem'],lsqr.inp.fit['stem'])
+    filename = '%s/%s_log.log' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
     # clear log file at first visit
-    filename = '%s/%s_log.log' %(lsqr.inp.fit['stem'],lsqr.inp.fit['stem'])
+    filename = '%s/%s_log.log' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
     if lsqr.inp.fit['goon'] == 'start':
         f = open(filename,'w')
         f.close()
@@ -377,7 +392,7 @@ def write_rej(inp, message = None):
     """
           
     if inp.files['rej_file'] == None:
-        filename = '%s/%s_rej.txt' %(inp.fit['stem'],inp.fit['stem'])
+        filename = '%s/%s_rej.txt' %(inp.fit['direc'],inp.fit['stem'])
     else:
         filename = inp.files['rej_file']
     # open for appending and write message

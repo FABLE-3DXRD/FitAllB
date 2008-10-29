@@ -158,33 +158,46 @@ def intensity(inp):
             minvol = []
             maxvol = []
             for i in range(inp.no_grains):
-                rej = []
-                newreject = 1
-                while newreject > 0:
-                    tmp = len(rej)
-                    mad(data[i],rej,5)
-                    newreject = len(rej) - tmp
-                avgdata = n.sum(data[i])/len(data[i])
-                sigdata = spread(data[i])
-                if len(rej) > 1:
-                    avgrej = n.sum(rej)/len(rej)
-                    sigrej = spread(rej)
-                elif len(rej) == 1:
-                    avgrej = rej[0]
-                    sigrej = 0                
+                if i+1 in inp.fit['skip']:
+                    pass
                 else:
-                    avgrej = 0
-                    sigrej = 0
-                minvol.append(max(0,min(data[i])))
-                maxvol.append(max(data[i]))
-#                print '\n',i, avgdata, sigdata, len(data[i]), minvol[i], maxvol[i],'\n   ',avgrej, sigrej, len(reject)#,'\n',data[i],'\n',reject
+                    rej = []
+                    newreject = 1
+                    while newreject > 0:
+                        tmp = len(rej)
+                        mad(data[i],rej,5)
+                        newreject = len(rej) - tmp
+                    avgdata = n.sum(data[i])/len(data[i])
+                    sigdata = spread(data[i])
+                    if len(rej) > 1:
+                        avgrej = n.sum(rej)/len(rej)
+                        sigrej = spread(rej)
+                    elif len(rej) == 1:
+                        avgrej = rej[0]
+                        sigrej = 0                
+                    else:
+                        avgrej = 0
+                        sigrej = 0
+                if len(data[i]) > 0:
+                    minvol.append(max(0,min(data[i])))
+                    maxvol.append(max(data[i]))
+                else: 
+                    minvol.append(0)
+                    maxvol.append(-1)
+                    if i+1 not in inp.fit['skip']:
+                        inp.fit['skip'].append(i+1)
+                    
+#                   print '\n',i, avgdata, sigdata, len(data[i]), minvol[i], maxvol[i],'\n   ',avgrej, sigrej, len(reject)#,'\n',data[i],'\n',reject
 
             delete = 0
             for i in range(inp.no_grains):
-                for j in range(inp.nrefl[i]-1,-1,-1):
-                    if inp.volume[i][j] < minvol[i] or inp.volume[i][j] > maxvol[i]:
-                        reject(inp,i,j,'intensity')
-                        delete = delete + 1
+                if i+1 in inp.fit['skip']:
+                    pass
+                else:
+                    for j in range(inp.nrefl[i]-1,-1,-1):
+                        if inp.volume[i][j] < minvol[i] or inp.volume[i][j] > maxvol[i]:
+                            reject(inp,i,j,'intensity')
+                            delete = delete + 1
                     
             print 'Rejected', delete, 'peaks because of different intensity scales'
             insignificant(inp)
@@ -287,7 +300,10 @@ def multi(inp):
         if  inp.files['structure_file'] != None:
             volavg = []
             for i in range(inp.no_grains):
-                volavg.append(sum(inp.volume[i])/len(inp.volume[i]))
+                if len(inp.volume[i]) > 0:
+                    volavg.append(sum(inp.volume[i])/len(inp.volume[i]))
+                else:
+                    volavg.append(0)
             
         for k in range(inp.param['total_refl']):
             if len(grain[k]) > 1:
@@ -408,13 +424,13 @@ def reject(inp,i,j,message):
                
 def median(numbers):
    # Sort the list and take the middle element.
-   n = len(numbers)
+   nn = len(numbers)
    copy = numbers[:] # So that "numbers" keeps its original order
    copy.sort()
-   if n & 1:         # There is an odd number of elements
-      return copy[n // 2]
+   if nn & 1:         # There is an odd number of elements
+      return copy[nn // 2]
    else:
-      return (copy[n // 2 - 1] + copy[n // 2]) / 2
+      return (copy[nn // 2 - 1] + copy[nn // 2]) / 2
 
 def spread(data):
         data = n.array(data)
@@ -436,15 +452,16 @@ def mad(data,reject,limit):
         Jette Oddershede 28 August 2008
         """
 
-        data.sort()
-        medi = median(data)
-        maddata = []
-        for j in range(len(data)):
-            maddata.append(abs(data[j]-medi))
-        maddata.sort()
-        mad = limit*maddata[len(maddata)/2]
-        for j in range(len(data)-1,-1,-1):
-            if data[j] < medi-mad or data[j] > medi+mad:
-                reject.append(data.pop(j))
-        reject.sort()
+        if len(data) > 1:
+            data.sort()
+            medi = median(data)
+            maddata = []
+            for j in range(len(data)):
+                maddata.append(abs(data[j]-medi))
+            maddata.sort()
+            mad = limit*maddata[len(maddata)/2]
+            for j in range(len(data)-1,-1,-1):
+                if data[j] < medi-mad or data[j] > medi+mad:
+                    reject.append(data.pop(j))
+            reject.sort()
     

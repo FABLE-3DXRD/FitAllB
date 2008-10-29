@@ -49,7 +49,7 @@ class fit_minuit():
 
 		# determine whether to refine
         self.ref = False
-        if 'grain' in self.inp.fit['goon'] or 'final' in self.inp.fit['goon']:
+        if 'grain' in self.inp.fit['goon'] or 'final' in self.inp.fit['goon'] or 'rotpos' in self.inp.fit['goon']:
             self.ref = True
         elif 'start' in self.inp.fit['goon'] and (self.inp.fit['w'] != 0 or self.inp.fit['tilt'] != 0 or self.inp.fit['pixel'] != 0 or self.inp.fit['center'] != 0 or self.inp.fit['L'] != 0):
             self.ref = True
@@ -92,6 +92,8 @@ class fit_minuit():
                         pass
                     elif 'final' in self.inp.fit['goon'] and (i+1 not in self.inp.fit['newreject_grain'] or (self.inp.fit['newreject_grain'].count(i+1) == 1 and g[i]/self.inp.nrefl[i] < sum(g)/sum(self.inp.nrefl))):
                         pass
+                    elif 'rotpos' in self.inp.fit['goon'] and i+1 not in self.inp.fit['newreject_grain'] and self.mg.errors['x%i' %i] != 10:
+                        pass
                     else:	
                         if 'grain' in self.inp.fit['goon'] or 'final' in self.inp.fit['goon']:
                             self.fitgrain(i)
@@ -101,6 +103,8 @@ class fit_minuit():
                             self.fitxyzgrain(i)
                         elif 'euler' in self.inp.fit['goon']:
                             self.fiteulergrain(i)
+                        elif 'rotpos' in self.inp.fit['goon']:
+                            self.fitrotposgrain(i)
                         if i == 0:
                             print 'Fit %s tolerance %e' %(self.inp.fit['goon'],self.mg.tol)
                         self.mg.values['i'] = i
@@ -112,10 +116,9 @@ class fit_minuit():
                         self.mg.migrad()
                         #print self.mg.edm, self.mg.ncalls
                         self.m.errors = self.mg.errors
-                        if 'grain' in self.inp.fit['goon'] or 'final' in self.inp.fit['goon']:
-                            write_output.write_cor(self,i)
-                            write_output.write_cov(self,i)
-                            write_output.write_errors(self,i)
+                        write_output.write_cor(self,i)
+                        write_output.write_cov(self,i)
+                        write_output.write_errors(self,i)
                         self.m.values = self.mg.values
 #                        self.m.tol = self.mg.tol
                         g[i] = self.mg.fval
@@ -138,6 +141,8 @@ class fit_minuit():
 
         if 'final' in self.inp.fit['goon'] and self.inp.newreject > 0:
             self.inp.fit['goon'] = 'grain'
+        elif 'rotpos' in self.inp.fit['goon'] and self.inp.newreject > 0:
+            self.inp.fit['goon'] = 'start'+ self.inp.fit['goon'][6:]
         
 		# move onto next refinement given by the reforder list	
         self.inp.fit['goon'] = self.inp.fit['reforder'][self.inp.fit['reforder'].index(self.inp.fit['goon'])+1]
@@ -336,7 +341,7 @@ class fit_minuit():
 	"""
         self.m.tol = self.inp.fit['tol_start']
         for entries in self.m.fixed:
-            if entries[0]=='w' and self.inp.fit['w'] != 0:
+            if entries=='wy' and self.inp.fit['w'] != 0:
                 self.m.fixed[entries] = False
             elif entries[0]=='t' and self.inp.fit['tilt'] != 0:
                 self.m.fixed[entries] = False
@@ -350,7 +355,7 @@ class fit_minuit():
 		
     def fiteulergrain(self,i):
 	"""
-	Set tolerance and fixed parameters for fit of orientations and selected global parameters
+	Set tolerance and fixed parameters for fit of orientations for grain i
 	"""
         self.mg.tol = self.inp.fit['tol_euler']
         for entries in self.mg.fixed:
@@ -363,7 +368,7 @@ class fit_minuit():
 
     def fitxyzgrain(self,i):
 	"""
-	Set tolerance and fixed parameters for fit of orientations and selected global parameters
+	Set tolerance and fixed parameters for fit of positions for grain i
 	"""
         self.mg.tol = self.inp.fit['tol_xyz']
         for entries in self.mg.fixed:
@@ -376,7 +381,7 @@ class fit_minuit():
 
     def fitepsgrain(self,i):
 	"""
-	Set tolerance and fixed parameters for fit of orientations and selected global parameters
+	Set tolerance and fixed parameters for fit of strains for grain i
 	"""
         self.mg.tol = self.inp.fit['tol_eps']
         for entries in self.mg.fixed:
@@ -389,7 +394,7 @@ class fit_minuit():
 				
     def fitgrain(self,i):
 	"""
-	Set tolerance and fixed parameters for fit of orientations and selected global parameters
+	Set tolerance and fixed parameters for fit of orientations, positions and strains for grain i
 	"""
         if self.inp.fit['goon'] == 'grain':
             self.mg.tol = self.inp.fit['tol_grain']
@@ -405,8 +410,38 @@ class fit_minuit():
                 self.mg.fixed[entries] = False
             elif (entries[1]=='h' or entries[1]=='H') and self.inp.fit['euler'] != 0:
                 self.mg.fixed[entries] = False
-				
+                
+                
+    def fitrotposgrain(self,i):
+        """
+        Set tolerance and fixed parameters for fit of orientations and positions for grain i    
+        """
+        self.mg.tol = self.inp.fit['tol_rotpos']
+        for entries in self.mg.fixed:
+            self.mg.fixed[entries] = True
 
-		
+        for entries in self.grains[i]:
+            if (entries[0]=='x' or entries[0]=='y' or entries[0]=='z') and self.inp.fit['xyz'] != 0:
+                self.mg.fixed[entries] = False
+            elif (entries[1]=='h' or entries[1]=='H') and self.inp.fit['euler'] != 0:
+                self.mg.fixed[entries] = False
+
+                
+                
+def refine(inp):
+    inp.set_globals()
+    while inp.fit['goon'] != 'end':
+        # calculate experimental errors using the present values 
+        from FitAllB import error
+        error.vars(inp)
+        # build functions to minimise
+        from FitAllB import build_fcn
+        build_fcn.FCN(inp)
+        # minuit fitting
+        from FitAllB import fit
+        lsqr = fit.fit_minuit(inp)
+        lsqr.refine()
+    inp.copy_globals()
+    		
 		
 					

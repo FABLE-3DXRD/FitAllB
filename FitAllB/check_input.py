@@ -9,11 +9,13 @@ import sys, os
 import write_output 
 import conversion
 from xfab import tools
+from xfab import symmetry
 from xfab import detector
 import ImageD11.columnfile as ic
 import numpy as n
 import logging
 import minuit
+from copy import deepcopy
 
 
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
@@ -22,8 +24,9 @@ class parse_input:
     def __init__(self,input_file = None):
         self.filename = input_file
         self.files = {}
-        self.param = {}
         self.fit = {}
+        self.param = {}
+        self.param_near = {}
         
         self.needed_items = {
                     'w_step': 'Missing input: omega step size in deg',
@@ -34,6 +37,8 @@ class parse_input:
         self.optional_items = {
             'dety_size': 2048,
             'detz_size': 2048,
+            'near_dety_size': 1536,
+            'near_detz_size': 1024,
             'w': 0,
             'tilt': 0,
             'pixel': 0,
@@ -49,13 +54,19 @@ class parse_input:
 			'hesse': 0,
             'skip': [],
             'resume': None,
+            'near_resume':None,
             'res_file': None,
             'rej_file': None,
             'structure_file': None,
+            'near_flt_file': None,
+            'near_par_file': None,
+            'const': 1e-5,
+            'near_const': 1e1,
             'goon': 'start',
             'tol_start': 1e-1,
             'tol_euler': 1e-1,
             'tol_xyz': 1e-1,
+            'tol_rotpos': 1e-2,
             'tol_eps': 1e-2,
             'tol_grain': 1e-3,
             'title': 'Title',
@@ -133,6 +144,7 @@ class parse_input:
         
         stem = split(self.filename,'.')[0]		
         self.fit['stem'] = stem
+        self.fit['direc'] = deepcopy(stem)
 				
                 
 						
@@ -173,15 +185,13 @@ class parse_input:
                                                                                                                                 c55=self.fit['c55'],c56=self.fit['c56'],
                                                                                                                                                     c66=self.fit['c66'])
         #print self.C                       
-               
-
            
            
-    def read_par(self): # read detector.par
+    def read_par(self,par_file): # read detector.par
         try:
-            f=open(self.files['par_file'],'r')
+            f=open(par_file,'r')
         except IOError:
-            logging.error('No file named %s' %self.files['par_file'])
+            logging.error('No file named %s' %filename)
             raise IOError
         
         input = f.readlines()
@@ -209,18 +219,17 @@ class parse_input:
                                                         self.fit['dety_size'],self.fit['detz_size'])
         self.param['y_center'] = dety_center
         self.param['z_center'] = detz_center
-					   
-		
-    def read_flt(self): # read peaks_t##.flt and calculate experimental variances Sww,Syy,Szz
+				
+                
+    def read_flt(self,flt_file): # read peaks_t##.flt and calculate experimental variances Sww,Syy,Szz
         # create parameters, must be lists in order to append
 		
         #read as columnfile to avoid problems if peaksearch output is changed
-        flt = ic.columnfile(self.files['flt_file'])
+        flt = ic.columnfile(flt_file)
         self.int = flt.getcolumn('sum_intensity')
         self.w = flt.getcolumn('omega')
         sigw = flt.getcolumn('sigo')
-        spot = flt.getcolumn('spot3d_id')
-        
+        spot = flt.getcolumn('spot3d_id')        
         sc = flt.getcolumn('sc')
         fc = flt.getcolumn('fc')
         sigs = flt.getcolumn('sigs')
@@ -304,14 +313,16 @@ class parse_input:
 #        self.Szz = [1./12.]*self.param['total_refl']
 
         # calculate alpha, the variance scaling parameter proportional to the average peak intensity
-        const = 2e-8
+#        const = 2e-8  # NB this factor might have to be part of the function call as it might be quite different for near- and far-field detectors
+        const = 1e1  # NB this factor might have to be part of the function call as it might be quite different for near- and far-field detectors
         nn = 0
         alpha = 0
         for j in range(len(self.int)):
             if self.int[j] > 0:
                 nn = nn + 1       
                 alpha = alpha + self.int[j]
-        alpha = alpha*const/nn
+#        alpha = alpha*const/nn
+        alpha = alpha*self.fit['const']/nn
         
         #NB! should be sig**2/int, the -1 term is a temporary fix and so are the limits of 1, this should be 0
         for j in range(len(self.int)):
@@ -325,7 +336,9 @@ class parse_input:
 #            print '%e, %e, %e' %(self.Sww[j],self.Syy[j],self.Szz[j])
         if self.fit['w_limit'] == None:
             self.fit['w_limit'] = [min(self.w),max(self.w)]
-     
+        else:
+            assert len(self.fit['w_limit']) % 2 == 0, 'An even number of omega-limits must be given'
+            self.fit['w_limit'].sort()
 
  
     def read_log(self): # read grainspotter.log
@@ -335,6 +348,9 @@ class parse_input:
         self.k = []
         self.l = []
         self.id = []
+        self.x = []
+        self.y = []
+        self.z = []
         self.eta = [0]*self.param['total_refl']
         self.tth = [0]*self.param['total_refl']
 		
@@ -353,7 +369,13 @@ class parse_input:
         for gr in range(self.no_grains):
             nn = nn + 1
             self.nrefl.append(int(split(input[nn])[1]))
-            nn = nn + 12
+            nn = nn + 1
+            # read grain positions from new grainspotter output
+            if len(split(input[nn])) >= 4: 
+                self.x.append(eval(split(input[nn])[1]))
+                self.y.append(eval(split(input[nn])[2]))
+                self.z.append(eval(split(input[nn])[3]))
+            nn = nn + 11
             self.euler.append([eval(split(input[nn])[0]),eval(split(input[nn])[1]),eval(split(input[nn])[2])])
             nn = nn + 3
             idgr = []
@@ -382,6 +404,23 @@ class parse_input:
             
         self.param['theta_min'] = min(self.tth)/2.
         self.param['theta_max'] = max(self.tth)/2.
+        
+        for i in range(1,self.no_grains):
+            Ui = tools.euler2U(self.euler[i][0]*n.pi/180,self.euler[i][1]*n.pi/180,self.euler[i][2]*n.pi/180)
+            for j in range(i):
+                Uj = tools.euler2U(self.euler[j][0]*n.pi/180,self.euler[j][1]*n.pi/180,self.euler[j][2]*n.pi/180)
+                Umis = symmetry.Umis(Ui,Uj,7)
+                mis = 180.
+                for k in range(len(Umis)):
+                    if Umis[k][1] < mis:
+                        mis = Umis[k][1]
+                if mis < 5:
+                    dist = n.sqrt((self.x[i]-self.x[j])**2+(self.y[i]-self.y[j])**2)
+                    if  dist < 0.1:
+                        print i+1,j+1,mis,self.x[i],self.y[i],self.z[i],self.x[j],self.y[j],self.z[j],dist
+            
+            
+        
             
 
     def read_res(self): # read file of positions, orientations and strain tensor components to resume refinement
@@ -423,14 +462,14 @@ class parse_input:
         f.close()
 
         # build rejection list in rigth format
-        self.reject = []
+        rejectid = []
         for i in range(self.no_grains):
-            self.reject.append([])
+            rejectid.append([])
                     
         # read parameters by appending
         for line in input:
             if 'Rejected peak id' in line:
-                self.reject[int(split(line)[7])-1].append(int(split(line)[4]))
+                rejectid[int(split(line)[7])-1].append(int(split(line)[4]))
                 self.fit['rejectid'].append(int(split(line)[4]))
                 self.fit['rejectgrain'].append(int(split(line)[7]))
                 self.fit['hh'].append(int(split(line)[9]))
@@ -448,7 +487,7 @@ class parse_input:
                 self.fit['skip'].extend(eval(string))
         for i in range(self.no_grains):
             for j in range(self.nrefl[i]-1,-1,-1): # loop backwards to make pop work
-                if self.id[i][j] in self.reject[i]:
+                if self.id[i][j] in rejectid[i]:
                     self.id[i].pop(j)
                     self.h[i].pop(j)
                     self.k[i].pop(j)
@@ -458,18 +497,7 @@ class parse_input:
 
     def set_start(self): # build fcn, initiate minuit and set starting values and errors
 
-        # global values
         self.values = {}
-        self.values['wx'] = 0.0
-        self.values['wy'] = self.param['wedge']
-        self.values['tx'] = self.param['tilt_x']
-        self.values['ty'] = self.param['tilt_y']
-        self.values['tz'] = self.param['tilt_z']
-        self.values['py'] = self.param['y_size']
-        self.values['pz'] = self.param['z_size']
-        self.values['cy'] = self.param['y_center']
-        self.values['cz'] = self.param['z_center']
-        self.values['L']  = self.param['distance']
         # grain values
         for i in range(self.no_grains):
             self.values['x%s' %i] = 0.0
@@ -500,25 +528,32 @@ class parse_input:
                     self.values['phia%s' %i] = self.phia[self.grainno.index(i+1)] 
                     self.values['PHI%s' %i]  = self.PHI[self.grainno.index(i+1)] 
                     self.values['phib%s' %i] = self.phib[self.grainno.index(i+1)] 
-        # global errors
+        # else if start from scratch with new grainspotter log file use positions from this
+        elif len(self.x) == self.no_grains:
+            for i in range(self.no_grains):
+                self.values['x%s' %i] = 1000.*self.x[i]
+                self.values['y%s' %i] = 1000.*self.y[i]
+                self.values['z%s' %i] = 1000.*self.z[i]
+        
         self.errors = {}
-        self.errors['wx'] = 0.001
-        self.errors['wy'] = 0.001
-        self.errors['tx'] = 0.001
-        self.errors['ty'] = 0.001
-        self.errors['tz'] = 0.001
-        self.errors['py'] = 0.1
-        self.errors['pz'] = 0.1
-        self.errors['cy'] = 0.1
-        self.errors['cz'] = 0.1
-        self.errors['L']  = 1
-        self.errors['i']  = 1
-        self.errors['j']  = 1
+        # global errors
+        self.param['chi_error'] = 0.001
+        self.param['wedge_error'] = 0.001
+        self.param['tilt_x_error'] = 0.001
+        self.param['tilt_y_error'] = 0.001
+        self.param['tilt_z_error'] = 0.001
+        self.param['y_size_error'] = 0.1
+        self.param['z_size_error'] = 0.1
+        self.param['y_center_error'] = 0.1
+        self.param['z_center_error'] = 0.1
+        self.param['distance_error']  = 1
+        self.param['i_error']  = 1
+        self.param['j_error']  = 1
         # grain errors
         for i in range(self.no_grains):
-            self.errors['x%s' %i] = 100
-            self.errors['y%s' %i] = 100
-            self.errors['z%s' %i] = 100
+            self.errors['x%s' %i] = 10
+            self.errors['y%s' %i] = 10
+            self.errors['z%s' %i] = 10
             self.errors['epsaa%s' %i] = 0.0001 
             self.errors['epsab%s' %i] = 0.0001
             self.errors['epsac%s' %i] = 0.0001
@@ -529,29 +564,69 @@ class parse_input:
             self.errors['PHI%s' %i]  = 0.1
             self.errors['phib%s' %i] = 0.1
     
-        
-        # set refinement order
-        self.fit['reforder'] = ['start']
-        self.fit['reforder'].append('euler')
-        self.fit['reforder'].append('xyz')
-        self.fit['reforder'].append('eps')
-        if self.fit['w'] != 0 or self.fit['tilt'] != 0 or self.fit['pixel'] != 0 or self.fit['center'] != 0 or self.fit['L'] != 0:
-            self.fit['reforder'].append('start0')
-        self.fit['reforder'].append('grain')
-        if self.fit['w'] != 0 or self.fit['tilt'] != 0 or self.fit['pixel'] != 0 or self.fit['center'] != 0 or self.fit['L'] != 0:
-            self.fit['reforder'].append('start1')
-        self.fit['reforder'].append('final')
-        self.fit['reforder'].append('end')
-        # remove items from list in case of resume
-        if self.fit['resume'] != None:
-            self.fit['goon'] = self.fit['resume']
-            self.fit['newreject_grain'] = []
 
+        self.fit['newreject_grain'] = []
+        
+            
+    def set_globals(self):
+        # global values
+        self.values['wx'] = deepcopy(self.param['chi'])
+        self.values['wy'] = deepcopy(self.param['wedge'])
+        self.values['tx'] = deepcopy(self.param['tilt_x'])
+        self.values['ty'] = deepcopy(self.param['tilt_y'])
+        self.values['tz'] = deepcopy(self.param['tilt_z'])
+        self.values['py'] = deepcopy(self.param['y_size'])
+        self.values['pz'] = deepcopy(self.param['z_size'])
+        self.values['cy'] = deepcopy(self.param['y_center'])
+        self.values['cz'] = deepcopy(self.param['z_center'])
+        self.values['L']  = deepcopy(self.param['distance'])
+        # global errors
+        self.errors['wx'] = deepcopy(self.param['chi_error'])
+        self.errors['wy'] = deepcopy(self.param['wedge_error'])
+        self.errors['tx'] = deepcopy(self.param['tilt_x_error'])
+        self.errors['ty'] = deepcopy(self.param['tilt_y_error'])
+        self.errors['tz'] = deepcopy(self.param['tilt_z_error'])
+        self.errors['py'] = deepcopy(self.param['y_size_error'])
+        self.errors['pz'] = deepcopy(self.param['z_size_error'])
+        self.errors['cy'] = deepcopy(self.param['y_center_error'])
+        self.errors['cz'] = deepcopy(self.param['z_center_error'])
+        self.errors['L']  = deepcopy(self.param['distance_error'])
+        self.errors['i']  = deepcopy(self.param['i_error'])
+        self.errors['j']  = deepcopy(self.param['j_error'])
+    
+    
+    def copy_globals(self):
+        # Necessary to save copies of global parameters in param when switching between near and farfiel detectors
+        # global values
+        self.param['chi'] = deepcopy(self.values['wx']) 
+        self.param['wedge'] = deepcopy(self.values['wy']) 
+        self.param['tilt_x'] = deepcopy(self.values['tx']) 
+        self.param['tilt_y'] = deepcopy(self.values['ty']) 
+        self.param['tilt_z'] = deepcopy(self.values['tz']) 
+        self.param['y_size'] = deepcopy(self.values['py']) 
+        self.param['y_size'] = deepcopy(self.values['pz']) 
+        self.param['y_center'] = deepcopy(self.values['cy']) 
+        self.param['z_center'] = deepcopy(self.values['cz']) 
+        self.param['distance'] = deepcopy(self.values['L'])  
+        # global errors
+        self.param['chi_error'] = deepcopy(self.errors['wx']) 
+        self.param['wedge_error'] = deepcopy(self.errors['wy']) 
+        self.param['tilt_x_error'] = deepcopy(self.errors['tx']) 
+        self.param['tilt_y_error'] = deepcopy(self.errors['ty']) 
+        self.param['tilt_z_error'] = deepcopy(self.errors['tz']) 
+        self.param['y_size_error'] = deepcopy(self.errors['py']) 
+        self.param['z_size_error'] = deepcopy(self.errors['pz']) 
+        self.param['y_center_error'] = deepcopy(self.errors['cy']) 
+        self.param['z_center_error'] = deepcopy(self.errors['cz']) 
+        self.param['distance_error'] = deepcopy(self.errors['L'])  
+        self.param['i_error'] = deepcopy(self.errors['i'])  
+        self.param['j_error'] = deepcopy(self.errors['j'])  
+           
             
     def reject(self): # carry out initial rejections
 
         import reject
-        print 'Number of reflections from GrainSpotter: ', n.sum(self.nrefl)
+        print 'Number of assigned reflections (from GrainSpotter): ', n.sum(self.nrefl)
         # set starting values
         self.newreject = 0
         self.fit['newreject_grain'] = []
