@@ -165,7 +165,7 @@ def intensity(inp):
                     newreject = 1
                     while newreject > 0:
                         tmp = len(rej)
-                        mad(data[i],rej,5)
+                        mad(data[i],rej,inp.fit['mad'][0])
                         newreject = len(rej) - tmp
                     avgdata = n.sum(data[i])/len(data[i])
                     sigdata = spread(data[i])
@@ -212,10 +212,10 @@ def residual(inp,limit,only=None):
         """
 		
         # must update inp.vars because the order here is [i][j] in stead of [id[i][j]], the latter doesn't change when peaks are rejected, the former does.
-        try:
-            self.values = deepcopy(self.m.values)
-        except:
-            pass
+#        try:
+#            inp.values = deepcopy(inp.m.values)
+#        except:
+#            pass
         # calculate experimental errors using the present values 
         import error
         error.vars(inp)
@@ -386,10 +386,10 @@ def merge(inp):
             
 def insignificant(inp):
         """
-        Remove grains with less than 12 peaks as being insignificant
+        Remove grains with less than inp.fit['min_refl'] peaks as being insignificant
         """
         for i in range(inp.no_grains):
-            if inp.nrefl[i] < 12 and i+1 not in inp.fit['skip']:
+            if inp.nrefl[i] < inp.fit['min_refl'] and i+1 not in inp.fit['skip']:
                 inp.fit['skip'].append(i+1)
         inp.fit['skip'].sort()
         
@@ -408,6 +408,7 @@ def reject(inp,i,j,message):
         """
         Reject peak j from grain i and print the message as rejectvalue
         """
+        inp.vars[i].pop(j)
         inp.fit['rejectgrain'].append(i)
         inp.fit['rejectid'].append(inp.id[i].pop(j))
         inp.fit['hh'].append(inp.h[i].pop(j))

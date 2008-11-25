@@ -50,6 +50,7 @@ class parse_input:
             'printmode': 0,
             'strategy': 0,
             'limit': [5,10], 
+            'mad': [5,25],
             'overlap': 0.5,
 			'hesse': 0,
             'skip': [],
@@ -60,8 +61,13 @@ class parse_input:
             'structure_file': None,
             'near_flt_file': None,
             'near_par_file': None,
-            'const': 1e-5,
-            'near_const': 1e1,
+            'bg': 100,
+            'near_bg': 67,
+            'const': 1,
+            'ia': 0.1,
+            'min_refl': 12,
+            'near_min_refl': 6,
+            'near_const': 1e5,
             'goon': 'start',
             'tol_start': 1e-1,
             'tol_euler': 1e-1,
@@ -161,6 +167,7 @@ class parse_input:
             
     def initialize(self): 
         # Does output directory exist?
+        print 'stem=',self.fit['stem']
         if not os.path.exists(self.fit['stem']):
             os.mkdir(self.fit['stem'])
         sys.path.insert(0,self.fit['stem'])
@@ -227,6 +234,7 @@ class parse_input:
         #read as columnfile to avoid problems if peaksearch output is changed
         flt = ic.columnfile(flt_file)
         self.int = flt.getcolumn('sum_intensity')
+        intmax = flt.getcolumn('IMax_int')
         self.w = flt.getcolumn('omega')
         sigw = flt.getcolumn('sigo')
         spot = flt.getcolumn('spot3d_id')        
@@ -271,6 +279,7 @@ class parse_input:
         sigy = sigy[n.argsort(spot)]
         sigz = sigz[n.argsort(spot)]
         self.int = self.int[n.argsort(spot)]
+        intmax = intmax[n.argsort(spot)]
 
         # we now have arrays on length len(self.spot), but in the end we want lists of length maxspotno+1
         # therefore create temporary lists with zero values of length maxspotno+1
@@ -282,6 +291,7 @@ class parse_input:
         tsigy = [-1.]*self.param['total_refl']
         tsigz = [-1.]*self.param['total_refl']
         tint = [0.]*self.param['total_refl']
+        tintmax = [1.]*self.param['total_refl']
         missing = 0
         # update temporary lists for all read reflections
         for i in range(self.param['total_refl']):
@@ -293,6 +303,7 @@ class parse_input:
                 tsigy[i] = sigy[i-missing]
                 tsigz[i] = sigz[i-missing]
                 tint[i] = self.int[i-missing]
+                tintmax[i] = intmax[i-missing]
             else:
                 missing = missing+1
 
@@ -304,7 +315,8 @@ class parse_input:
         sigy = tsigy
         sigz = tsigz
         self.int = tint
-		
+        intmax = tintmax
+        
         # set default variances
         self.Sww = [self.fit['w_step']**2/12.]*self.param['total_refl']
         self.Syy = [1.]*self.param['total_refl']
@@ -312,27 +324,17 @@ class parse_input:
 #        self.Syy = [1./12.]*self.param['total_refl']
 #        self.Szz = [1./12.]*self.param['total_refl']
 
-        # calculate alpha, the variance scaling parameter proportional to the average peak intensity
-#        const = 2e-8  # NB this factor might have to be part of the function call as it might be quite different for near- and far-field detectors
-        const = 1e1  # NB this factor might have to be part of the function call as it might be quite different for near- and far-field detectors
-        nn = 0
-        alpha = 0
-        for j in range(len(self.int)):
-            if self.int[j] > 0:
-                nn = nn + 1       
-                alpha = alpha + self.int[j]
-#        alpha = alpha*const/nn
-        alpha = alpha*self.fit['const']/nn
         
         #NB! should be sig**2/int, the -1 term is a temporary fix and so are the limits of 1, this should be 0
+        # Error expressions taken from Withers, Daymond and Johnson (2001), J.Appl.Cryst.34,737.
         for j in range(len(self.int)):
             if self.int[j] > 0:
                 if sigw[j] > 1:
-                    self.Sww[j] = alpha*(sigw[j]**2-1)/self.int[j]
+                    self.Sww[j] = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])*(sigw[j]**2-1)/self.int[j]
                 if sigy[j] > 1:
-                    self.Syy[j] = alpha*(sigy[j]**2-1)/self.int[j]
+                    self.Syy[j] = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])*(sigy[j]**2-1)/self.int[j]
                 if sigz[j] > 1:
-                    self.Szz[j] = alpha*(sigz[j]**2-1)/self.int[j]       
+                    self.Szz[j] = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])*(sigz[j]**2-1)/self.int[j]       
 #            print '%e, %e, %e' %(self.Sww[j],self.Syy[j],self.Szz[j])
         if self.fit['w_limit'] == None:
             self.fit['w_limit'] = [min(self.w),max(self.w)]
@@ -353,6 +355,7 @@ class parse_input:
         self.z = []
         self.eta = [0]*self.param['total_refl']
         self.tth = [0]*self.param['total_refl']
+        ia = []
 		
         try:
             f=open(self.files['log_file'],'r')
@@ -372,6 +375,7 @@ class parse_input:
             nn = nn + 1
             # read grain positions from new grainspotter output
             if len(split(input[nn])) >= 4: 
+                ia.append(eval(split(input[nn])[0]))
                 self.x.append(eval(split(input[nn])[1]))
                 self.y.append(eval(split(input[nn])[2]))
                 self.z.append(eval(split(input[nn])[3]))
@@ -405,6 +409,11 @@ class parse_input:
         self.param['theta_min'] = min(self.tth)/2.
         self.param['theta_max'] = max(self.tth)/2.
         
+        # delete grains with an internal angle above the set threshold
+        for i in range(self.no_grains):
+            if ia[i] > self.fit['ia']:
+                self.fit['skip'].append(i+1)
+                
         for i in range(1,self.no_grains):
             Ui = tools.euler2U(self.euler[i][0]*n.pi/180,self.euler[i][1]*n.pi/180,self.euler[i][2]*n.pi/180)
             for j in range(i):
@@ -551,9 +560,9 @@ class parse_input:
         self.param['j_error']  = 1
         # grain errors
         for i in range(self.no_grains):
-            self.errors['x%s' %i] = 10
-            self.errors['y%s' %i] = 10
-            self.errors['z%s' %i] = 10
+            self.errors['x%s' %i] = self.param['y_size']/5.
+            self.errors['y%s' %i] = self.param['y_size']/5.
+            self.errors['z%s' %i] = self.param['z_size']/10.
             self.errors['epsaa%s' %i] = 0.0001 
             self.errors['epsab%s' %i] = 0.0001
             self.errors['epsac%s' %i] = 0.0001
@@ -568,65 +577,10 @@ class parse_input:
         self.fit['newreject_grain'] = []
         
             
-    def set_globals(self):
-        # global values
-        self.values['wx'] = deepcopy(self.param['chi'])
-        self.values['wy'] = deepcopy(self.param['wedge'])
-        self.values['tx'] = deepcopy(self.param['tilt_x'])
-        self.values['ty'] = deepcopy(self.param['tilt_y'])
-        self.values['tz'] = deepcopy(self.param['tilt_z'])
-        self.values['py'] = deepcopy(self.param['y_size'])
-        self.values['pz'] = deepcopy(self.param['z_size'])
-        self.values['cy'] = deepcopy(self.param['y_center'])
-        self.values['cz'] = deepcopy(self.param['z_center'])
-        self.values['L']  = deepcopy(self.param['distance'])
-        # global errors
-        self.errors['wx'] = deepcopy(self.param['chi_error'])
-        self.errors['wy'] = deepcopy(self.param['wedge_error'])
-        self.errors['tx'] = deepcopy(self.param['tilt_x_error'])
-        self.errors['ty'] = deepcopy(self.param['tilt_y_error'])
-        self.errors['tz'] = deepcopy(self.param['tilt_z_error'])
-        self.errors['py'] = deepcopy(self.param['y_size_error'])
-        self.errors['pz'] = deepcopy(self.param['z_size_error'])
-        self.errors['cy'] = deepcopy(self.param['y_center_error'])
-        self.errors['cz'] = deepcopy(self.param['z_center_error'])
-        self.errors['L']  = deepcopy(self.param['distance_error'])
-        self.errors['i']  = deepcopy(self.param['i_error'])
-        self.errors['j']  = deepcopy(self.param['j_error'])
-    
-    
-    def copy_globals(self):
-        # Necessary to save copies of global parameters in param when switching between near and farfiel detectors
-        # global values
-        self.param['chi'] = deepcopy(self.values['wx']) 
-        self.param['wedge'] = deepcopy(self.values['wy']) 
-        self.param['tilt_x'] = deepcopy(self.values['tx']) 
-        self.param['tilt_y'] = deepcopy(self.values['ty']) 
-        self.param['tilt_z'] = deepcopy(self.values['tz']) 
-        self.param['y_size'] = deepcopy(self.values['py']) 
-        self.param['y_size'] = deepcopy(self.values['pz']) 
-        self.param['y_center'] = deepcopy(self.values['cy']) 
-        self.param['z_center'] = deepcopy(self.values['cz']) 
-        self.param['distance'] = deepcopy(self.values['L'])  
-        # global errors
-        self.param['chi_error'] = deepcopy(self.errors['wx']) 
-        self.param['wedge_error'] = deepcopy(self.errors['wy']) 
-        self.param['tilt_x_error'] = deepcopy(self.errors['tx']) 
-        self.param['tilt_y_error'] = deepcopy(self.errors['ty']) 
-        self.param['tilt_z_error'] = deepcopy(self.errors['tz']) 
-        self.param['y_size_error'] = deepcopy(self.errors['py']) 
-        self.param['z_size_error'] = deepcopy(self.errors['pz']) 
-        self.param['y_center_error'] = deepcopy(self.errors['cy']) 
-        self.param['z_center_error'] = deepcopy(self.errors['cz']) 
-        self.param['distance_error'] = deepcopy(self.errors['L'])  
-        self.param['i_error'] = deepcopy(self.errors['i'])  
-        self.param['j_error'] = deepcopy(self.errors['j'])  
-           
-            
     def reject(self): # carry out initial rejections
 
         import reject
-        print 'Number of assigned reflections (from GrainSpotter): ', n.sum(self.nrefl)
+        print '\n\nNumber of assigned reflections (from GrainSpotter): ', n.sum(self.nrefl)
         # set starting values
         self.newreject = 0
         self.fit['newreject_grain'] = []
@@ -656,7 +610,60 @@ class parse_input:
        
         write_output.write_rej(self,message=('%s\n\ncheck_input' %self.fit['title']))
         
-        
+def set_globals(inp):
+        # global values
+        inp.values['wx'] = deepcopy(inp.param['chi'])
+        inp.values['wy'] = deepcopy(inp.param['wedge'])
+        inp.values['tx'] = deepcopy(inp.param['tilt_x'])
+        inp.values['ty'] = deepcopy(inp.param['tilt_y'])
+        inp.values['tz'] = deepcopy(inp.param['tilt_z'])
+        inp.values['py'] = deepcopy(inp.param['y_size'])
+        inp.values['pz'] = deepcopy(inp.param['z_size'])
+        inp.values['cy'] = deepcopy(inp.param['y_center'])
+        inp.values['cz'] = deepcopy(inp.param['z_center'])
+        inp.values['L']  = deepcopy(inp.param['distance'])
+        # global errors
+        inp.errors['wx'] = deepcopy(inp.param['chi_error'])
+        inp.errors['wy'] = deepcopy(inp.param['wedge_error'])
+        inp.errors['tx'] = deepcopy(inp.param['tilt_x_error'])
+        inp.errors['ty'] = deepcopy(inp.param['tilt_y_error'])
+        inp.errors['tz'] = deepcopy(inp.param['tilt_z_error'])
+        inp.errors['py'] = deepcopy(inp.param['y_size_error'])
+        inp.errors['pz'] = deepcopy(inp.param['z_size_error'])
+        inp.errors['cy'] = deepcopy(inp.param['y_center_error'])
+        inp.errors['cz'] = deepcopy(inp.param['z_center_error'])
+        inp.errors['L']  = deepcopy(inp.param['distance_error'])
+        inp.errors['i']  = deepcopy(inp.param['i_error'])
+        inp.errors['j']  = deepcopy(inp.param['j_error'])
+    
+    
+def copy_globals(inp):
+        # Necessary to save copies of global parameters in param when switching between near and farfiel detectors
+        # global values
+        inp.param['chi'] = deepcopy(inp.values['wx']) 
+        inp.param['wedge'] = deepcopy(inp.values['wy']) 
+        inp.param['tilt_x'] = deepcopy(inp.values['tx']) 
+        inp.param['tilt_y'] = deepcopy(inp.values['ty']) 
+        inp.param['tilt_z'] = deepcopy(inp.values['tz']) 
+        inp.param['y_size'] = deepcopy(inp.values['py']) 
+        inp.param['y_size'] = deepcopy(inp.values['pz']) 
+        inp.param['y_center'] = deepcopy(inp.values['cy']) 
+        inp.param['z_center'] = deepcopy(inp.values['cz']) 
+        inp.param['distance'] = deepcopy(inp.values['L'])  
+        # global errors
+        inp.param['chi_error'] = deepcopy(inp.errors['wx']) 
+        inp.param['wedge_error'] = deepcopy(inp.errors['wy']) 
+        inp.param['tilt_x_error'] = deepcopy(inp.errors['tx']) 
+        inp.param['tilt_y_error'] = deepcopy(inp.errors['ty']) 
+        inp.param['tilt_z_error'] = deepcopy(inp.errors['tz']) 
+        inp.param['y_size_error'] = deepcopy(inp.errors['py']) 
+        inp.param['z_size_error'] = deepcopy(inp.errors['pz']) 
+        inp.param['y_center_error'] = deepcopy(inp.errors['cy']) 
+        inp.param['z_center_error'] = deepcopy(inp.errors['cz']) 
+        inp.param['distance_error'] = deepcopy(inp.errors['L'])  
+        inp.param['i_error'] = deepcopy(inp.errors['i'])  
+        inp.param['j_error'] = deepcopy(inp.errors['j'])  
+                   
         
         
  

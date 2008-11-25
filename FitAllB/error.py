@@ -1,5 +1,6 @@
 import numpy as n
 from xfab import tools
+import check_input
 
 
 def	vars(inp):
@@ -8,6 +9,9 @@ def	vars(inp):
 	Jette Oddershede, July 2008
 	"""
     
+#	id = inp.id[0][0]
+#	print inp.w[id],inp.dety[id],inp.detz[id],inp.Sww[id],inp.Syy[id],inp.Szz[id],inp.values['x0'],inp.values['y0'],inp.values['z0'],inp.values['L']
+	check_input.set_globals(inp)
 	inp.vars = []
 	for i in range(inp.no_grains):
 		inp.vars.append([])

@@ -36,7 +36,8 @@ far.read_log()          # read grainspotter.log file
 far.read_res()          # read paramters file to resume refinement                              NB! optional
 far.read_rej()          # read file containing rejected peaks to resume refinement   NB! optional
 far.set_start()         # set values and errors for refinement start
-far.set_globals()
+check_input.set_globals(far)
+
 # optional nearfield info
 if far.files['near_flt_file'] != None:
     assert far.files['near_par_file'] != None, 'near_par_file parameter file for near-field detector is missing'
@@ -46,6 +47,8 @@ if far.files['near_flt_file'] != None:
         if key[0:5] == 'near_': 
             near.fit[key[5:len(key)]] = near.fit[key]
     near.fit['stem'] = far.fit['stem'] + '_near'
+    print 'far.fit', far.fit
+    print 'near.fit', near.fit
     near.read_par(near.files['near_par_file'])
     near.read_flt(near.files['near_flt_file'])
     keys = ['cell__a','cell__b','cell__c','cell_alpha','cell_beta','cell_gamma','cell_lattice_[P,A,B,C,I,F,R]','chi','omegasign','wavelength']
@@ -58,7 +61,8 @@ if far.files['near_flt_file'] != None:
 #        far.fit['w'] = 1
     near.values = far.values
     near.errors = far.errors
-    near.set_globals()
+    near.fit['skip'] = far.fit['skip']
+    check_input.set_globals(near)
     # match peaks on nearfield detector and reject outliers
     from FitAllB import near_field
     near_field.find_refl(near)
@@ -69,7 +73,8 @@ if far.files['near_flt_file'] != None:
     build_fcn.FCN(near)
     near.reject()
     near.write_rej()
-    near.fit['reforder'] = ['starta','rotposa','end']
+    near.fit['reforder'] = ['starta','xyza','end']
+#    near.fit['reforder'] = ['starta','rotposa','end']
     if near.fit['near_resume'] != None:
         near.fit['goon'] = near.fit['near_resume']
     else:
@@ -80,6 +85,10 @@ if far.files['near_flt_file'] != None:
  
 #  Farfield outlier rejection
 if far.fit['resume'] == None: # do outlier rejection
+    from FitAllB import error
+    error.vars(far)
+    from FitAllB import build_fcn
+    build_fcn.FCN(far)
     far.reject()            
 else:                          # if refinement is resumed build residual and volume arrays 
     far.residual = []
@@ -95,7 +104,8 @@ else:                          # if refinement is resumed build residual and vol
 far.write_rej()         # write the files rejected during friedel and merge to rejection file
  
 # farfield refinement
-far.fit['reforder'] = ['start','eps','grain','start1','final','end']
+#far.fit['reforder'] = ['start','eps','grain','start1','final','end']
+far.fit['reforder'] = ['start','grain','start1','final','end']
 if far.fit['resume'] != None:
     far.fit['goon'] = far.fit['near_resume']
 else:
@@ -103,16 +113,32 @@ else:
 from FitAllB import fit
 fit.refine(far)
 
+
+
+sys.exit()
 #nearfield refinement
 try: 
-    near.fit['reforder'] = ['startb','rotposb','end']
+#    near.fit['reforder'] = ['startb','rotposb','end']
+    near.fit['reforder'] = ['startb','xyzb','end']
     if near.fit['near_resume'] != None:
         near.fit['goon'] = near.fit['near_resume']
     else:
         near.fit['goon'] = near.fit['reforder'][0]
+    # set errors back to standard values to ensure refinement of all grains
+    for i in range(near.no_grains):
+        near.errors['x%s' %i] = near.param['y_size']/5.
+        near.errors['y%s' %i] = near.param['y_size']/5.
+        near.errors['z%s' %i] = near.param['z_size']/10.
     # nearfield refinement
     from FitAllB import fit
     fit.refine(near)
+
+# farfield refinement
+    far.fit['reforder'] = ['grainb','start1','finalb','end']
+    far.fit['goon'] = 'grainb'
+    from FitAllB import fit
+    fit.refine(far)
+    
 except:
     pass
 

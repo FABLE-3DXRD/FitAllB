@@ -25,63 +25,64 @@ def find_refl(inp):
 
         for grainno in range(inp.no_grains):
             inp.possible.append([])
-            B = tools.epsilon2B(n.array([inp.values['epsaa%s' %grainno],
-                                         inp.values['epsab%s' %grainno],
-                                         inp.values['epsac%s' %grainno],
-                                         inp.values['epsbb%s' %grainno],
-                                         inp.values['epsbc%s' %grainno],
-                                         inp.values['epscc%s' %grainno]]),
-                                inp.unit_cell)
-            U = tools.euler2U(inp.values['phia%s' %grainno]*n.pi/180,
-                              inp.values['PHI%s' %grainno]*n.pi/180,
-                              inp.values['phib%s' %grainno]*n.pi/180)
-            gr_pos = n.array([inp.values['x%s' %grainno],
-                              inp.values['y%s' %grainno],
-                              inp.values['z%s' %grainno]])
+            if grainno+1 not in inp.fit['skip']:
+                B = tools.epsilon2B(n.array([inp.values['epsaa%s' %grainno],
+                                             inp.values['epsab%s' %grainno],
+                                             inp.values['epsac%s' %grainno],
+                                             inp.values['epsbb%s' %grainno],
+                                             inp.values['epsbc%s' %grainno],
+                                             inp.values['epscc%s' %grainno]]),
+                                    inp.unit_cell)
+                U = tools.euler2U(inp.values['phia%s' %grainno]*n.pi/180,
+                                  inp.values['PHI%s' %grainno]*n.pi/180,
+                                  inp.values['phib%s' %grainno]*n.pi/180)
+                gr_pos = n.array([inp.values['x%s' %grainno],
+                                  inp.values['y%s' %grainno],
+                                  inp.values['z%s' %grainno]])
             
 
 
         # if no structure info is given consider the reflections hitting the farfield as the nearfield possibilities
-            if inp.files['structure_file'] == None:
-                HKL = []
-                for j in range(inp.nrefl[grainno]):
-                    HKL.append([inp.h[grainno][j],inp.k[grainno][j],inp.l[grainno][j]])
-                HKL = n.array(HKL)
+                if inp.files['structure_file'] == None:
+                    HKL = []
+                    for j in range(inp.nrefl[grainno]):
+                        HKL.append([inp.h[grainno][j],inp.k[grainno][j],inp.l[grainno][j]])
+                    HKL = n.array(HKL)
 
   
-            for hkl in HKL:
-                Gc = n.dot(B,hkl[0:3])
-                Gw = n.dot(S,n.dot(U,Gc))
-                tth = tools.tth2(Gw,inp.param['wavelength'])
-                costth = n.cos(tth)
-                (Omega, Eta) = tools.find_omega_quart(inp.param['wavelength']/(4.*n.pi)*Gw,tth,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  # correct way to do it except function not yet working
-                if len(Omega) > 0:
-                    for solution in range(len(Omega)):
-                        omega = Omega[solution]
-                        eta = Eta[solution]
-                        for i in range(len(inp.fit['w_limit'])/2):
-                            if  (inp.fit['w_limit'][2*i]*n.pi/180) < omega and\
-                                omega < (inp.fit['w_limit'][2*i+1]*n.pi/180):
+                for hkl in HKL:
+                    Gc = n.dot(B,hkl[0:3])
+                    Gw = n.dot(S,n.dot(U,Gc))
+                    tth = tools.tth2(Gw,inp.param['wavelength'])
+                    costth = n.cos(tth)
+                    (Omega, Eta) = tools.find_omega_quart(inp.param['wavelength']/(4.*n.pi)*Gw,tth,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  # correct way to do it except function not yet working
+                    if len(Omega) > 0:
+                        for solution in range(len(Omega)):
+                            omega = Omega[solution]
+                            eta = Eta[solution]
+                            for i in range(len(inp.fit['w_limit'])/2):
+                                if  (inp.fit['w_limit'][2*i]*n.pi/180) < omega and\
+                                    omega < (inp.fit['w_limit'][2*i+1]*n.pi/180):
                                 # form Omega rotation matrix
-                                Om = tools.quart2Omega(omega*180./n.pi,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  # correct way to do it except omega incorrectly determined
-                                Gt = n.dot(Om,Gw) 
+                                    Om = tools.quart2Omega(omega*180./n.pi,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  # correct way to do it except omega incorrectly determined
+                                    Gt = n.dot(Om,Gw) 
                                 # Calc crystal position at present omega
-                                [tx,ty,tz]= n.dot(Om,gr_pos)
+                                    [tx,ty,tz]= n.dot(Om,gr_pos)
                                 # Calc detector coordinate for peak 
-                                (dety, detz) = detector.det_coor(Gt,costth,
-                                                                 inp.param['wavelength'],
-                                                                 inp.param['distance'],
-                                                                 inp.param['y_size'],
-                                                                 inp.param['z_size'],
-                                                                 inp.param['y_center'],
-                                                                 inp.param['z_center'],
-                                                                 R,tx,ty,tz)
+                                    (dety, detz) = detector.det_coor(Gt,costth,
+                                                                    inp.param['wavelength'],
+                                                                    inp.param['distance'],
+                                                                    inp.param['y_size'],
+                                                                    inp.param['z_size'],
+                                                                    inp.param['y_center'],
+                                                                    inp.param['z_center'],
+                                                                    R,tx,ty,tz)
                             #If peak within detector frame store it in possible
-                                if (-0.5 < dety) and\
-                                    (dety < inp.fit['dety_size']-0.5) and\
-                                    (-0.5 < detz) and\
-                                    (detz < inp.fit['detz_size']-0.5):
-                                    inp.possible[grainno].append([hkl[0],hkl[1],hkl[2],omega*180/n.pi,dety,detz,tth,eta])
+                                    if (-0.5 < dety) and\
+                                        (dety < inp.fit['dety_size']-0.5) and\
+                                        (-0.5 < detz) and\
+                                        (detz < inp.fit['detz_size']-0.5):
+                                        inp.possible[grainno].append([hkl[0],hkl[1],hkl[2],omega*180/n.pi,dety,detz,tth,eta])
                                             
 
 def match(inp):

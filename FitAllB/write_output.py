@@ -6,6 +6,7 @@ import sys
 import logging
 import conversion
 from copy import deepcopy
+from string import split
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
 		
@@ -215,6 +216,138 @@ def write_values(lsqr):
 
 
 def write_errors(lsqr,i):
+    """
+    Save the fitted grain error parameters, pos, U and eps
+
+    INPUT: The error set from the final fitting
+    OUTPUT: grainno x y z phi1 PHI phi2 
+            U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps12 eps13 eps22 eps23 eps33
+ 
+    Jette Oddershede, Risoe DTU, June 23 2008
+    """
+    
+
+    # error transformation into other coordinate system and from strain to stress under construction
+    U = tools.euler2U(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
+    eps_ref = False
+    for key in lsqr.mg.covariance.keys():
+        if 'epsaa%s' %i in key:
+            eps_ref = True
+            break
+
+    if eps_ref == False:
+        cov_eps = n.zeros((6,6))
+    else:
+        free = lsqr.mg.fixed.values().count(False)
+        assert free >= 6, 'wrong dimensions of covariance matrix'
+        covariance = n.zeros((free,free))
+        j1 = 0
+        for entry1 in lsqr.grains[i]:
+            if lsqr.mg.fixed[entry1] == False:
+                j2 = 0
+                for entry2 in lsqr.grains[i]:
+                    if lsqr.mg.fixed[entry2] == False:
+                        covariance[j1][j2] = lsqr.mg.covariance[('%s' %entry1, '%s' %entry2)]
+                        j2 = j2 + 1
+                j1 = j1 + 1
+                
+        if free == 6:
+            cov_eps = covariance
+        else:
+            derivatives = n.linalg.inv(covariance)
+            derivatives = derivatives[len(derivatives)-6:,len(derivatives)-6:]
+            cov_eps = n.linalg.inv(derivatives)
+
+    cov_eps_s = conversion.CovarianceRotation(cov_eps,U)
+    cov_sig = conversion.CovarianceTransformation(cov_eps,lsqr.inp.C)
+    cov_sig_s = conversion.CovarianceRotation(cov_sig,U)
+    
+    filename = '%s/%s_errors.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
+    filename2 = '%s/%s_%s_errors.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
+    try:
+        f = open(filename,'r')
+        lines = f.readlines()
+        f.close()
+    except:
+        f = open(filename,'w')
+        out = "# grainno grainsize grainvolume x y z phi1 PHI phi2 U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
+        out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s\n"
+        f.write(out)
+        f.close()   
+        f = open(filename,'r')
+        lines = f.readlines()
+        f.close()
+
+    index = 0
+    for j in range(1,len(lines)):
+        if i+1 == eval(split(lines[j])[0]):
+            index = j
+            break
+    if index == 0:
+        index = len(lines)
+        lines.append('')
+    
+    format = "%d "*1 + "%f "*17 + "%e "*24 +"\n"
+    
+#    print lsqr.inp.volume[i], sum(lsqr.inp.volume[i])/lsqr.inp.nrefl[i], reject.median(lsqr.inp.volume[i]),reject.spread(lsqr.inp.volume[i])
+#    print lsqr.inp.residual[i]
+    lines[index] = format %(i+1,
+                   0,
+                   reject.spread(lsqr.inp.volume[i]),
+                   lsqr.mg.errors['x%s' %i]/1000,
+                   lsqr.mg.errors['y%s' %i]/1000,
+                   lsqr.mg.errors['z%s' %i]/1000,
+                   lsqr.mg.errors['phia%s' %i],
+                   lsqr.mg.errors['PHI%s' %i],
+                   lsqr.mg.errors['phib%s' %i],
+#                   lsqr.mg.merrors['phia%s' %i,1],
+#                   lsqr.mg.merrors['PHI%s' %i,1],
+#                   lsqr.mg.merrors['phib%s' %i,1],
+  			       0,
+   			       0,
+   			       0,
+   			       0,
+   			       0,
+   			       0,
+   			       0,
+   			       0,
+   			       0,
+                   n.sqrt(cov_eps[0][0]),
+                   n.sqrt(cov_eps[1][1]),
+                   n.sqrt(cov_eps[2][2]),
+                   n.sqrt(cov_eps[3][3]),
+                   n.sqrt(cov_eps[4][4]),
+                   n.sqrt(cov_eps[5][5]),
+                   n.sqrt(cov_eps_s[0][0]),
+                   n.sqrt(cov_eps_s[1][1]),
+                   n.sqrt(cov_eps_s[2][2]),
+                   n.sqrt(cov_eps_s[3][3]),
+                   n.sqrt(cov_eps_s[4][4]),
+                   n.sqrt(cov_eps_s[5][5]),
+                   n.sqrt(cov_sig[0][0]),
+                   n.sqrt(cov_sig[1][1]),
+                   n.sqrt(cov_sig[2][2]),
+                   n.sqrt(cov_sig[3][3]),
+                   n.sqrt(cov_sig[4][4]),
+                   n.sqrt(cov_sig[5][5]),
+                   n.sqrt(cov_sig_s[0][0]),
+                   n.sqrt(cov_sig_s[1][1]),
+                   n.sqrt(cov_sig_s[2][2]),
+                   n.sqrt(cov_sig_s[3][3]),
+                   n.sqrt(cov_sig_s[4][4]),
+                   n.sqrt(cov_sig_s[5][5])
+                  )
+    f = open(filename,'w')
+    for j in range(len(lines)):
+        f.write(lines[j])
+    f.close()   
+    f = open(filename2,'w')
+    for j in range(len(lines)):
+        f.write(lines[j])
+    f.close()   
+
+		
+def write_errors_old(lsqr,i):
     """
     Save the fitted grain error parameters, pos, U and eps
 
