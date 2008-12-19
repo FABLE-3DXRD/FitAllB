@@ -1,7 +1,49 @@
 import numpy as n
 from xfab import tools
 import check_input
+import reject
 
+def vars_scale(inp):
+    """
+    Scale vars so that the expectation value for each refinement 
+    becomes number of observations (3*nrefl) 
+    Should be number of observations - number of parameters,
+    but this is much more difficult and the scaling is only preliminary
+    to ensure reasonable tolerances and up
+     
+    Jette Oddershede, December 2008
+    """
+
+    print '\n',inp.fit['goon']
+    print 'present residuals'
+    for i in range(inp.no_grains):
+        print i+1,n.sum(inp.residual[i]),len(inp.residual[i]),n.sum(inp.residual[i])/len(inp.residual[i])
+    # cakk if reject.residual is necessary to return to same reference point in as before first refinement
+    reject.residual(inp,inp.fit['limit'][0],only=[])
+    print 'original reference residuals'
+    for i in range(inp.no_grains):
+        print i+1,n.sum(inp.residual[i]),len(inp.residual[i]),n.sum(inp.residual[i])/len(inp.residual[i])
+
+    check_input.set_globals(inp)
+    inp.vars = []
+    for i in range(inp.no_grains):
+        inp.vars.append([])
+        fcn_current = n.sum(inp.residual[i]) 
+        fcn_expected = 3.*len(inp.residual[i]) 
+        for j in range(inp.nrefl[i]):
+            if i+1 in inp.fit['skip']:
+                inp.vars[i].append([1,1,1])
+            else:
+                Sgg = error(inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],\
+                            inp.Sww[inp.id[i][j]]*fcn_current/fcn_expected,\
+                            inp.Syy[inp.id[i][j]]*fcn_current/fcn_expected,\
+                            inp.Szz[inp.id[i][j]]*fcn_current/fcn_expected,\
+                            inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],\
+                            inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],\
+                            inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
+                inp.vars[i].append([Sgg[0,0],Sgg[1,0],Sgg[2,0]])
+
+                
 
 def	vars(inp):
 	"""

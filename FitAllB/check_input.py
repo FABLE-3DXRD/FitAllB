@@ -167,11 +167,10 @@ class parse_input:
             
     def initialize(self): 
         # Does output directory exist?
-        print 'stem=',self.fit['stem']
         if not os.path.exists(self.fit['stem']):
             os.mkdir(self.fit['stem'])
         sys.path.insert(0,self.fit['stem'])
-        print sys.path[0]
+        #print sys.path[0]
         #sys.exit()
         # Set default options
         for item in self.optional_items:
@@ -256,15 +255,10 @@ class parse_input:
                                               self.fit['detz_size'])
             self.dety.append(dety)				
             self.detz.append(detz)
-            (sy,sz) = detector.xy2detyz([sigs[i],sigf[i]],
-                                              self.param['o11'],
-                                              self.param['o12'],
-                                              self.param['o21'],
-                                              self.param['o22'],
-                                              self.fit['dety_size'],
-                                              self.fit['detz_size'])
-            sigy.append(abs(sy))				
-            sigz.append(abs(sz))
+            (sz,sy) = n.dot(n.array([[abs(self.param['o11']),abs(self.param['o12'])],[abs(self.param['o21']),abs(self.param['o22'])]]),
+                               n.array([sigs[i],sigf[i]]))
+            sigy.append(sy)				
+            sigz.append(sz)
 
         # convert into arrays so sorting according to spotid is possible 
         self.dety = n.array(self.dety)
@@ -329,12 +323,13 @@ class parse_input:
         # Error expressions taken from Withers, Daymond and Johnson (2001), J.Appl.Cryst.34,737.
         for j in range(len(self.int)):
             if self.int[j] > 0:
-                if sigw[j] > 1:
-                    self.Sww[j] = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])*(sigw[j]**2-1)/self.int[j]
-                if sigy[j] > 1:
-                    self.Syy[j] = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])*(sigy[j]**2-1)/self.int[j]
-                if sigz[j] > 1:
-                    self.Szz[j] = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])*(sigz[j]**2-1)/self.int[j]       
+                prefactor = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])
+                if sigw[j] >= 1:
+                    self.Sww[j] = prefactor*(sigw[j]**2-1+self.fit['w_step']**2/12.)/self.int[j]
+                if sigy[j] >= 1:
+                    self.Syy[j] = prefactor*(sigy[j]**2-1+1/12.)/self.int[j]
+                if sigz[j] >= 1:
+                    self.Szz[j] = prefactor*(sigz[j]**2-1+1/12.)/self.int[j]       
 #            print '%e, %e, %e' %(self.Sww[j],self.Syy[j],self.Szz[j])
         if self.fit['w_limit'] == None:
             self.fit['w_limit'] = [min(self.w),max(self.w)]
@@ -508,6 +503,13 @@ class parse_input:
 
         self.values = {}
         # grain values
+        if self.files['res_file'] != None:
+            self.no_grains = max(self.grainno)
+            self.euler = []
+            for i in range(self.no_grains):
+                self.euler.append([0.0,0.0,0.0])
+            self.param['theta_min'] = 0.0
+            self.param['theta_max'] = 7.5
         for i in range(self.no_grains):
             self.values['x%s' %i] = 0.0
             self.values['y%s' %i] = 0.0
@@ -536,7 +538,9 @@ class parse_input:
                     self.values['epscc%s' %i] = self.eps33[self.grainno.index(i+1)]
                     self.values['phia%s' %i] = self.phia[self.grainno.index(i+1)] 
                     self.values['PHI%s' %i]  = self.PHI[self.grainno.index(i+1)] 
-                    self.values['phib%s' %i] = self.phib[self.grainno.index(i+1)] 
+                    self.values['phib%s' %i] = self.phib[self.grainno.index(i+1)]
+                else:
+                    self.fit['skip'].append(i+1)
         # else if start from scratch with new grainspotter log file use positions from this
         elif len(self.x) == self.no_grains:
             for i in range(self.no_grains):
@@ -562,7 +566,7 @@ class parse_input:
         for i in range(self.no_grains):
             self.errors['x%s' %i] = self.param['y_size']/5.
             self.errors['y%s' %i] = self.param['y_size']/5.
-            self.errors['z%s' %i] = self.param['z_size']/10.
+            self.errors['z%s' %i] = self.param['z_size']/20.
             self.errors['epsaa%s' %i] = 0.0001 
             self.errors['epsab%s' %i] = 0.0001
             self.errors['epsac%s' %i] = 0.0001

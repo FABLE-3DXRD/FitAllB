@@ -73,6 +73,8 @@ class fit_minuit():
             self.mg.fixed = self.m.fixed
 
             print '\n\n*****Now fitting %s*****' %self.inp.fit['goon']
+            print 'rerefine', self.inp.rerefine
+            print 'newreject_grain', self.inp.fit['newreject_grain']
             # calculate starting values
             g = self.grain_values()
             fval = sum(g)
@@ -95,9 +97,9 @@ class fit_minuit():
                     if i+1 in self.inp.fit['skip']:
                         pass
 #                    elif 'final' in self.inp.fit['goon'] and (i+1 not in self.inp.fit['newreject_grain'] or (self.inp.fit['newreject_grain'].count(i+1) == 1 and g[i]/self.inp.nrefl[i] < sum(g)/sum(self.inp.nrefl))):
-                    elif 'final' in self.inp.fit['goon'] and i+1 not in self.inp.fit['newreject_grain']:
+                    elif 'final' in self.inp.fit['goon'] and i+1 not in self.inp.fit['newreject_grain'] and i+1 not in self.inp.rerefine:
                         pass
-                    elif 'xyz' in self.inp.fit['goon'] and i+1 not in self.inp.fit['newreject_grain'] and abs(self.mg.errors['x%i' %i] - self.inp.param['y_size']/5.) > 1e-3:
+                    elif 'xyz' in self.inp.fit['goon'] and i+1 not in self.inp.fit['newreject_grain'] and abs(self.mg.errors['x%i' %i] - self.inp.param['y_size']/5.) > 1e-3 and i+1 not in self.inp.rerefine:
                         pass
                     else:	
                         if 'grain' in self.inp.fit['goon'] or 'final' in self.inp.fit['goon']:
@@ -148,11 +150,11 @@ class fit_minuit():
             write_output.write_rej(self.inp,message=self.inp.fit['goon'])
             write_output.write_log(self)
 
-        if 'final' in self.inp.fit['goon'] and self.inp.newreject > 0:
+        if 'final' in self.inp.fit['goon'] and (self.inp.newreject > 0 or len(self.inp.rerefine) > 0):
             self.inp.fit['goon'] = 'grain'+ self.inp.fit['goon'][5:]
-        elif 'rotpos' in self.inp.fit['goon'] and self.inp.newreject > 0:
+        elif 'rotpos' in self.inp.fit['goon'] and (self.inp.newreject > 0 or len(self.inp.rerefine) > 0):
             self.inp.fit['goon'] = 'start'+ self.inp.fit['goon'][6:]
-        elif 'xyz' in self.inp.fit['goon'] and self.inp.newreject > 0:
+        elif 'xyz' in self.inp.fit['goon'] and (self.inp.newreject > 0 or len(self.inp.rerefine) > 0):
             self.inp.fit['goon'] = 'start'+ self.inp.fit['goon'][3:]
         
 		# move onto next refinement given by the reforder list	
@@ -216,9 +218,9 @@ class fit_minuit():
             
         # print - to be deleted after testing
         if 'start' in self.inp.fit['goon']:
-            print '     fval %f error %e' %(self.m.fval,self.m.errors[example])
+            print '     fval %f %s error %e' %(self.m.fval,example,self.m.errors[example])
         else:
-            print '     fval %f error %e' %(self.mg.fval,self.mg.errors[example])
+            print '     fval %f %s error %e' %(self.mg.fval,example,self.mg.errors[example])
             
         # perform the  actual scaling task
         if 'start' in self.inp.fit['goon']:
@@ -238,13 +240,14 @@ class fit_minuit():
         
         # print - to be deleted after testing
         if 'start' in self.inp.fit['goon']:
-            print '                 expected %f error %e' %(expectation,self.m.errors[example])
+            print '                 expected %f %s error %e' %(expectation,example,self.m.errors[example])
         else:
-            print '                 expected %f error %e' %(expectation,self.mg.errors[example])
+            print '                 expected %f %s error %e' %(expectation,example,self.mg.errors[example])
         
-
+        
         # remember only to apply correction to parameters refined in this particular cycle!!!!!!
-        
+       
+       
     def grain_values(self):
         """
         Calculate the contributions from each grain
@@ -315,6 +318,7 @@ class fit_minuit():
         g = self.grain_values()
         self.inp.newreject = 0
         self.inp.fit['newreject_grain'] = []
+        self.inp.rerefine = []
         #value = []
         new = 1
         while new == 1:
@@ -323,7 +327,7 @@ class fit_minuit():
                 #value.append([])
                 if i+1 in self.inp.fit['skip']:
                     pass
-                else:				
+                else:		
                     for j in range(self.inp.nrefl[i]-1,-1,-1): # loop backwards to make pop work
                         value = fcn.peak(self.inp.h[i][j],self.inp.k[i][j],self.inp.l[i][j],
                                         self.inp.w[self.inp.id[i][j]],self.inp.dety[self.inp.id[i][j]],self.inp.detz[self.inp.id[i][j]],self.inp.vars[i][j], 
@@ -338,7 +342,8 @@ class fit_minuit():
                                         self.m.values['epsbb%s' %i],self.m.values['epsbc%s' %i],self.m.values['epscc%s' %i]) 
                         if value > self.inp.fit['limit'][1]*g[i]/self.inp.nrefl[i]:
                             new = 1
-                            print 'Rejected peak id %i from grain %i (hkl: %i %i %i, limit: %f): %f %f %f' %(self.inp.id[i][j],i+1,self.inp.h[i][j],self.inp.k[i][j],self.inp.l[i][j],self.inp.fit['limit'][1],value*self.inp.nrefl[i]/g[i],g[i],self.inp.nrefl[i])
+#                            print 'Rejected peak id %i from grain %i (hkl: %i %i %i, limit: %f): %f' %(self.inp.id[i][j],i+1,self.inp.h[i][j],self.inp.k[i][j],self.inp.l[i][j],self.inp.fit['limit'][1],value*self.inp.nrefl[i]/g[i],g[i],self.inp.nrefl[i])
+                            print 'Rejected peak id %i from grain %i (hkl: %i %i %i, limit: %f): %f' %(self.inp.id[i][j],i+1,self.inp.h[i][j],self.inp.k[i][j],self.inp.l[i][j],self.inp.fit['limit'][1],value*self.inp.nrefl[i]/g[i])
                             reject.reject(self.inp,i,j,value*self.inp.nrefl[i]/g[i])
                         
         if 'final' in self.inp.fit['goon'] or 'grain' in self.inp.fit['goon']:
@@ -351,13 +356,18 @@ class fit_minuit():
                     self.inp.residual[i].append(1)
                     self.inp.volume[i].append(1)
 #            reject.residual(self.inp,self.inp.fit['limit'][0],only=self.inp.fit['poor'])
-            reject.residual(self.inp,self.inp.fit['limit'][0])
+            reject.residual_scale(self.inp,self.inp.fit['limit'][0])
             reject.intensity(self.inp)
             reject.merge(self.inp)
             reject.multi(self.inp)
+        else: #else added to update self.inp.residual if not final or grain
+            reject.residual_scale(self.inp,self.inp.fit['limit'][0],only=[])
         
                         
         for i in range(self.inp.no_grains):
+            # rerefine if more than 10% change in fcn
+            if n.sum(self.inp.residual[i])/len(self.inp.residual[i]) < 2.7: 
+                self.inp.rerefine.append(i+1)
             if self.inp.nrefl[i] < self.inp.fit['min_refl'] and i+1 not in self.inp.fit['skip']:
                 self.inp.fit['skip'].append(i+1)
         self.inp.fit['skip'].sort()
@@ -529,11 +539,13 @@ class fit_minuit():
                 
                 
 def refine(inp):
+    inp.rerefine = []
     while inp.fit['goon'] != 'end':
         check_input.set_globals(inp)
         # calculate experimental errors using the present values 
         from FitAllB import error
-        error.vars(inp)
+        error.vars_scale(inp)   # function to ensure correct relative scaling of variances between grains
+#        error.vars(inp)
         # build functions to minimise
         from FitAllB import build_fcn
         build_fcn.FCN(inp)

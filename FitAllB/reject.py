@@ -212,10 +212,6 @@ def residual(inp,limit,only=None):
         """
 		
         # must update inp.vars because the order here is [i][j] in stead of [id[i][j]], the latter doesn't change when peaks are rejected, the former does.
-#        try:
-#            inp.values = deepcopy(inp.m.values)
-#        except:
-#            pass
         # calculate experimental errors using the present values 
         import error
         error.vars(inp)
@@ -230,7 +226,7 @@ def residual(inp,limit,only=None):
                 pass
             else:				
                 for j in range(inp.nrefl[i]): 
-                    inp.residual[i][j] = int(fcn.peak(inp.h[i][j],inp.k[i][j],inp.l[i][j],
+                    inp.residual[i][j] = fcn.peak(inp.h[i][j],inp.k[i][j],inp.l[i][j],
                                               inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],inp.vars[i][j], 
                                               inp.values['wx'],inp.values['wy'],
                                               inp.values['tx'],inp.values['ty'],inp.values['tz'],
@@ -240,7 +236,7 @@ def residual(inp,limit,only=None):
                                               inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i], 
                                               inp.values['phia%s' %i],inp.values['PHI%s' %i],inp.values['phib%s' %i], 
                                               inp.values['epsaa%s' %i],inp.values['epsab%s' %i],inp.values['epsac%s' %i], 
-                                              inp.values['epsbb%s' %i],inp.values['epsbc%s' %i],inp.values['epscc%s' %i])) 
+                                              inp.values['epsbb%s' %i],inp.values['epsbc%s' %i],inp.values['epscc%s' %i]) 
                                                     
         data = deepcopy(inp.residual)
         maxres = [0]*inp.no_grains
@@ -270,7 +266,76 @@ def residual(inp,limit,only=None):
                     if inp.residual[i][j] > maxres[i]:
                         delete = delete + 1
                         reject(inp,i,j,'residual')
-        print 'Rejected', delete, 'reflection based on residuals'
+        if only != []:
+            print 'Rejected', delete, 'reflection based on residuals'
+        insignificant(inp)
+                    
+
+def residual_scale(inp,limit,only=None):
+        """
+        Reject outliers peaks with a distance to the calculated peak position of
+        more than limit times the mean distance for the given grain	
+		
+		Jette Oddershede, Risoe DTU, May 15 2008
+        """
+		
+        # must update inp.vars because the order here is [i][j] in stead of [id[i][j]], the latter doesn't change when peaks are rejected, the former does.
+#        # calculate experimental errors using the present values 
+#        import error
+#        error.vars_scale(inp)
+        # build functions to minimise
+        import build_fcn
+        build_fcn.FCN(inp)
+        #refinement update
+        import fcn
+        reload(fcn)
+        for i in range(inp.no_grains):
+            if i+1 in inp.fit['skip']:
+                pass
+            else:				
+                for j in range(inp.nrefl[i]): 
+                    inp.residual[i][j] = fcn.peak(inp.h[i][j],inp.k[i][j],inp.l[i][j],
+                                              inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],inp.vars[i][j], 
+                                              inp.values['wx'],inp.values['wy'],
+                                              inp.values['tx'],inp.values['ty'],inp.values['tz'],
+                                              inp.values['py'],inp.values['pz'],
+                                              inp.values['cy'],inp.values['cz'],
+                                              inp.values['L'],
+                                              inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i], 
+                                              inp.values['phia%s' %i],inp.values['PHI%s' %i],inp.values['phib%s' %i], 
+                                              inp.values['epsaa%s' %i],inp.values['epsab%s' %i],inp.values['epsac%s' %i], 
+                                              inp.values['epsbb%s' %i],inp.values['epsbc%s' %i],inp.values['epscc%s' %i])
+                                                    
+        data = deepcopy(inp.residual)
+        maxres = [0]*inp.no_grains
+        for i in range(inp.no_grains):
+            data[i].sort()
+            if i+1 in inp.fit['skip']:
+                pass
+            else:		
+                mean = int(n.sum(data[i])/len(data[i]))
+                medi = median(data[i])
+#                print i, len(data[i]), medi, mean,'\n',data[i]
+                while mean > limit*medi:
+                    data[i].pop()
+                    mean = int(n.sum(data[i])/inp.nrefl[i])
+                    medi = median(data[i])
+                maxres[i] = max(data[i])
+#                print i, len(data[i]),medi,mean,'\n',data[i],'\n'
+        
+        delete = 0
+        if only==None:
+            only = range(1,1+inp.no_grains)        
+        for i in range(inp.no_grains):
+            if i+1 in inp.fit['skip'] or i+1 not in only:
+                pass
+            else:				
+                for j in range(inp.nrefl[i]-1,-1,-1): # loop backwards to make pop work
+                    if inp.residual[i][j] > maxres[i]:
+                        delete = delete + 1
+                        reject(inp,i,j,'residual')
+        if only != []:
+            print 'Rejected', delete, 'reflection based on residuals'
         insignificant(inp)
                     
 
