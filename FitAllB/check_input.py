@@ -44,14 +44,15 @@ class parse_input:
             'pixel': 0,
             'center': 0,
             'L': 0,
-            'euler': 1,
+            'euler': 0,
+            'rod': 1,
             'xyz': 1,
             'eps': 1,
             'printmode': 0,
             'strategy': 0,
             'limit': [5,10], 
             'mad': [5,25],
-            'overlap': 0.5,
+            'overlap': 0.8,
 			'hesse': 0,
             'skip': [],
             'resume': None,
@@ -71,6 +72,7 @@ class parse_input:
             'goon': 'start',
             'tol_start': 1e-1,
             'tol_euler': 1e-1,
+            'tol_rod': 1e-1,
             'tol_xyz': 1e-1,
             'tol_rotpos': 1e-2,
             'tol_eps': 1e-2,
@@ -329,7 +331,12 @@ class parse_input:
                 if sigy[j] >= 1:
                     self.Syy[j] = prefactor*(sigy[j]**2-1+1/12.)/self.int[j]
                 if sigz[j] >= 1:
-                    self.Szz[j] = prefactor*(sigz[j]**2-1+1/12.)/self.int[j]       
+                    self.Szz[j] = prefactor*(sigz[j]**2-1+1/12.)/self.int[j]  
+        
+#        if self.files['near_flt_file'] == None:
+#            for j in range(len(self.int)):
+#                self.Syy[j] = self.Syy[j] + 1./5.**2
+#                self.Szz[j] = self.Szz[j] + 1./20.**2
 #            print '%e, %e, %e' %(self.Sww[j],self.Syy[j],self.Szz[j])
         if self.fit['w_limit'] == None:
             self.fit['w_limit'] = [min(self.w),max(self.w)]
@@ -341,6 +348,7 @@ class parse_input:
     def read_log(self): # read grainspotter.log
         self.nrefl = []
         self.euler = []
+        self.rod = []
         self.h = []
         self.k = []
         self.l = []
@@ -374,7 +382,9 @@ class parse_input:
                 self.x.append(eval(split(input[nn])[1]))
                 self.y.append(eval(split(input[nn])[2]))
                 self.z.append(eval(split(input[nn])[3]))
-            nn = nn + 11
+            nn = nn + 9
+            self.rod.append([eval(split(input[nn])[0]),eval(split(input[nn])[1]),eval(split(input[nn])[2])])
+            nn = nn + 2
             self.euler.append([eval(split(input[nn])[0]),eval(split(input[nn])[1]),eval(split(input[nn])[2])])
             nn = nn + 3
             idgr = []
@@ -439,9 +449,38 @@ class parse_input:
             self.x = res.getcolumn('x')
             self.y = res.getcolumn('y')
             self.z = res.getcolumn('z')
-            self.phia = res.getcolumn('phi1')
-            self.PHI = res.getcolumn('PHI')
-            self.phib = res.getcolumn('phi2')
+#            self.phia = res.getcolumn('phi1')
+#            self.PHI = res.getcolumn('PHI')
+#            self.phib = res.getcolumn('phi2')
+            U11 = res.getcolumn('U11')            
+            U12 = res.getcolumn('U12')            
+            U13 = res.getcolumn('U13')            
+            U21 = res.getcolumn('U21')            
+            U22 = res.getcolumn('U22')            
+            U23 = res.getcolumn('U23')            
+            U31 = res.getcolumn('U31')            
+            U32 = res.getcolumn('U32')            
+            U33 = res.getcolumn('U33')
+            U = n.zeros((len(U11),3,3))
+            for i in range(len(U11)):
+                U[i][0][0] = U11[i]
+                U[i][0][1] = U12[i]
+                U[i][0][2] = U13[i]
+                U[i][1][0] = U21[i]
+                U[i][1][1] = U22[i]
+                U[i][1][2] = U23[i]
+                U[i][2][0] = U31[i]
+                U[i][2][1] = U32[i]
+                U[i][2][2] = U33[i]
+            self.rodx = n.zeros((len(U11)))
+            self.rody = n.zeros((len(U11)))
+            self.rodz = n.zeros((len(U11)))
+            self.phia = n.zeros((len(U11)))
+            self.PHI = n.zeros((len(U11)))
+            self.phib = n.zeros((len(U11)))
+            for i in range(len(U11)):
+                [self.rodx[i],self.rody[i],self.rodz[i]] = tools.U2rod(U[i])
+                [self.phia[i],self.PHI[i],self.phib[i]] = tools.U2euler(U[i])*180./n.pi
             self.eps11 = res.getcolumn('eps11')
             self.eps22 = res.getcolumn('eps22')
             self.eps33 = res.getcolumn('eps33')
@@ -506,8 +545,10 @@ class parse_input:
         if self.files['res_file'] != None:
             self.no_grains = max(self.grainno)
             self.euler = []
+            self.rod = []
             for i in range(self.no_grains):
                 self.euler.append([0.0,0.0,0.0])
+                self.rod.append([0.0,0.0,0.0])
             self.param['theta_min'] = 0.0
             self.param['theta_max'] = 7.5
         for i in range(self.no_grains):
@@ -523,6 +564,9 @@ class parse_input:
             self.values['phia%s' %i] = self.euler[i][0]
             self.values['PHI%s' %i]  = self.euler[i][1]
             self.values['phib%s' %i] = self.euler[i][2]
+            self.values['rodx%s' %i] = 0.0
+            self.values['rody%s' %i] = 0.0
+            self.values['rodz%s' %i] = 0.0
         # grain values for resuming refinement
         if self.files['res_file'] != None:
             for i in range(self.no_grains):
@@ -539,6 +583,9 @@ class parse_input:
                     self.values['phia%s' %i] = self.phia[self.grainno.index(i+1)] 
                     self.values['PHI%s' %i]  = self.PHI[self.grainno.index(i+1)] 
                     self.values['phib%s' %i] = self.phib[self.grainno.index(i+1)]
+                    self.rod[i][0] = self.rodx[self.grainno.index(i+1)]
+                    self.rod[i][1] = self.rody[self.grainno.index(i+1)]
+                    self.rod[i][2] = self.rodz[self.grainno.index(i+1)]
                 else:
                     self.fit['skip'].append(i+1)
         # else if start from scratch with new grainspotter log file use positions from this
@@ -567,15 +614,27 @@ class parse_input:
             self.errors['x%s' %i] = self.param['y_size']/5.
             self.errors['y%s' %i] = self.param['y_size']/5.
             self.errors['z%s' %i] = self.param['z_size']/20.
-            self.errors['epsaa%s' %i] = 0.0001 
-            self.errors['epsab%s' %i] = 0.0001
-            self.errors['epsac%s' %i] = 0.0001
-            self.errors['epsbb%s' %i] = 0.0001
-            self.errors['epsbc%s' %i] = 0.0001
-            self.errors['epscc%s' %i] = 0.0001
+            self.errors['epsaa%s' %i] = 0.001 
+            self.errors['epsab%s' %i] = 0.001
+            self.errors['epsac%s' %i] = 0.001
+            self.errors['epsbb%s' %i] = 0.001
+            self.errors['epsbc%s' %i] = 0.001
+            self.errors['epscc%s' %i] = 0.001
             self.errors['phia%s' %i] = 0.1
             self.errors['PHI%s' %i]  = 0.1
             self.errors['phib%s' %i] = 0.1
+            self.errors['rodx%s' %i] = .01
+            self.errors['rody%s' %i] = .01
+            self.errors['rodz%s' %i] = .01
+#            lenrod = n.linalg.norm(self.rod[i])
+#            ia = 0.1*n.pi/180.
+#            errorscale = ia*(1+lenrod*lenrod)/(lenrod*(1-0.25*ia*ia*lenrod*lenrod))
+#            if errorscale < 0:
+#                errorscale = 1
+#            self.errors['rodx%s' %i] = errorscale*abs(self.rod[i][0])
+#            self.errors['rody%s' %i] = errorscale*abs(self.rod[i][1])
+#            self.errors['rodz%s' %i] = errorscale*abs(self.rod[i][2])
+#            print 'roderr', i,self.errors['rodx%s' %i],self.errors['rody%s' %i],self.errors['rodz%s' %i]
     
 
         self.fit['newreject_grain'] = []
@@ -599,8 +658,8 @@ class parse_input:
         # do the actual rejections
         reject.intensity(self)
         reject.residual(self,self.fit['limit'][0])
-        reject.merge(self)
         reject.multi(self)
+        reject.merge(self)
         #reject.friedel(self)
 
 		

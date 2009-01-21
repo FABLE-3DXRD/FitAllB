@@ -153,7 +153,7 @@ def write_values(lsqr):
 
     filename = '%s/%s_%s.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
     f = open(filename,'w')
-    format = "%d "*1 + "%f "*17 + "%e "*24 +"\n"
+    format = "%d "*1 + "%f "*8 + "%0.12f "*9 + "%e "*24 +"\n"
     out = "# grainno grainsize grainvolume x y z phi1 PHI phi2 U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
     out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s\n"
     f.write(out)
@@ -161,7 +161,8 @@ def write_values(lsqr):
         if i+1 in lsqr.inp.fit['skip']:
             pass
         else:
-            U = tools.euler2U(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
+            U = tools.rod2U([lsqr.inp.rod[i][0]+lsqr.m.values['rodx%s' %i],lsqr.inp.rod[i][1]+lsqr.m.values['rody%s' %i],lsqr.inp.rod[i][2]+lsqr.m.values['rodz%s' %i],])
+#            U = tools.euler2U(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
             eps = n.array([[lsqr.m.values['epsaa%s' %i],lsqr.m.values['epsab%s' %i],lsqr.m.values['epsac%s' %i]],
                            [lsqr.m.values['epsab%s' %i],lsqr.m.values['epsbb%s' %i],lsqr.m.values['epsbc%s' %i]],
                            [lsqr.m.values['epsac%s' %i],lsqr.m.values['epsbc%s' %i],lsqr.m.values['epscc%s' %i]]])
@@ -169,14 +170,14 @@ def write_values(lsqr):
             sig = conversion.strain2stress(eps,lsqr.inp.C)
             sig_s = conversion.grain2sample(sig,U)            
             out = format %(i+1,
-    			           0,
+    			           lsqr.mean_ia[i],#0,
 	    				   sum(lsqr.inp.volume[i])/lsqr.inp.nrefl[i],
                            lsqr.m.values['x%s' %i]/1000,
                            lsqr.m.values['y%s' %i]/1000,
                            lsqr.m.values['z%s' %i]/1000,
-                           lsqr.m.values['phia%s' %i],
-                           lsqr.m.values['PHI%s' %i],
-                           lsqr.m.values['phib%s' %i],
+                           lsqr.inp.rod[i][0]+lsqr.m.values['rodx%s' %i],
+                           lsqr.inp.rod[i][1]+lsqr.m.values['rody%s' %i],
+                           lsqr.inp.rod[i][2]+lsqr.m.values['rodz%s' %i],
                            U[0,0],
                            U[0,1],
                            U[0,2],
@@ -228,8 +229,12 @@ def write_errors(lsqr,i):
     
 
     # error transformation into other coordinate system and from strain to stress under construction
-    U = tools.euler2U(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
+    U = tools.rod2U([lsqr.inp.rod[i][0]+lsqr.m.values['rodx%s' %i],lsqr.inp.rod[i][1]+lsqr.m.values['rody%s' %i],lsqr.inp.rod[i][2]+lsqr.m.values['rodz%s' %i],])
+#    U = tools.euler2U(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
     eps_ref = False
+    rodx_err = 0
+    rody_err = 0
+    rodz_err = 0
     for key in lsqr.mg.covariance.keys():
         if 'epsaa%s' %i in key:
             eps_ref = True
@@ -255,6 +260,9 @@ def write_errors(lsqr,i):
             cov_eps = covariance
         else:
             derivatives = n.linalg.inv(covariance)
+            derivatives_rod = derivatives[len(derivatives)-9:len(derivatives)-6,len(derivatives)-9:len(derivatives)-6]
+            cov_rod = n.linalg.inv(derivatives_rod)
+            vars_rod = n.linalg.eig(cov_rod)[0]
             derivatives = derivatives[len(derivatives)-6:,len(derivatives)-6:]
             cov_eps = n.linalg.inv(derivatives)
 
@@ -287,22 +295,25 @@ def write_errors(lsqr,i):
         index = len(lines)
         lines.append('')
     
-    format = "%d "*1 + "%f "*17 + "%e "*24 +"\n"
+    format = "%d "*1 + "%f "*8 + "%0.1f "*9 + "%e "*24 +"\n"
     
 #    print lsqr.inp.volume[i], sum(lsqr.inp.volume[i])/lsqr.inp.nrefl[i], reject.median(lsqr.inp.volume[i]),reject.spread(lsqr.inp.volume[i])
 #    print lsqr.inp.residual[i]
     lines[index] = format %(i+1,
-                   0,
+			       0,#reject.spread(lsqr.mean_ia[i]),
                    reject.spread(lsqr.inp.volume[i]),
                    lsqr.mg.errors['x%s' %i]/1000,
                    lsqr.mg.errors['y%s' %i]/1000,
                    lsqr.mg.errors['z%s' %i]/1000,
-                   lsqr.mg.errors['phia%s' %i],
-                   lsqr.mg.errors['PHI%s' %i],
-                   lsqr.mg.errors['phib%s' %i],
-#                   lsqr.mg.merrors['phia%s' %i,1],
-#                   lsqr.mg.merrors['PHI%s' %i,1],
-#                   lsqr.mg.merrors['phib%s' %i,1],
+                   lsqr.mg.errors['rodx%s' %i],
+                   lsqr.mg.errors['rody%s' %i],
+                   lsqr.mg.errors['rodz%s' %i],
+#                   (lsqr.mg.merrors['rodx%s' %i,2]-lsqr.mg.merrors['rodx%s' %i,-2])/2.,
+#                   (lsqr.mg.merrors['rody%s' %i,2]-lsqr.mg.merrors['rody%s' %i,-2])/2.,
+#                   (lsqr.mg.merrors['rodz%s' %i,2]-lsqr.mg.merrors['rodz%s' %i,-2])/2.,
+#                   n.sqrt(vars_rod[0]),
+#                   n.sqrt(vars_rod[1]),
+#                   n.sqrt(vars_rod[2]),
   			       0,
    			       0,
    			       0,

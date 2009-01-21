@@ -234,7 +234,9 @@ def residual(inp,limit,only=None):
                                               inp.values['cy'],inp.values['cz'],
                                               inp.values['L'],
                                               inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i], 
-                                              inp.values['phia%s' %i],inp.values['PHI%s' %i],inp.values['phib%s' %i], 
+                                              inp.rod[i][0]+inp.values['rodx%s' %i],
+                                              inp.rod[i][1]+inp.values['rody%s' %i],
+                                              inp.rod[i][2]+inp.values['rodz%s' %i],
                                               inp.values['epsaa%s' %i],inp.values['epsab%s' %i],inp.values['epsac%s' %i], 
                                               inp.values['epsbb%s' %i],inp.values['epsbc%s' %i],inp.values['epscc%s' %i]) 
                                                     
@@ -302,7 +304,9 @@ def residual_scale(inp,limit,only=None):
                                               inp.values['cy'],inp.values['cz'],
                                               inp.values['L'],
                                               inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i], 
-                                              inp.values['phia%s' %i],inp.values['PHI%s' %i],inp.values['phib%s' %i], 
+                                              inp.rod[i][0]+inp.values['rodx%s' %i],
+                                              inp.rod[i][1]+inp.values['rody%s' %i],
+                                              inp.rod[i][2]+inp.values['rodz%s' %i],
                                               inp.values['epsaa%s' %i],inp.values['epsab%s' %i],inp.values['epsac%s' %i], 
                                               inp.values['epsbb%s' %i],inp.values['epsbc%s' %i],inp.values['epscc%s' %i])
                                                     

@@ -42,6 +42,7 @@ def vars_scale(inp):
                             inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],\
                             inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
                 inp.vars[i].append([Sgg[0,0],Sgg[1,0],Sgg[2,0]])
+#                inp.vars[i].append([fcn_current/fcn_expected,fcn_current/fcn_expected,fcn_current/fcn_expected])
 
                 
 
@@ -90,7 +91,7 @@ def error(w,dety,detz,Sww,Syy,Szz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z):
 #	print 'Syy',sum(dy*dy),Syy,sum(dy*dy)*Syy
 #	print 'Szz',sum(dz*dz),Szz,sum(dz*dz)*Szz, '\n'
 	return vars 
-
+#	return n.array([[1.],[1.],[1.]])
 	
 def gexp(w,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z):
 	"""

@@ -2,6 +2,7 @@ import numpy as n
 from xfab import tools
 from xfab import sg
 from xfab import detector
+from xfab import symmetry
 import check_input,write_output
 import reject
 import fcn
@@ -37,7 +38,7 @@ class fit_minuit():
 #            print entry, self.inp.values[entry]
         self.grains = []
         for i in range(self.inp.no_grains):
-            self.grains.append(["x%s" %i,"y%s" %i,"z%s" %i,"phia%s" %i,"PHI%s" %i,"phib%s" %i,
+            self.grains.append(["x%s" %i,"y%s" %i,"z%s" %i,"rodx%s" %i,"rody%s" %i,"rodz%s" %i,#"phia%s" %i,"PHI%s" %i,"phib%s" %i,
                                 "epsaa%s" %i,"epsbb%s" %i,"epscc%s" %i,"epsbc%s" %i,"epsac%s" %i,"epsab%s" %i])
 
         #refinement update
@@ -57,6 +58,8 @@ class fit_minuit():
         elif 'start' in self.inp.fit['goon'] and (self.inp.fit['w'] != 0 or self.inp.fit['tilt'] != 0 or self.inp.fit['pixel'] != 0 or self.inp.fit['center'] != 0 or self.inp.fit['L'] != 0):
             self.ref = True
         elif 'euler' in self.inp.fit['goon'] and self.inp.fit['euler'] != 0:
+            self.ref = True		
+        elif 'rod' in self.inp.fit['goon'] and self.inp.fit['rod'] != 0:
             self.ref = True		
         elif 'eps' in self.inp.fit['goon'] and self.inp.fit['eps'] != 0:
             self.ref = True		
@@ -106,6 +109,8 @@ class fit_minuit():
                             self.fitgrain(i)
                         elif 'eps' in self.inp.fit['goon']:
                             self.fitepsgrain(i)
+                        elif 'rod' in self.inp.fit['goon']:
+                            self.fitrodgrain(i)
                         elif 'xyz' in self.inp.fit['goon']:
                             self.fitxyzgrain(i)
                         elif 'euler' in self.inp.fit['goon']:
@@ -119,12 +124,15 @@ class fit_minuit():
                         sys.stdout.flush()
                         # if hesse != 0 covariance and errors from full hessian
                         self.mg.migrad()
+#                        self.mg.minos("rodx%i" %i,2)
+#                        self.mg.minos("rody%i" %i,2)
+#                        self.mg.minos("rodz%i" %i,2)
+#                        self.mg.minos("rodx%i" %i,-2)
+#                        self.mg.minos("rody%i" %i,-2)
+#                        self.mg.minos("rodz%i" %i,-2)
                         if self.inp.fit['hesse'] != 0:
                             self.mg.hesse()
                         self.scale_errors(i)
-#                        self.mg.minos("phia%i" %i,1)
-#                        self.mg.minos("PHI%i" %i,1)
-#                        self.mg.minos("phib%i" %i,1)
                         #print self.mg.edm, self.mg.ncalls
                         self.m.errors = self.mg.errors
                         write_output.write_cor(self,i)
@@ -146,6 +154,7 @@ class fit_minuit():
             # reject outliers and save cycle info	
             self.m.errors = self.inp.errors
             self.reject_outliers()
+            self.mean_ia()
             write_output.write_values(self)
             write_output.write_rej(self.inp,message=self.inp.fit['goon'])
             write_output.write_log(self)
@@ -233,7 +242,10 @@ class fit_minuit():
         else:
             for entry1 in self.grains[i]:
                 if self.mg.fixed[entry1] == False:
-                    self.mg.errors[entry1] = self.mg.errors[entry1] * n.sqrt(correction)
+                    try:
+                        self.mg.merrors[entry1] = self.mg.merrors[entry1] * n.sqrt(correction)
+                    except:
+                        self.mg.errors[entry1] = self.mg.errors[entry1] * n.sqrt(correction)
                     for entry2 in self.grains[i]:
                         if self.mg.fixed[entry2] == False:
                             self.mg.covariance[('%s' %entry1, '%s' %entry2)] = self.mg.covariance[('%s' %entry1, '%s' %entry2)] * correction
@@ -247,7 +259,47 @@ class fit_minuit():
         
         # remember only to apply correction to parameters refined in this particular cycle!!!!!!
        
-       
+    
+    def mean_ia(self):
+        """
+        Calculate mean internal angle for each grain and store in self.mena_ia array of length self.inp.no_grains
+        Jette Oddershede Januar 2009
+        """
+        
+        self.mean_ia = n.zeros(self.inp.no_grains)
+        for i in range(self.inp.no_grains):
+            if i+1 in self.inp.fit['skip']:
+                pass
+            else:
+                rod = n.array([self.inp.rod[i][0]+self.inp.values['rodx%s' %i],self.inp.rod[i][1]+self.inp.values['rody%s' %i],self.inp.rod[i][2]+self.inp.values['rodz%s' %i]])
+                rot = n.array([0,0,0])
+#                print i, rod/n.linalg.norm(rod)
+                for j in range(self.inp.nrefl[i]):
+                    gexp = fcn.gexp(self.inp.w[self.inp.id[i][j]],self.inp.dety[self.inp.id[i][j]],self.inp.detz[self.inp.id[i][j]],
+                                    self.inp.values['wx'],self.inp.values['wy'],self.inp.values['tx'],self.inp.values['ty'],self.inp.values['tz'],
+                                    self.inp.values['py'],self.inp.values['pz'],self.inp.values['cy'],self.inp.values['cz'],self.inp.values['L'],
+                                    self.inp.values['x%s' %i],self.inp.values['y%s' %i],self.inp.values['z%s' %i])
+                    gcalc = fcn.gcalc(self.inp.h[i][j],self.inp.k[i][j],self.inp.l[i][j],
+                                      self.inp.w[self.inp.id[i][j]],self.inp.dety[self.inp.id[i][j]],self.inp.detz[self.inp.id[i][j]],
+                                      self.inp.values['wx'],self.inp.values['wy'],
+                                      self.inp.rod[i][0]+self.inp.values['rodx%s' %i],
+                                      self.inp.rod[i][1]+self.inp.values['rody%s' %i],
+                                      self.inp.rod[i][2]+self.inp.values['rodz%s' %i],
+                                      self.inp.values['epsaa%s' %i],self.inp.values['epsab%s' %i],self.inp.values['epsac%s' %i],
+                                      self.inp.values['epsbb%s' %i],self.inp.values['epsbc%s' %i],self.inp.values['epscc%s' %i])
+                    (ia,rotj,ia2,rotj2) = self.IAforrod(n.transpose(gexp)[0],
+                                                        n.transpose(gcalc)[0],
+                                                        rod)
+#                    ia = sum(gexp*gcalc)/n.sqrt(sum(gcalc*gcalc)*sum(gexp*gexp))
+#                    ia = 180*n.arccos(ia[0])/n.pi
+#                    print ia
+#                    rot = rot + rotj
+#                    print ia,rotj,ia2,rotj2
+                    self.mean_ia[i] = self.mean_ia[i] + ia 
+                self.mean_ia[i] = self.mean_ia[i] / self.inp.nrefl[i]  
+#                rot = rot / n.linalg.norm(rot)
+#                print '  ', rot
+    
     def grain_values(self):
         """
         Calculate the contributions from each grain
@@ -288,14 +340,15 @@ class fit_minuit():
 #        print max(data), data, poor
         for i in range(self.inp.no_grains):
             if i+1 not in self.inp.fit['skip']:                
+                print 'Grain %i %i: %e %f' %(i+1,self.inp.nrefl[i],g[i],g[i]/self.inp.nrefl[i])
 #                if g[i] > 2*self.m.fval/(self.inp.no_grains-len(self.inp.fit['skip'])):
-                if g[i]/self.inp.nrefl[i] > max(data):# and self.inp.nrefl[i] < 24:
-                    print 'Grain %i %i: %e %f *****' %(i+1,self.inp.nrefl[i],g[i],g[i]/self.inp.nrefl[i])
-                    self.inp.fit['poor'].append(i+1)
-                    self.poor_value.append(g[i]/self.inp.nrefl[i]*len(data)/sum(data))
-                    self.poor_nrefl.append(self.inp.nrefl[i])                    
-                else:	
-                    print 'Grain %i %i: %e %f' %(i+1,self.inp.nrefl[i],g[i],g[i]/self.inp.nrefl[i])
+#                if g[i]/self.inp.nrefl[i] > max(data):# and self.inp.nrefl[i] < 24:
+#                    print 'Grain %i %i: %e %f *****' %(i+1,self.inp.nrefl[i],g[i],g[i]/self.inp.nrefl[i])
+#                    self.inp.fit['poor'].append(i+1)
+#                    self.poor_value.append(g[i]/self.inp.nrefl[i]*len(data)/sum(data))
+#                    self.poor_nrefl.append(self.inp.nrefl[i])                    
+#                else:	
+#                    print 'Grain %i %i: %e %f' %(i+1,self.inp.nrefl[i],g[i],g[i]/self.inp.nrefl[i])
 		# give back old values	
         self.m.errors = temp2		
         self.m.fixed = temp3		
@@ -337,7 +390,9 @@ class fit_minuit():
                                         self.m.values['cy'],self.m.values['cz'],
                                         self.m.values['L'],
                                         self.m.values['x%s' %i],self.m.values['y%s' %i],self.m.values['z%s' %i], 
-                                        self.m.values['phia%s' %i],self.m.values['PHI%s' %i],self.m.values['phib%s' %i], 
+                                        self.inp.rod[i][0]+self.inp.values['rodx%s' %i],
+                                        self.inp.rod[i][1]+self.inp.values['rody%s' %i],
+                                        self.inp.rod[i][2]+self.inp.values['rodz%s' %i],
                                         self.m.values['epsaa%s' %i],self.m.values['epsab%s' %i],self.m.values['epsac%s' %i], 
                                         self.m.values['epsbb%s' %i],self.m.values['epsbc%s' %i],self.m.values['epscc%s' %i]) 
                         if value > self.inp.fit['limit'][1]*g[i]/self.inp.nrefl[i]:
@@ -366,10 +421,10 @@ class fit_minuit():
                         
         for i in range(self.inp.no_grains):
             # rerefine if more than 10% change in fcn
-            if n.sum(self.inp.residual[i])/len(self.inp.residual[i]) < 2.7: 
-                self.inp.rerefine.append(i+1)
             if self.inp.nrefl[i] < self.inp.fit['min_refl'] and i+1 not in self.inp.fit['skip']:
                 self.inp.fit['skip'].append(i+1)
+            if n.sum(self.inp.residual[i])/len(self.inp.residual[i]) < 2.9 and i+1 not in self.inp.fit['skip']: 
+                self.inp.rerefine.append(i+1)
         self.inp.fit['skip'].sort()
 
                 
@@ -476,6 +531,19 @@ class fit_minuit():
                 self.mg.fixed[angles] = False
 
 
+    def fitrodgrain(self,i):
+	"""
+	Set tolerance and fixed parameters for fit of orientations for grain i
+	"""
+        self.mg.tol = self.inp.fit['tol_rod']
+        for entries in self.mg.fixed:
+            self.mg.fixed[entries] = True
+
+        for angles in self.grains[i]:
+            if 'rod' in angles and self.inp.fit['rod'] != 0:
+                self.mg.fixed[angles] = False
+
+
     def fitxyzgrain(self,i):
 	"""
 	Set tolerance and fixed parameters for fit of positions for grain i
@@ -506,6 +574,8 @@ class fit_minuit():
 	"""
 	Set tolerance and fixed parameters for fit of orientations, positions and strains for grain i
 	"""
+        self.mg.printMode = 0
+        
         if self.inp.fit['goon'] == 'grain':
             self.mg.tol = self.inp.fit['tol_grain']
         else:
@@ -520,6 +590,10 @@ class fit_minuit():
                 self.mg.fixed[entries] = False
             elif (entries[1]=='h' or entries[1]=='H') and self.inp.fit['euler'] != 0:
                 self.mg.fixed[entries] = False
+            elif 'rod' in entries and self.inp.fit['rod'] != 0:
+                self.mg.fixed[entries] = False
+#            if self.mg.fixed[entries] == False:
+#                print entries
                 
                 
     def fitrotposgrain(self,i):
@@ -535,8 +609,50 @@ class fit_minuit():
                 self.mg.fixed[entries] = False
             elif (entries[1]=='h' or entries[1]=='H') and self.inp.fit['euler'] != 0:
                 self.mg.fixed[entries] = False
+            elif 'rod' in entries and self.inp.fit['rod'] != 0:
+                self.mg.fixed[entries] = False
 
-                
+    def IAforrod(self,gv1,gv2,rod):
+        """
+        Calculates the internal angle ia between gvectors gv1 and gv2 relative to a 
+        rotation axis given as a rodrigues vector rod.
+        gv1,gv2,rod n.array(1x3)
+        Returns ia in degrees
+    
+        Jette Oddershede, Jan 2009
+        """
+    
+        # rotation axis must be projected onto the plane of gv1xgv2 and gv2+gv2
+        gvcross = n.cross(gv1,gv2)
+        gvcross = gvcross/n.linalg.norm(gvcross)
+        gvadd = gv1+gv2
+        gvadd = gvadd/n.linalg.norm(gvadd)
+        # calculate normal of this plane
+        gvnorm = n.cross(gvcross,gvadd)
+        gvnorm = gvnorm/n.linalg.norm(gvnorm)
+        
+        # rotation vector in plane of gv1xgv2 and gv2+gv2 now given as
+        rot = rod - n.dot(rod,gvnorm)*gvnorm
+        rot = rot/n.linalg.norm(rot)
+        
+        #project gv1 and gv2 onto the plane perpendicular to rot
+        gv1_proj = gv1 - n.dot(gv1,rot)*rot
+        gv2_proj = gv2 - n.dot(gv2,rot)*rot
+    
+        # The desired angle is now the angle between gv1_proj and gv2_proj
+        gv1_proj = gv1_proj/n.linalg.norm(gv1_proj)
+        gv2_proj = gv2_proj/n.linalg.norm(gv2_proj)
+        ia = n.arccos(n.dot(gv1_proj,gv2_proj))
+        
+        # ia2 angle between rod and rot around norm
+        rod = rod/n.linalg.norm(rod)
+        ia2 = n.arccos(n.dot(rod,rot))
+        norm = n.cross(rod,rot)
+        norm = norm/n.linalg.norm(norm)
+    
+        return (ia*180./n.pi,rot,ia2*180./n.pi,norm)
+            
+		                
                 
 def refine(inp):
     inp.rerefine = []
@@ -557,6 +673,4 @@ def refine(inp):
    
    
 
-            
-		
 					

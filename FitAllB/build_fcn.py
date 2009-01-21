@@ -20,7 +20,7 @@ def FCN(inp):
 		
     These are all called with the following refinable parameters:
         globals: 		wx,wy,tx,ty,tz,py,pz,cy,cz,L
-        for each grain: x,y,z,phia,PHI,phib,
+        for each grain: x,y,z,rodx,rody,rodz,
                         epsaa,epsab,epsac,epsbb,epsbc,epscc
 		
     Additional needed parameters that are written in fcn.py
@@ -66,6 +66,11 @@ def FCN(inp):
     string = string + "nrefl = [" 
     for i in range(inp.no_grains):
         string = string + '%i,' %inp.nrefl[i]
+    string = string + ']\n\n'
+    # rodrigues vector from GrainSpotter since only deviations from this are refined
+    string = string + "rod = [" 
+    for i in range(inp.no_grains):
+        string = string + '%s,' %inp.rod[i]
     string = string + ']\n\n'
 
     # id
@@ -163,16 +168,16 @@ def FCN(inp):
     string = string + '\t gexp = n.dot(n.linalg.inv(Omega),(d/n.sqrt(n.sum(d**2)) - n.array([[1],[0],[0]])))\n'
     string = string + '\t return gexp \n\n'
 
-    string = string + 'def gcalc(h,k,l,w,dety,detz,wx,wy,phia,PHI,phib,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
+    string = string + 'def gcalc(h,k,l,w,dety,detz,wx,wy,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
     string = string + '\t Omega = tools.quart2Omega(w,wx*n.pi/180,wy*n.pi/180)\n'
     string = string + "\t B = tools.epsilon2B(n.array([epsaa,epsab,epsac,epsbb,epsbc,epscc]),unit_cell)\n" 
-    string = string + '\t U = tools.euler2U(phia*n.pi/180,PHI*n.pi/180,phib*n.pi/180)\n'
+    string = string + '\t U = tools.rod2U([rodx,rody,rodz])\n'
     string = string + '\t Bhkl = n.dot(B,n.array([[h],[k],[l]]))\n'
     string = string + '\t gcalc = (wavelength/(2*n.pi))*n.dot(U,Bhkl) \n'
     string = string + '\t return gcalc \n\n'
 	
-    string = string + 'def peak(h,k,l,w,dety,detz,vars,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z,phia,PHI,phib,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
-    string = string + '\t diff = gexp(w,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z)-gcalc(h,k,l,w,dety,detz,wx,wy,phia,PHI,phib,epsaa,epsab,epsac,epsbb,epsbc,epscc)\n'
+    string = string + 'def peak(h,k,l,w,dety,detz,vars,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
+    string = string + '\t diff = gexp(w,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z)-gcalc(h,k,l,w,dety,detz,wx,wy,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc)\n'
     string = string + '\t result = n.sum(diff*diff/n.array([[vars[0]],[vars[1]],[vars[2]]]))\n'
     string = string + '\t return result \n\n'
 
@@ -181,7 +186,7 @@ def FCN(inp):
 	
     string = string + 'def FCN(wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
     for i in range(inp.no_grains):
-        string = string + ',\n \t x%s,y%s,z%s,phia%s,PHI%s,phib%s,epsaa%s,epsab%s,epsac%s,epsbb%s,epsbc%s,epscc%s' \
+        string = string + ',\n \t x%s,y%s,z%s,rodx%s,rody%s,rodz%s,epsaa%s,epsab%s,epsac%s,epsbb%s,epsbc%s,epscc%s' \
 	                          %(i,i,i,i,i,i,i,i,i,i,i,i)
     string = string + '):\n \n'
 
@@ -199,18 +204,18 @@ def FCN(inp):
         string = string + 'z%i,' %i
     string = string + ']\n'
 
-    # Euler angles
-    string = string + "\t phia = ["
+    # Rodrigues vectors
+    string = string + "\t rodx = ["
     for i in range(inp.no_grains):
-        string = string + 'phia%i,' %i
+        string = string + 'rodx%i,' %i
     string = string + ']\n'
-    string = string + "\t PHI = ["
+    string = string + "\t rody = ["
     for i in range(inp.no_grains):
-        string = string + 'PHI%i,' %i
+        string = string + 'rody%i,' %i
     string = string + ']\n'
-    string = string + "\t phib = ["
+    string = string + "\t rodz = ["
     for i in range(inp.no_grains):
-        string = string + 'phib%i,' %i
+        string = string + 'rodz%i,' %i
     string = string + ']\n'
 	
     # strain tensor
@@ -248,7 +253,7 @@ def FCN(inp):
     string = string + '\t\t else:\n'
     string = string + '\t\t\t for j in range(nrefl[i]):\n'
     string = string + '\t\t\t\t sum = sum + peak(h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
-    string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],phia[i],PHI[i],phib[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
+    string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],rod[i][0]+rodx[i],rod[i][1]+rody[i],rod[i][2]+rodz[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
     string = string + '\n'
     string = string + '\t return sum \n\n\n'
 
@@ -258,7 +263,7 @@ def FCN(inp):
 	
     string = string + 'def FCNgrain(i,wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
     for i in range(inp.no_grains):
-        string = string + ',\n \t x%s,y%s,z%s,phia%s,PHI%s,phib%s,epsaa%s,epsab%s,epsac%s,epsbb%s,epsbc%s,epscc%s' \
+        string = string + ',\n \t x%s,y%s,z%s,rodx%s,rody%s,rodz%s,epsaa%s,epsab%s,epsac%s,epsbb%s,epsbc%s,epscc%s' \
 	                          %(i,i,i,i,i,i,i,i,i,i,i,i)
     string = string + '):\n \n'
     string = string + '\t i=int(i)\n'	
@@ -277,18 +282,18 @@ def FCN(inp):
         string = string + 'z%i,' %i
     string = string + ']\n'
 
-    # Euler angles
-    string = string + "\t phia = ["
+    # Rodrigues vectors
+    string = string + "\t rodx = ["
     for i in range(inp.no_grains):
-        string = string + 'phia%i,' %i
+        string = string + 'rodx%i,' %i
     string = string + ']\n'
-    string = string + "\t PHI = ["
+    string = string + "\t rody = ["
     for i in range(inp.no_grains):
-        string = string + 'PHI%i,' %i
+        string = string + 'rody%i,' %i
     string = string + ']\n'
-    string = string + "\t phib = ["
+    string = string + "\t rodz = ["
     for i in range(inp.no_grains):
-        string = string + 'phib%i,' %i
+        string = string + 'rodz%i,' %i
     string = string + ']\n'
 	
     # strain tensor
@@ -322,7 +327,7 @@ def FCN(inp):
 
     string = string + '\t for j in range(nrefl[i]):\n'
     string = string + '\t\t sum = sum + peak(h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
-    string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],phia[i],PHI[i],phib[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
+    string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],rod[i][0]+rodx[i],rod[i][1]+rody[i],rod[i][2]+rodz[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
     string = string + '\n'
     string = string + '\t return sum \n\n\n'
 
@@ -332,7 +337,7 @@ def FCN(inp):
 	
     string = string + 'def FCNpeak(i,j,wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
     for i in range(inp.no_grains):
-        string = string + ',\n \t x%s,y%s,z%s,phia%s,PHI%s,phib%s,epsaa%s,epsab%s,epsac%s,epsbb%s,epsbc%s,epscc%s' \
+        string = string + ',\n \t x%s,y%s,z%s,rodx%s,rody%s,rodz%s,epsaa%s,epsab%s,epsac%s,epsbb%s,epsbc%s,epscc%s' \
 	                          %(i,i,i,i,i,i,i,i,i,i,i,i)
     string = string + '):\n \n'
     string = string + '\t i=int(i)\n'	
@@ -352,18 +357,18 @@ def FCN(inp):
         string = string + 'z%i,' %i
     string = string + ']\n'
 
-    # Euler angles
-    string = string + "\t phia = ["
+    # Rodrigues vectors
+    string = string + "\t rodx = ["
     for i in range(inp.no_grains):
-        string = string + 'phia%i,' %i
+        string = string + 'rodx%i,' %i
     string = string + ']\n'
-    string = string + "\t PHI = ["
+    string = string + "\t rody = ["
     for i in range(inp.no_grains):
-        string = string + 'PHI%i,' %i
+        string = string + 'rody%i,' %i
     string = string + ']\n'
-    string = string + "\t phib = ["
+    string = string + "\t rodz = ["
     for i in range(inp.no_grains):
-        string = string + 'phib%i,' %i
+        string = string + 'rodz%i,' %i
     string = string + ']\n'
 	
     # strain tensor
@@ -393,7 +398,7 @@ def FCN(inp):
     string = string + ']\n\n'
 
     string = string + '\t sum = peak(h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
-    string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],phia[i],PHI[i],phib[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
+    string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],rod[i][0]+rodx[i],rod[i][1]+rody[i],rod[i][2]+rodz[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
     string = string + '\t return sum \n\n\n'
 	
 
