@@ -2,7 +2,6 @@
 
 # Modules to import 
 import sys
-from xfab import tools
 from FitAllB import check_input
 import logging
 from optparse import OptionParser

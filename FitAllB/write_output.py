@@ -161,8 +161,8 @@ def write_values(lsqr):
         if i+1 in lsqr.inp.fit['skip']:
             pass
         else:
-            U = tools.rod2U([lsqr.inp.rod[i][0]+lsqr.m.values['rodx%s' %i],lsqr.inp.rod[i][1]+lsqr.m.values['rody%s' %i],lsqr.inp.rod[i][2]+lsqr.m.values['rodz%s' %i],])
-#            U = tools.euler2U(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
+            U = tools.rod_to_u([lsqr.inp.rod[i][0]+lsqr.m.values['rodx%s' %i],lsqr.inp.rod[i][1]+lsqr.m.values['rody%s' %i],lsqr.inp.rod[i][2]+lsqr.m.values['rodz%s' %i],])
+#            U = tools.euler_to_u(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
             eps = n.array([[lsqr.m.values['epsaa%s' %i],lsqr.m.values['epsab%s' %i],lsqr.m.values['epsac%s' %i]],
                            [lsqr.m.values['epsab%s' %i],lsqr.m.values['epsbb%s' %i],lsqr.m.values['epsbc%s' %i]],
                            [lsqr.m.values['epsac%s' %i],lsqr.m.values['epsbc%s' %i],lsqr.m.values['epscc%s' %i]]])
@@ -229,8 +229,8 @@ def write_errors(lsqr,i):
     
 
     # error transformation into other coordinate system and from strain to stress under construction
-    U = tools.rod2U([lsqr.inp.rod[i][0]+lsqr.m.values['rodx%s' %i],lsqr.inp.rod[i][1]+lsqr.m.values['rody%s' %i],lsqr.inp.rod[i][2]+lsqr.m.values['rodz%s' %i],])
-#    U = tools.euler2U(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
+    U = tools.rod_to_u([lsqr.inp.rod[i][0]+lsqr.m.values['rodx%s' %i],lsqr.inp.rod[i][1]+lsqr.m.values['rody%s' %i],lsqr.inp.rod[i][2]+lsqr.m.values['rodz%s' %i],])
+#    U = tools.euler_to_u(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
     eps_ref = False
     rodx_err = 0
     rody_err = 0
@@ -371,7 +371,7 @@ def write_errors_old(lsqr,i):
     
 
     # error transformation into other coordinate system and from strain to stress under construction
-    U = tools.euler2U(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
+    U = tools.euler_to_u(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
     try:
         cov_eps = n.array([[lsqr.mg.covariance[('epsaa%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epscc%s' %i)],
                         lsqr.mg.covariance[('epsaa%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsab%s' %i)]],
@@ -500,9 +500,9 @@ def write_log(lsqr):
                 f.write('%s %f +- %f\n' %(entries, lsqr.m.values[entries], lsqr.m.errors[entries]))
                     
     # convert beam center to detector.par convention
-    (z_center, y_center) = detector.detyz2xy([lsqr.m.values['cy'],lsqr.m.values['cz']],
-                                              lsqr.inp.param['o11'],lsqr.inp.param['o12'],lsqr.inp.param['o21'],lsqr.inp.param['o22'],
-                                              lsqr.inp.fit['dety_size'],lsqr.inp.fit['detz_size'])
+    (z_center, y_center) = detector.detyz_to_xy([lsqr.m.values['cy'],lsqr.m.values['cz']],
+                                                lsqr.inp.param['o11'],lsqr.inp.param['o12'],lsqr.inp.param['o21'],lsqr.inp.param['o22'],
+                                                lsqr.inp.fit['dety_size'],lsqr.inp.fit['detz_size'])
     (z_error, y_error) = n.dot(n.array([[abs(lsqr.inp.param['o11']),abs(lsqr.inp.param['o12'])],[abs(lsqr.inp.param['o21']),abs(lsqr.inp.param['o22'])]]),
                                n.array([lsqr.m.errors['cy'],lsqr.m.errors['cz']]))
     if lsqr.m.fixed['cy'] == True:

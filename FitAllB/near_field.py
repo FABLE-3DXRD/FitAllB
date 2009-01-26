@@ -26,16 +26,16 @@ def find_refl(inp):
         for grainno in range(inp.no_grains):
             inp.possible.append([])
             if grainno+1 not in inp.fit['skip']:
-                B = tools.epsilon2B(n.array([inp.values['epsaa%s' %grainno],
-                                             inp.values['epsab%s' %grainno],
-                                             inp.values['epsac%s' %grainno],
-                                             inp.values['epsbb%s' %grainno],
-                                             inp.values['epsbc%s' %grainno],
-                                             inp.values['epscc%s' %grainno]]),
-                                    inp.unit_cell)
-                U = tools.rod2U([inp.rod[grainno][0]+inp.values['rodx%s' %grainno],
-                                 inp.rod[grainno][1]+inp.values['rody%s' %grainno],
-                                 inp.rod[grainno][2]+inp.values['rodz%s' %grainno]])
+                B = tools.epsilon_to_b(n.array([inp.values['epsaa%s' %grainno],
+                                                inp.values['epsab%s' %grainno],
+                                                inp.values['epsac%s' %grainno],
+                                                inp.values['epsbb%s' %grainno],
+                                                inp.values['epsbc%s' %grainno],
+                                                inp.values['epscc%s' %grainno]]),
+                                       inp.unit_cell)
+                U = tools.rod_to_u([inp.rod[grainno][0]+inp.values['rodx%s' %grainno],
+                                    inp.rod[grainno][1]+inp.values['rody%s' %grainno],
+                                    inp.rod[grainno][2]+inp.values['rodz%s' %grainno]])
 #                U = tools.euler2U(inp.values['phia%s' %grainno]*n.pi/180,
 #                                  inp.values['PHI%s' %grainno]*n.pi/180,
 #                                  inp.values['phib%s' %grainno]*n.pi/180)
@@ -67,7 +67,7 @@ def find_refl(inp):
                                 if  (inp.fit['w_limit'][2*i]*n.pi/180) < omega and\
                                     omega < (inp.fit['w_limit'][2*i+1]*n.pi/180):
                                 # form Omega rotation matrix
-                                    Om = tools.quart2Omega(omega*180./n.pi,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  # correct way to do it except omega incorrectly determined
+                                    Om = tools.quart_to_omega(omega*180./n.pi,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  # correct way to do it except omega incorrectly determined
                                     Gt = n.dot(Om,Gw) 
                                 # Calc crystal position at present omega
                                     [tx,ty,tz]= n.dot(Om,gr_pos)

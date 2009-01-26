@@ -161,7 +161,7 @@ def FCN(inp):
 # helpful functions
 
     string = string + 'def gexp(w,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z):\n' 
-    string = string + '\t Omega = tools.quart2Omega(w,wx*n.pi/180,wy*n.pi/180)\n'
+    string = string + '\t Omega = tools.quart_to_omega(w,wx*n.pi/180,wy*n.pi/180)\n'
     string = string + '\t R = tools.detect_tilt(tx,ty,tz)\n'
     string = string + '\t d = n.dot(R,n.array([[0],[(dety-cy)*py],[(detz-cz)*pz]])) \n'
     string = string + '\t d = d + n.array([[L],[0],[0]]) - n.dot(Omega,n.array([[x],[y],[z]]))\n'
@@ -169,9 +169,9 @@ def FCN(inp):
     string = string + '\t return gexp \n\n'
 
     string = string + 'def gcalc(h,k,l,w,dety,detz,wx,wy,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
-    string = string + '\t Omega = tools.quart2Omega(w,wx*n.pi/180,wy*n.pi/180)\n'
-    string = string + "\t B = tools.epsilon2B(n.array([epsaa,epsab,epsac,epsbb,epsbc,epscc]),unit_cell)\n" 
-    string = string + '\t U = tools.rod2U([rodx,rody,rodz])\n'
+    string = string + '\t Omega = tools.quart_to_omega(w,wx*n.pi/180,wy*n.pi/180)\n'
+    string = string + "\t B = tools.epsilon_to_b(n.array([epsaa,epsab,epsac,epsbb,epsbc,epscc]),unit_cell)\n" 
+    string = string + '\t U = tools.rod_to_u([rodx,rody,rodz])\n'
     string = string + '\t Bhkl = n.dot(B,n.array([[h],[k],[l]]))\n'
     string = string + '\t gcalc = (wavelength/(2*n.pi))*n.dot(U,Bhkl) \n'
     string = string + '\t return gcalc \n\n'

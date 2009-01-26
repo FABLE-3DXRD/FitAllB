@@ -222,9 +222,9 @@ class parse_input:
                         
         self.unit_cell = n.array([self.param['cell__a'],self.param['cell__b'],self.param['cell__c'],self.param['cell_alpha'],self.param['cell_beta'],self.param['cell_gamma']])
         self.param['unit_cell'] = self.unit_cell
-        (dety_center, detz_center) = detector.xy2detyz([self.param['z_center'],self.param['y_center']],
-                                                        self.param['o11'],self.param['o12'],self.param['o21'],self.param['o22'],
-                                                        self.fit['dety_size'],self.fit['detz_size'])
+        (dety_center, detz_center) = detector.xy_to_detyz([self.param['z_center'],self.param['y_center']],
+                                                          self.param['o11'],self.param['o12'],self.param['o21'],self.param['o22'],
+                                                          self.fit['dety_size'],self.fit['detz_size'])
         self.param['y_center'] = dety_center
         self.param['z_center'] = detz_center
 				
@@ -248,13 +248,13 @@ class parse_input:
         sigy = []
         sigz = []
         for i in range(flt.nrows):
-            (dety,detz) = detector.xy2detyz([sc[i],fc[i]],
-                                              self.param['o11'],
-                                              self.param['o12'],
-                                              self.param['o21'],
-                                              self.param['o22'],
-                                              self.fit['dety_size'],
-                                              self.fit['detz_size'])
+            (dety,detz) = detector.xy_to_detyz([sc[i],fc[i]],
+                                               self.param['o11'],
+                                               self.param['o12'],
+                                               self.param['o21'],
+                                               self.param['o22'],
+                                               self.fit['dety_size'],
+                                               self.fit['detz_size'])
             self.dety.append(dety)				
             self.detz.append(detz)
             (sz,sy) = n.dot(n.array([[abs(self.param['o11']),abs(self.param['o12'])],[abs(self.param['o21']),abs(self.param['o22'])]]),
@@ -420,9 +420,9 @@ class parse_input:
                 self.fit['skip'].append(i+1)
                 
         for i in range(1,self.no_grains):
-            Ui = tools.euler2U(self.euler[i][0]*n.pi/180,self.euler[i][1]*n.pi/180,self.euler[i][2]*n.pi/180)
+            Ui = tools.euler_to_u(self.euler[i][0]*n.pi/180,self.euler[i][1]*n.pi/180,self.euler[i][2]*n.pi/180)
             for j in range(i):
-                Uj = tools.euler2U(self.euler[j][0]*n.pi/180,self.euler[j][1]*n.pi/180,self.euler[j][2]*n.pi/180)
+                Uj = tools.euler_to_u(self.euler[j][0]*n.pi/180,self.euler[j][1]*n.pi/180,self.euler[j][2]*n.pi/180)
                 Umis = symmetry.Umis(Ui,Uj,7)
                 mis = 180.
                 for k in range(len(Umis)):
@@ -479,8 +479,8 @@ class parse_input:
             self.PHI = n.zeros((len(U11)))
             self.phib = n.zeros((len(U11)))
             for i in range(len(U11)):
-                [self.rodx[i],self.rody[i],self.rodz[i]] = tools.U2rod(U[i])
-                [self.phia[i],self.PHI[i],self.phib[i]] = tools.U2euler(U[i])*180./n.pi
+                [self.rodx[i],self.rody[i],self.rodz[i]] = tools.u_to_rod(U[i])
+                [self.phia[i],self.PHI[i],self.phib[i]] = tools.u_to_euler(U[i])*180./n.pi
             self.eps11 = res.getcolumn('eps11')
             self.eps22 = res.getcolumn('eps22')
             self.eps33 = res.getcolumn('eps33')
@@ -623,17 +623,17 @@ class parse_input:
             self.errors['phia%s' %i] = 0.1
             self.errors['PHI%s' %i]  = 0.1
             self.errors['phib%s' %i] = 0.1
-            self.errors['rodx%s' %i] = .01
-            self.errors['rody%s' %i] = .01
-            self.errors['rodz%s' %i] = .01
-#            lenrod = n.linalg.norm(self.rod[i])
-#            ia = 0.1*n.pi/180.
-#            errorscale = ia*(1+lenrod*lenrod)/(lenrod*(1-0.25*ia*ia*lenrod*lenrod))
-#            if errorscale < 0:
-#                errorscale = 1
-#            self.errors['rodx%s' %i] = errorscale*abs(self.rod[i][0])
-#            self.errors['rody%s' %i] = errorscale*abs(self.rod[i][1])
-#            self.errors['rodz%s' %i] = errorscale*abs(self.rod[i][2])
+#            self.errors['rodx%s' %i] = .01
+#            self.errors['rody%s' %i] = .01
+#            self.errors['rodz%s' %i] = .01
+            lenrod = n.linalg.norm(self.rod[i])
+            ia = 0.1*n.pi/180.
+            errorscale = ia*(1+lenrod*lenrod)/(lenrod*(1-0.25*ia*ia*lenrod*lenrod))
+            if errorscale < 0:
+                errorscale = 1
+            self.errors['rodx%s' %i] = errorscale*abs(self.rod[i][0])
+            self.errors['rody%s' %i] = errorscale*abs(self.rod[i][1])
+            self.errors['rodz%s' %i] = errorscale*abs(self.rod[i][2])
 #            print 'roderr', i,self.errors['rodx%s' %i],self.errors['rody%s' %i],self.errors['rodz%s' %i]
     
 

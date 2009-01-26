@@ -103,7 +103,7 @@ def gexp(w,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z):
 	Jette Oddershede, July 2008
 	"""
 	
-	Omega = tools.quart2Omega(w,wx*n.pi/180,wy*n.pi/180)
+	Omega = tools.quart_to_omega(w,wx*n.pi/180,wy*n.pi/180)
 	R = tools.detect_tilt(tx,ty,tz)
 	d = n.dot(R,n.array([[0],[(dety+cy)*py],[(detz-cz)*pz]])) 
 	d = d + n.array([[L],[0],[0]]) - n.dot(Omega,n.array([[x],[y],[z]]))

@@ -1,9 +1,6 @@
 import numpy as n
-from xfab import tools
-from xfab import sg
-from xfab import detector
-from xfab import symmetry
-import check_input,write_output
+import check_input
+import write_output
 import reject
 import fcn
 import time
@@ -67,7 +64,6 @@ class fit_minuit():
             self.ref = True		
 		
 
-
 		# carry out refinement
         if self.ref == True:
             self.mg = minuit.Minuit(fcn.FCNgrain)
@@ -105,7 +101,64 @@ class fit_minuit():
                     elif 'xyz' in self.inp.fit['goon'] and i+1 not in self.inp.fit['newreject_grain'] and abs(self.mg.errors['x%i' %i] - self.inp.param['y_size']/5.) > 1e-3 and i+1 not in self.inp.rerefine:
                         pass
                     else:	
-                        if 'grain' in self.inp.fit['goon'] or 'final' in self.inp.fit['goon']:
+                        if 'grain' in self.inp.fit['goon']:
+                            fval = sum(self.inp.residual[i])
+                            print i,0,fval
+                            for k in range(0):
+                                value = 0
+#                                xnew = n.random.normal(self.m.values['x%s' %i],self.m.errors['x%s' %i])
+#                                ynew = n.random.normal(self.m.values['y%s' %i],self.m.errors['y%s' %i])
+#                                znew = n.random.normal(self.m.values['z%s' %i],self.m.errors['z%s' %i])
+                                rodxnew = n.random.normal(self.m.values['rodx%s' %i],self.m.errors['rodx%s' %i])
+                                rodynew = n.random.normal(self.m.values['rody%s' %i],self.m.errors['rody%s' %i])
+                                rodznew = n.random.normal(self.m.values['rodz%s' %i],self.m.errors['rody%s' %i])
+                                epsaanew = n.random.normal(self.m.values['epsaa%s' %i],self.m.errors['epsaa%s' %i])
+                                epsabnew = n.random.normal(self.m.values['epsab%s' %i],self.m.errors['epsab%s' %i])
+                                epsacnew = n.random.normal(self.m.values['epsac%s' %i],self.m.errors['epsac%s' %i])
+                                epsbbnew = n.random.normal(self.m.values['epsbb%s' %i],self.m.errors['epsbb%s' %i])
+                                epsbcnew = n.random.normal(self.m.values['epsbc%s' %i],self.m.errors['epsbc%s' %i])
+                                epsccnew = n.random.normal(self.m.values['epscc%s' %i],self.m.errors['epscc%s' %i])
+                                for j in range(self.inp.nrefl[i]):
+                                    value = value + fcn.peak(self.inp.h[i][j],self.inp.k[i][j],self.inp.l[i][j],
+                                                             self.inp.w[self.inp.id[i][j]],
+                                                             self.inp.dety[self.inp.id[i][j]],
+                                                             self.inp.detz[self.inp.id[i][j]],
+                                                             self.inp.vars[i][j], 
+                                                             self.m.values['wx'],self.m.values['wy'],
+                                                             self.m.values['tx'],self.m.values['ty'],self.m.values['tz'],
+                                                             self.m.values['py'],self.m.values['pz'],
+                                                             self.m.values['cy'],self.m.values['cz'],
+                                                             self.m.values['L'],
+                                                             self.m.values['x%s' %i],
+                                                             self.m.values['y%s' %i],
+                                                             self.m.values['z%s' %i],
+                                                             self.inp.rod[i][0]+rodxnew,
+                                                             self.inp.rod[i][1]+rodynew,
+                                                             self.inp.rod[i][2]+rodznew,
+                                                             epsaanew,
+                                                             epsabnew,
+                                                             epsacnew,
+                                                             epsbbnew,
+                                                             epsbcnew,
+                                                             epsccnew)
+                                if value < fval:
+                                    fval = value
+                                    print i,k,fval
+#                                    self.m.values['x%s' %i] = xnew
+#                                    self.m.values['y%s' %i] = ynew
+#                                    self.m.values['z%s' %i] = znew
+                                    self.m.values['rodx%s' %i] = rodxnew
+                                    self.m.values['rody%s' %i] = rodynew
+                                    self.m.values['rodz%s' %i] = rodznew
+                                    self.m.values['epsaa%s' %i] = epsaanew
+                                    self.m.values['epsab%s' %i] = epsabnew
+                                    self.m.values['epsac%s' %i] = epsacnew
+                                    self.m.values['epsbb%s' %i] = epsbbnew
+                                    self.m.values['epsbc%s' %i] = epsbcnew
+                                    self.m.values['epscc%s' %i] = epsccnew
+                                
+                            self.fitgrain(i)
+                        elif 'final' in self.inp.fit['goon']:
                             self.fitgrain(i)
                         elif 'eps' in self.inp.fit['goon']:
                             self.fitepsgrain(i)
@@ -161,6 +214,8 @@ class fit_minuit():
 
         if 'final' in self.inp.fit['goon'] and (self.inp.newreject > 0 or len(self.inp.rerefine) > 0):
             self.inp.fit['goon'] = 'grain'+ self.inp.fit['goon'][5:]
+        elif 'final' in self.inp.fit['goon']:
+            self.inp.rerefine = range(self.inp.no_grains)
         elif 'rotpos' in self.inp.fit['goon'] and (self.inp.newreject > 0 or len(self.inp.rerefine) > 0):
             self.inp.fit['goon'] = 'start'+ self.inp.fit['goon'][6:]
         elif 'xyz' in self.inp.fit['goon'] and (self.inp.newreject > 0 or len(self.inp.rerefine) > 0):
@@ -390,9 +445,9 @@ class fit_minuit():
                                         self.m.values['cy'],self.m.values['cz'],
                                         self.m.values['L'],
                                         self.m.values['x%s' %i],self.m.values['y%s' %i],self.m.values['z%s' %i], 
-                                        self.inp.rod[i][0]+self.inp.values['rodx%s' %i],
-                                        self.inp.rod[i][1]+self.inp.values['rody%s' %i],
-                                        self.inp.rod[i][2]+self.inp.values['rodz%s' %i],
+                                        self.inp.rod[i][0]+self.m.values['rodx%s' %i],
+                                        self.inp.rod[i][1]+self.m.values['rody%s' %i],
+                                        self.inp.rod[i][2]+self.m.values['rodz%s' %i],
                                         self.m.values['epsaa%s' %i],self.m.values['epsab%s' %i],self.m.values['epsac%s' %i], 
                                         self.m.values['epsbb%s' %i],self.m.values['epsbc%s' %i],self.m.values['epscc%s' %i]) 
                         if value > self.inp.fit['limit'][1]*g[i]/self.inp.nrefl[i]:
@@ -542,6 +597,7 @@ class fit_minuit():
         for angles in self.grains[i]:
             if 'rod' in angles and self.inp.fit['rod'] != 0:
                 self.mg.fixed[angles] = False
+                self.mg.errors[angles] = self.mg.errors[angles] * 10.
 
 
     def fitxyzgrain(self,i):
