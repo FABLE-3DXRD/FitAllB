@@ -51,7 +51,7 @@ def FCN(inp):
     import numpy as n
 
     string = 'import numpy as n\n'
-    string = string + 'from xfab import tools\n\n'
+    string = string + 'from xfab import tools,detector\n\n'
 
     # wavelength
     string = string + 'wavelength = %f \n' %inp.param['wavelength']
@@ -156,7 +156,20 @@ def FCN(inp):
         string = string + '],\n'
     string = string + '\t]\n\n'
     
-	
+    # vars, input Syy and Szz as vars to be used as first test of peak_yz
+#    string = string + "vars = [\n" 
+#    for i in range(inp.no_grains):
+#        nn = 1
+#        string = string + '\t[' 
+#        for j in range(0,inp.nrefl[i]):
+#            nn = nn + 1
+#            string = string + '%s,' %([inp.Syy[inp.id[i][j]],inp.Szz[inp.id[i][j]],inp.Sww[inp.id[i][j]]])
+#            if nn == 5:
+#                nn = 0
+#                string = string + '\n\t'
+#        string = string + '],\n'
+#    string = string + '\t]\n\n'
+    
 	
 # helpful functions
 
@@ -165,22 +178,51 @@ def FCN(inp):
     string = string + '\t R = tools.detect_tilt(tx,ty,tz)\n'
     string = string + '\t d = n.dot(R,n.array([[0],[(dety-cy)*py],[(detz-cz)*pz]])) \n'
     string = string + '\t d = d + n.array([[L],[0],[0]]) - n.dot(Omega,n.array([[x],[y],[z]]))\n'
-    string = string + '\t gexp = n.dot(n.linalg.inv(Omega),(d/n.sqrt(n.sum(d**2)) - n.array([[1],[0],[0]])))\n'
+    string = string + '\t gexp = n.dot(n.transpose(Omega),(d/n.sqrt(n.sum(d**2)) - n.array([[1],[0],[0]])))\n'
     string = string + '\t return gexp \n\n'
 
-    string = string + 'def gcalc(h,k,l,w,dety,detz,wx,wy,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
-    string = string + '\t Omega = tools.quart_to_omega(w,wx*n.pi/180,wy*n.pi/180)\n'
+    string = string + 'def gcalc(h,k,l,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
     string = string + "\t B = tools.epsilon_to_b(n.array([epsaa,epsab,epsac,epsbb,epsbc,epscc]),unit_cell)\n" 
     string = string + '\t U = tools.rod_to_u([rodx,rody,rodz])\n'
     string = string + '\t Bhkl = n.dot(B,n.array([[h],[k],[l]]))\n'
     string = string + '\t gcalc = (wavelength/(2*n.pi))*n.dot(U,Bhkl) \n'
     string = string + '\t return gcalc \n\n'
 	
+    # refine residual*IA in stead of residual
     string = string + 'def peak(h,k,l,w,dety,detz,vars,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
-    string = string + '\t diff = gexp(w,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z)-gcalc(h,k,l,w,dety,detz,wx,wy,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc)\n'
+    string = string + '\t ge = gexp(w,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z)\n'
+    string = string + '\t gc = gcalc(h,k,l,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc)\n'
+    string = string + '\t diff = ge-gc\n'
     string = string + '\t result = n.sum(diff*diff/n.array([[vars[0]],[vars[1]],[vars[2]]]))\n'
+#    string = string + '\t ia = n.arccos(n.sum(ge*gc)/(n.sqrt(n.sum(ge*ge))*n.sqrt(n.sum(gc*gc)))) \n\n'
+#    string = string + '\t result = result*ia \n\n'
     string = string + '\t return result \n\n'
 
+    # peak_yz renamed for test
+    string = string + 'def peak_yz(h,k,l,w,dety,detz,vars,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
+    string = string + '\t R = tools.detect_tilt(tx,ty,tz)\n'
+    string = string + "\t B = tools.epsilon_to_b(n.array([epsaa,epsab,epsac,epsbb,epsbc,epscc]),unit_cell)\n" 
+    string = string + '\t U = tools.rod_to_u([rodx,rody,rodz])\n'
+    string = string + '\t Gw = n.dot(U,n.dot(B,n.array([h,k,l])))\n'
+    string = string + '\t tth = tools.tth2(Gw,wavelength)\n'
+    string = string + '\t costth = n.cos(tth)\n'
+    string = string + '\t (Omega, Eta) = tools.find_omega_quart(wavelength/(4.*n.pi)*Gw,tth,wx*n.pi/180,wy*n.pi/180)\n'
+    string = string + '\t w_dist = 360 \n'
+    string = string + '\t w_solution = w \n'
+    string = string + '\t if len(Omega) > 0:\n'
+    string = string + '\t\t for solution in range(len(Omega)):\n'
+    string = string + '\t\t\t if abs(w-Omega[solution]*180./n.pi) < w_dist: \n'
+    string = string + '\t\t\t\t w_dist = abs(w-Omega[solution]*180./n.pi)\n'
+    string = string + '\t\t\t\t w_solution = Omega[solution]*180./n.pi\n'
+    string = string + '\t Om = tools.quart_to_omega(w_solution,wx*n.pi/180,wy*n.pi/180)\n'
+    string = string + '\t Gt = n.dot(Om,Gw)\n'
+    string = string + '\t [posx,posy,posz] = n.dot(Om,n.array([x,y,z]))\n'
+    string = string + '\t (dety_solution, detz_solution) = detector.det_coor(Gt,costth,wavelength,L,py,pz,cy,cz,R,posx,posy,posz)\n'
+    string = string + '\t diff =  n.array([dety-dety_solution,detz-detz_solution,w-w_solution])\n'
+    string = string + '\t result = n.sum(diff*diff/vars)\n'
+    string = string + '\t return result \n\n'
+
+    
 	
 # FCN function for all grains
 	

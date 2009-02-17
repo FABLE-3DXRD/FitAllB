@@ -40,12 +40,6 @@ far.set_start()         # set values and errors for refinement start
 check_input.set_globals(far)
 
 
- 
- 
- 
-
-
-
 # optional nearfield info
 if far.files['near_flt_file'] != None:
     assert far.files['near_par_file'] != None, 'near_par_file parameter file for near-field detector is missing'
@@ -98,6 +92,9 @@ if far.fit['resume'] == None: # do outlier rejection
         from FitAllB import near_field
         near_field.find_refl(far)
         near_field.match(far)
+#    from FitAllB import near_field
+#    near_field.find_refl(far)
+#    near_field.match(far)
     from FitAllB import error
     error.vars(far)
     from FitAllB import build_fcn
@@ -106,12 +103,15 @@ if far.fit['resume'] == None: # do outlier rejection
 else:                          # if refinement is resumed build residual and volume arrays 
     far.residual = []
     far.volume = []
+    far.mean_ia = []
     for i in range(far.no_grains):
         far.residual.append([])
         far.volume.append([])
+        far.mean_ia.append([])
         for j in range(far.nrefl[i]):
             far.residual[i].append(1)
             far.volume[i].append(1)
+            far.mean_ia[i].append(1)
     from FitAllB import reject
     reject.intensity(far)       # necessary to get correct volumes in output file, very few peaks actually rejected
 far.write_rej()         # write the files rejected during friedel and merge to rejection file
@@ -131,8 +131,8 @@ fit.refine(far)
     
     
     
-os.remove('%s/fcn.py' %far.fit['direc'])
-os.remove('%s/fcn.pyc' %far.fit['direc'])
+#os.remove('%s/fcn.py' %far.fit['direc'])
+#os.remove('%s/fcn.pyc' %far.fit['direc'])
 sys.exit()
 # program ends here after deleting fcn.py and fcn.pyc
 

@@ -122,7 +122,38 @@ def friedel(inp):
         print 'Removed', delete, 'entire Friedel pairs with non-matching intensities', delete*2, 'reflections'
         insignificant(inp)
 
+def overflow(inp):
+
+    delete = 0
+    for i in range(inp.no_grains):
+        for j in range(inp.nrefl[i]-1,-1,-1):
+            if inp.Sww[inp.id[i][j]] < 0 and inp.Sww[inp.id[i][j]] > -20:
+                reject(inp,i,j,'overflow')
+                delete = delete + 1
+                    
+    print 'Rejected', delete, 'peaks because of overflow'
+    insignificant(inp)
+
+def edge(inp):
+
+    delete = 0
+    for i in range(inp.no_grains):
+        for j in range(inp.nrefl[i]-1,-1,-1):
+            if inp.Sww[inp.id[i][j]] < -50:
+                reject(inp,i,j,'omega edge')
+                delete = delete + 1
+            elif inp.Syy[inp.id[i][j]] < -50:
+                reject(inp,i,j,'y edge')
+                delete = delete + 1
+            elif inp.Szz[inp.id[i][j]] < -50:
+                reject(inp,i,j,'z edge')
+                delete = delete + 1
+                    
+    print 'Rejected', delete, 'peaks close to the edges of the detector or the omega ranges'
+    insignificant(inp)
+                
     
+        
 def intensity(inp):
         """
         Reject peaks based on intensity
@@ -203,6 +234,136 @@ def intensity(inp):
             insignificant(inp)
             
                     			
+def mean_ia(inp,limit,only=None):
+        """
+        Calculate the internal angle for each peak and store in inp.mena_ia[inp.no_grains][inp.nrefl[i]]
+        Jette Oddershede Januar 2009
+        """
+        
+        import build_fcn
+        build_fcn.FCN(inp)
+        import fcn
+        reload(fcn)
+
+        for i in range(inp.no_grains):
+            if i+1 in inp.fit['skip']:
+                pass
+            else:
+                rod = n.array([inp.rod[i][0]+inp.values['rodx%s' %i],inp.rod[i][1]+inp.values['rody%s' %i],inp.rod[i][2]+inp.values['rodz%s' %i]])
+                for j in range(inp.nrefl[i]):
+                    Omega = tools.quart_to_omega(inp.w[inp.id[i][j]],inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)
+                    gexp = fcn.gexp(inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],
+                                    inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],
+                                    inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],
+                                    inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
+                    gcalc = fcn.gcalc(inp.h[i][j],inp.k[i][j],inp.l[i][j],
+                                      rod[0],
+                                      rod[1],
+                                      rod[2],
+                                      inp.values['epsaa%s' %i],inp.values['epsab%s' %i],inp.values['epsac%s' %i],
+                                      inp.values['epsbb%s' %i],inp.values['epsbc%s' %i],inp.values['epscc%s' %i])
+                    gexp = n.dot(Omega,gexp)
+                    gcalc = n.dot(Omega,gcalc)
+#                    print int(inp.h[i][j]), int(inp.k[i][j]), int(inp.l[i][j]),inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],'gexp', 2*n.pi*n.transpose(gexp)[0]/inp.param['wavelength']
+#                    print int(inp.h[i][j]), int(inp.k[i][j]), int(inp.l[i][j]),inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],'gcalc', 2*n.pi*n.transpose(gcalc)[0]/inp.param['wavelength']
+                    inp.mean_ia[i][j] = IA(n.transpose(gexp)[0],n.transpose(gcalc)[0])
+#                    inp.mean_ia[i][j] = IAforrod(n.transpose(gexp)[0],n.transpose(gcalc)[0],rod)
+#                    print inp.h[i][j], inp.k[i][j], inp.l[i][j], inp.id[i][j], inp.mean_ia[i][j]
+
+        data = deepcopy(inp.mean_ia)
+        maxia = [0]*inp.no_grains
+        for i in range(inp.no_grains):
+            data[i].sort()
+            if i+1 in inp.fit['skip']:
+                pass
+            else:		
+                mean = n.sum(data[i])/len(data[i])
+                medi = median(data[i])
+#                print i, len(data[i]), medi, mean,'\n',data[i]
+                while mean > limit*medi:
+                    data[i].pop()
+                    mean = n.sum(data[i])/inp.nrefl[i]
+                    medi = median(data[i])
+                maxia[i] = max(data[i])
+#                print i, len(data[i]),medi,mean,'\n',data[i],'\n'
+        
+        delete = 0
+        if only==None:
+            only = range(1,1+inp.no_grains)        
+        for i in range(inp.no_grains):
+            if i+1 in inp.fit['skip'] or i+1 not in only:
+                pass
+            else:				
+                for j in range(inp.nrefl[i]-1,-1,-1): # loop backwards to make pop work
+                    if inp.mean_ia[i][j] > maxia[i]:
+                        delete = delete + 1
+                        reject(inp,i,j,'ia')
+#                    elif inp.mean_ia[i][j] > 1.:
+#                        delete = delete + 1
+#                        reject(inp,i,j,'ia')
+        if only != []:
+            print 'Rejected', delete, 'reflection based on internal angles'
+        insignificant(inp)
+
+
+                    
+def IAforrod(gv1,gv2,rod):
+        """
+        Calculates the internal angle ia between gvectors gv1 and gv2 relative to a 
+        rotation axis given as a rodrigues vector rod.
+        gv1,gv2,rod n.array(1x3)
+        Returns ia in degrees
+    
+        Jette Oddershede, Jan 2009
+        """
+    
+        # rotation axis must be projected onto the plane of gv1xgv2 and gv2+gv2
+        gvcross = n.cross(gv1,gv2)
+        gvcross = gvcross/n.linalg.norm(gvcross)
+        gvadd = gv1+gv2
+        gvadd = gvadd/n.linalg.norm(gvadd)
+        # calculate normal of this plane
+        gvnorm = n.cross(gvcross,gvadd)
+        gvnorm = gvnorm/n.linalg.norm(gvnorm)
+        
+        # rotation vector in plane of gv1xgv2 and gv2+gv2 now given as
+        rot = rod - n.dot(rod,gvnorm)*gvnorm
+        rot = rot/n.linalg.norm(rot)
+        
+        #project gv1 and gv2 onto the plane perpendicular to rot
+        gv1_proj = gv1 - n.dot(gv1,rot)*rot
+        gv2_proj = gv2 - n.dot(gv2,rot)*rot
+    
+        # The desired angle is now the angle between gv1_proj and gv2_proj
+        gv1_proj = gv1_proj/n.linalg.norm(gv1_proj)
+        gv2_proj = gv2_proj/n.linalg.norm(gv2_proj)
+        ia = n.arccos(n.dot(gv1_proj,gv2_proj))
+        
+        # ia2 angle between rod and rot around norm
+        rod = rod/n.linalg.norm(rod)
+        ia2 = n.arccos(n.dot(rod,rot))
+        norm = n.cross(rod,rot)
+        norm = norm/n.linalg.norm(norm)
+    
+#        return (ia*180./n.pi,rot,ia2*180./n.pi,norm)
+        return ia*180./n.pi
+
+    
+def IA(gv1,gv2):
+        """
+        Calculates the internal angle ia between gvectors gv1 and gv2
+        gv1,gv2 n.array(1x3)
+        Returns ia in degrees
+    
+        Jette Oddershede, Jan 2009
+        """
+    
+        gv1 = gv1/n.linalg.norm(gv1)
+        gv2 = gv2/n.linalg.norm(gv2)
+
+        return n.arccos(n.dot(gv1,gv2))*180./n.pi
+
+        
 def residual(inp,limit,only=None):
         """
         Reject outliers peaks with a distance to the calculated peak position of
@@ -227,7 +388,9 @@ def residual(inp,limit,only=None):
             else:				
                 for j in range(inp.nrefl[i]): 
                     inp.residual[i][j] = fcn.peak(inp.h[i][j],inp.k[i][j],inp.l[i][j],
-                                              inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],inp.vars[i][j], 
+                                              inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],
+                                              #n.array([inp.Syy[inp.id[i][j]],inp.Szz[inp.id[i][j]],inp.Sww[inp.id[i][j]]]),
+                                              inp.vars[i][j], 
                                               inp.values['wx'],inp.values['wy'],
                                               inp.values['tx'],inp.values['ty'],inp.values['tz'],
                                               inp.values['py'],inp.values['pz'],
@@ -281,23 +444,20 @@ def residual_scale(inp,limit,only=None):
 		Jette Oddershede, Risoe DTU, May 15 2008
         """
 		
-        # must update inp.vars because the order here is [i][j] in stead of [id[i][j]], the latter doesn't change when peaks are rejected, the former does.
-#        # calculate experimental errors using the present values 
-#        import error
-#        error.vars_scale(inp)
-        # build functions to minimise
         import build_fcn
         build_fcn.FCN(inp)
-        #refinement update
         import fcn
         reload(fcn)
+
         for i in range(inp.no_grains):
             if i+1 in inp.fit['skip']:
                 pass
             else:				
                 for j in range(inp.nrefl[i]): 
                     inp.residual[i][j] = fcn.peak(inp.h[i][j],inp.k[i][j],inp.l[i][j],
-                                              inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],inp.vars[i][j], 
+                                              inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],
+                                              #n.array([inp.Syy[inp.id[i][j]],inp.Szz[inp.id[i][j]],inp.Sww[inp.id[i][j]]]),
+                                              inp.vars[i][j], 
                                               inp.values['wx'],inp.values['wy'],
                                               inp.values['tx'],inp.values['ty'],inp.values['tz'],
                                               inp.values['py'],inp.values['pz'],
@@ -490,6 +650,12 @@ def reject(inp,i,j,message):
         inp.fit['newreject_grain'].append(i+1)
         inp.residual[i].pop(j)
         inp.volume[i].pop(j)
+        inp.mean_ia[i].pop(j)
+        
+#        import build_fcn
+#        build_fcn.FCN(inp)
+#        import fcn
+#        reload(fcn)
                
                
 def median(numbers):

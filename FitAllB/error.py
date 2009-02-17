@@ -41,33 +41,33 @@ def vars_scale(inp):
                             inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],\
                             inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],\
                             inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
-                inp.vars[i].append([Sgg[0,0],Sgg[1,0],Sgg[2,0]])
-#                inp.vars[i].append([fcn_current/fcn_expected,fcn_current/fcn_expected,fcn_current/fcn_expected])
+#                inp.vars[i].append([Sgg[0,0],Sgg[1,0],Sgg[2,0]])
+                inp.vars[i].append([fcn_current/fcn_expected,fcn_current/fcn_expected,fcn_current/fcn_expected])
 
                 
 
 def	vars(inp):
-	"""
-	Calculated experimental errors of gexp for all peaks
-	Jette Oddershede, July 2008
-	"""
+    """
+    Calculated experimental errors of gexp for all peaks
+    Jette Oddershede, July 2008
+    """
     
-#	id = inp.id[0][0]
-#	print inp.w[id],inp.dety[id],inp.detz[id],inp.Sww[id],inp.Syy[id],inp.Szz[id],inp.values['x0'],inp.values['y0'],inp.values['z0'],inp.values['L']
-	check_input.set_globals(inp)
-	inp.vars = []
-	for i in range(inp.no_grains):
-		inp.vars.append([])
-		for j in range(inp.nrefl[i]):
-			if i+1 in inp.fit['skip']:
-				inp.vars[i].append([1,1,1])
-			else:
-				Sgg = error(inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],\
-							inp.Sww[inp.id[i][j]],inp.Syy[inp.id[i][j]],inp.Szz[inp.id[i][j]],\
-							inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],\
-							inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],\
-							inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
-				inp.vars[i].append([Sgg[0,0],Sgg[1,0],Sgg[2,0]])
+    check_input.set_globals(inp)
+    inp.vars = []
+    for i in range(inp.no_grains):
+        inp.vars.append([])
+        for j in range(inp.nrefl[i]):
+            if i+1 in inp.fit['skip']:
+                inp.vars[i].append([1,1,1])
+            else:
+                Sgg = error(inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],\
+                            inp.Sww[inp.id[i][j]],inp.Syy[inp.id[i][j]],inp.Szz[inp.id[i][j]],\
+                            inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],\
+                            inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],\
+                            inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
+#                inp.vars[i].append([Sgg[0,0],Sgg[1,0],Sgg[2,0]]) # propagated errors
+#                inp.vars[i].append([Sgg[0,0]+1e-9,Sgg[1,0]+1e-9,Sgg[2,0]+1e-9]) # propagated errors + constant contribution
+                inp.vars[i].append([1e-8,1e-8,1e-8]) # no error propagation
 
 
 def error(w,dety,detz,Sww,Syy,Szz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z):
@@ -82,7 +82,7 @@ def error(w,dety,detz,Sww,Syy,Szz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z):
 	Jette Oddershede, July 2008
 	"""
 	
-	hh = 1e-3
+	hh = 1e-6
 	dw = (gexp(w+hh/2,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z)-gexp(w-hh/2,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z))/hh
 	dy = (gexp(w,dety+hh/2,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z)-gexp(w,dety-hh/2,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z))/hh
 	dz = (gexp(w,dety,detz+hh/2,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z)-gexp(w,dety,detz-hh/2,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z))/hh
@@ -107,7 +107,7 @@ def gexp(w,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z):
 	R = tools.detect_tilt(tx,ty,tz)
 	d = n.dot(R,n.array([[0],[(dety+cy)*py],[(detz-cz)*pz]])) 
 	d = d + n.array([[L],[0],[0]]) - n.dot(Omega,n.array([[x],[y],[z]]))
-	gexp = n.dot(n.linalg.inv(Omega),(d/n.sqrt(n.sum(d**2)) - n.array([[1],[0],[0]])))
+	gexp = n.dot(n.transpose(Omega),(d/n.sqrt(n.sum(d**2)) - n.array([[1],[0],[0]])))
 	return gexp 
 	
 	

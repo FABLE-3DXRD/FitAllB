@@ -1,7 +1,9 @@
 import numpy as n
 from xfab import tools
+from xfab import symmetry
 from xfab import detector
 import reject
+#import fcn
 import sys
 import logging
 import conversion
@@ -144,8 +146,12 @@ def write_values(lsqr):
     Save the fitted grain parameters, pos, U and eps
 
     INPUT: The parameter set from the final fitting
-    OUTPUT: grainno x y z phi1 PHI phi2 
-            U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12
+    OUTPUT: grainno x y z rodx rody rodz 
+            U11 U12 U13 U21 U22 U23 U31 U32 U33 
+            eps11   eps22   eps33   eps23   eps13   eps12
+            eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s
+            sig11   sig22   sig33   sig23   sig13   sig12
+            sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s
  
     Jette Oddershede, Risoe DTU, April 21 2008
     """
@@ -154,7 +160,7 @@ def write_values(lsqr):
     filename = '%s/%s_%s.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
     f = open(filename,'w')
     format = "%d "*1 + "%f "*8 + "%0.12f "*9 + "%e "*24 +"\n"
-    out = "# grainno grainsize grainvolume x y z phi1 PHI phi2 U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
+    out = "# grainno grainsize grainvolume x y z rodx rody rodz U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
     out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s\n"
     f.write(out)
     for i in range(lsqr.inp.no_grains):
@@ -162,7 +168,6 @@ def write_values(lsqr):
             pass
         else:
             U = tools.rod_to_u([lsqr.inp.rod[i][0]+lsqr.m.values['rodx%s' %i],lsqr.inp.rod[i][1]+lsqr.m.values['rody%s' %i],lsqr.inp.rod[i][2]+lsqr.m.values['rodz%s' %i],])
-#            U = tools.euler_to_u(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
             eps = n.array([[lsqr.m.values['epsaa%s' %i],lsqr.m.values['epsab%s' %i],lsqr.m.values['epsac%s' %i]],
                            [lsqr.m.values['epsab%s' %i],lsqr.m.values['epsbb%s' %i],lsqr.m.values['epsbc%s' %i]],
                            [lsqr.m.values['epsac%s' %i],lsqr.m.values['epsbc%s' %i],lsqr.m.values['epscc%s' %i]]])
@@ -170,7 +175,7 @@ def write_values(lsqr):
             sig = conversion.strain2stress(eps,lsqr.inp.C)
             sig_s = conversion.grain2sample(sig,U)            
             out = format %(i+1,
-    			           lsqr.mean_ia[i],#0,
+    			           n.sum(lsqr.inp.mean_ia[i])/len(lsqr.inp.mean_ia[i]),#0,
 	    				   sum(lsqr.inp.volume[i])/lsqr.inp.nrefl[i],
                            lsqr.m.values['x%s' %i]/1000,
                            lsqr.m.values['y%s' %i]/1000,
@@ -221,8 +226,12 @@ def write_errors(lsqr,i):
     Save the fitted grain error parameters, pos, U and eps
 
     INPUT: The error set from the final fitting
-    OUTPUT: grainno x y z phi1 PHI phi2 
-            U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps12 eps13 eps22 eps23 eps33
+    OUTPUT: grainno x y z rodx rody rodz
+            U11 U12 U13 U21 U22 U23 U31 U32 U33 
+            eps11   eps22   eps33   eps23   eps13   eps12
+            eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s
+            sig11   sig22   sig33   sig23   sig13   sig12
+            sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s
  
     Jette Oddershede, Risoe DTU, June 23 2008
     """
@@ -230,7 +239,6 @@ def write_errors(lsqr,i):
 
     # error transformation into other coordinate system and from strain to stress under construction
     U = tools.rod_to_u([lsqr.inp.rod[i][0]+lsqr.m.values['rodx%s' %i],lsqr.inp.rod[i][1]+lsqr.m.values['rody%s' %i],lsqr.inp.rod[i][2]+lsqr.m.values['rodz%s' %i],])
-#    U = tools.euler_to_u(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
     eps_ref = False
     rodx_err = 0
     rody_err = 0
@@ -266,6 +274,27 @@ def write_errors(lsqr,i):
             derivatives = derivatives[len(derivatives)-6:,len(derivatives)-6:]
             cov_eps = n.linalg.inv(derivatives)
 
+    # old way of doing it including covariances with orientations in strain errors
+    try:
+        cov_eps = n.array([[lsqr.mg.covariance[('epsaa%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epscc%s' %i)],
+                        lsqr.mg.covariance[('epsaa%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsab%s' %i)]],
+                       [lsqr.mg.covariance[('epsbb%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epscc%s' %i)],
+                        lsqr.mg.covariance[('epsbb%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epsab%s' %i)]],
+                       [lsqr.mg.covariance[('epscc%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epscc%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epscc%s' %i, 'epscc%s' %i)],
+                        lsqr.mg.covariance[('epscc%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epscc%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epscc%s' %i, 'epsab%s' %i)]],
+                       [lsqr.mg.covariance[('epsbc%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsbc%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsbc%s' %i, 'epscc%s' %i)],
+                        lsqr.mg.covariance[('epsbc%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsbc%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsbc%s' %i, 'epsab%s' %i)]],
+                       [lsqr.mg.covariance[('epsac%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsac%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsac%s' %i, 'epscc%s' %i)],
+                        lsqr.mg.covariance[('epsac%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsac%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsac%s' %i, 'epsab%s' %i)]],
+                       [lsqr.mg.covariance[('epsab%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epscc%s' %i)],
+                        lsqr.mg.covariance[('epsab%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epsab%s' %i)]]])
+    except:
+        cov_eps = n.zeros((6,6))
+            
+            
+            
+            
+            
     cov_eps_s = conversion.CovarianceRotation(cov_eps,U)
     cov_sig = conversion.CovarianceTransformation(cov_eps,lsqr.inp.C)
     cov_sig_s = conversion.CovarianceRotation(cov_sig,U)
@@ -278,7 +307,7 @@ def write_errors(lsqr,i):
         f.close()
     except:
         f = open(filename,'w')
-        out = "# grainno grainsize grainvolume x y z phi1 PHI phi2 U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
+        out = "# grainno grainsize grainvolume x y z rodx rody rodz U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
         out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s\n"
         f.write(out)
         f.close()   
@@ -297,10 +326,8 @@ def write_errors(lsqr,i):
     
     format = "%d "*1 + "%f "*8 + "%0.1f "*9 + "%e "*24 +"\n"
     
-#    print lsqr.inp.volume[i], sum(lsqr.inp.volume[i])/lsqr.inp.nrefl[i], reject.median(lsqr.inp.volume[i]),reject.spread(lsqr.inp.volume[i])
-#    print lsqr.inp.residual[i]
     lines[index] = format %(i+1,
-			       0,#reject.spread(lsqr.mean_ia[i]),
+			       reject.spread(lsqr.inp.mean_ia[i]),#0
                    reject.spread(lsqr.inp.volume[i]),
                    lsqr.mg.errors['x%s' %i]/1000,
                    lsqr.mg.errors['y%s' %i]/1000,
@@ -308,12 +335,6 @@ def write_errors(lsqr,i):
                    lsqr.mg.errors['rodx%s' %i],
                    lsqr.mg.errors['rody%s' %i],
                    lsqr.mg.errors['rodz%s' %i],
-#                   (lsqr.mg.merrors['rodx%s' %i,2]-lsqr.mg.merrors['rodx%s' %i,-2])/2.,
-#                   (lsqr.mg.merrors['rody%s' %i,2]-lsqr.mg.merrors['rody%s' %i,-2])/2.,
-#                   (lsqr.mg.merrors['rodz%s' %i,2]-lsqr.mg.merrors['rodz%s' %i,-2])/2.,
-#                   n.sqrt(vars_rod[0]),
-#                   n.sqrt(vars_rod[1]),
-#                   n.sqrt(vars_rod[2]),
   			       0,
    			       0,
    			       0,
@@ -355,110 +376,6 @@ def write_errors(lsqr,i):
     f = open(filename2,'w')
     for j in range(len(lines)):
         f.write(lines[j])
-    f.close()   
-
-		
-def write_errors_old(lsqr,i):
-    """
-    Save the fitted grain error parameters, pos, U and eps
-
-    INPUT: The error set from the final fitting
-    OUTPUT: grainno x y z phi1 PHI phi2 
-            U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps12 eps13 eps22 eps23 eps33
- 
-    Jette Oddershede, Risoe DTU, June 23 2008
-    """
-    
-
-    # error transformation into other coordinate system and from strain to stress under construction
-    U = tools.euler_to_u(lsqr.m.values['phia%s' %i]*n.pi/180,lsqr.m.values['PHI%s' %i]*n.pi/180,lsqr.m.values['phib%s' %i]*n.pi/180)
-    try:
-        cov_eps = n.array([[lsqr.mg.covariance[('epsaa%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epscc%s' %i)],
-                        lsqr.mg.covariance[('epsaa%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsaa%s' %i, 'epsab%s' %i)]],
-                       [lsqr.mg.covariance[('epsbb%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epscc%s' %i)],
-                        lsqr.mg.covariance[('epsbb%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsbb%s' %i, 'epsab%s' %i)]],
-                       [lsqr.mg.covariance[('epscc%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epscc%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epscc%s' %i, 'epscc%s' %i)],
-                        lsqr.mg.covariance[('epscc%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epscc%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epscc%s' %i, 'epsab%s' %i)]],
-                       [lsqr.mg.covariance[('epsbc%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsbc%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsbc%s' %i, 'epscc%s' %i)],
-                        lsqr.mg.covariance[('epsbc%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsbc%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsbc%s' %i, 'epsab%s' %i)]],
-                       [lsqr.mg.covariance[('epsac%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsac%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsac%s' %i, 'epscc%s' %i)],
-                        lsqr.mg.covariance[('epsac%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsac%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsac%s' %i, 'epsab%s' %i)]],
-                       [lsqr.mg.covariance[('epsab%s' %i, 'epsaa%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epsbb%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epscc%s' %i)],
-                        lsqr.mg.covariance[('epsab%s' %i, 'epsbc%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epsac%s' %i)],lsqr.mg.covariance[('epsab%s' %i, 'epsab%s' %i)]]])
-    except:
-        cov_eps = n.zeros((6,6))
-    cov_eps_s = conversion.CovarianceRotation(cov_eps,U)
-    cov_sig = conversion.CovarianceTransformation(cov_eps,lsqr.inp.C)
-    cov_sig_s = conversion.CovarianceRotation(cov_sig,U)
-    
-    filename = '%s/%s_%s_errors.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
-    #create grainlist containing numbers of refined grains
-    grainlist = range(lsqr.inp.no_grains)
-    skip = deepcopy(lsqr.inp.fit['skip'])
-    skip.sort()
-    skip.reverse()
-    for j in range(len(skip)):
-        if j > 0 and skip[j] == skip[j-1]:
-            pass
-        else:
-            grainlist.pop(grainlist.index(skip[j]-1))
-    if  i == grainlist[0]:
-        if 'final' in lsqr.inp.fit['goon']:
-            f = open(filename,'a')
-        else:
-            f = open(filename,'w')        
-        out = "# grainno grainsize grainvolume x y z phi1 PHI phi2 U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
-        out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s\n"
-        f.write(out)
-        f.close()   
-    # now open for appending
-    f = open(filename,'a')
-    format = "%d "*1 + "%f "*17 + "%e "*24 +"\n"
-
-    out = format %(i+1,
-                   0,
-                   reject.spread(lsqr.inp.volume[i]),
-                   lsqr.mg.errors['x%s' %i]/1000,
-                   lsqr.mg.errors['y%s' %i]/1000,
-                   lsqr.mg.errors['z%s' %i]/1000,
-                   lsqr.mg.errors['phia%s' %i],
-                   lsqr.mg.errors['PHI%s' %i],
-                   lsqr.mg.errors['phib%s' %i],
-  			       0,
-   			       0,
-   			       0,
-   			       0,
-   			       0,
-   			       0,
-   			       0,
-   			       0,
-   			       0,
-                   n.sqrt(cov_eps[0][0]),
-                   n.sqrt(cov_eps[1][1]),
-                   n.sqrt(cov_eps[2][2]),
-                   n.sqrt(cov_eps[3][3]),
-                   n.sqrt(cov_eps[4][4]),
-                   n.sqrt(cov_eps[5][5]),
-                   n.sqrt(cov_eps_s[0][0]),
-                   n.sqrt(cov_eps_s[1][1]),
-                   n.sqrt(cov_eps_s[2][2]),
-                   n.sqrt(cov_eps_s[3][3]),
-                   n.sqrt(cov_eps_s[4][4]),
-                   n.sqrt(cov_eps_s[5][5]),
-                   n.sqrt(cov_sig[0][0]),
-                   n.sqrt(cov_sig[1][1]),
-                   n.sqrt(cov_sig[2][2]),
-                   n.sqrt(cov_sig[3][3]),
-                   n.sqrt(cov_sig[4][4]),
-                   n.sqrt(cov_sig[5][5]),
-                   n.sqrt(cov_sig_s[0][0]),
-                   n.sqrt(cov_sig_s[1][1]),
-                   n.sqrt(cov_sig_s[2][2]),
-                   n.sqrt(cov_sig_s[3][3]),
-                   n.sqrt(cov_sig_s[4][4]),
-                   n.sqrt(cov_sig_s[5][5])
-                  )
-    f.write(out)
     f.close()   
 
 		
@@ -550,3 +467,118 @@ def write_rej(inp, message = None):
                 %(j+1,inp.fit['rejectid'][j],inp.fit['rejectgrain'][j]+1,inp.fit['hh'][j],inp.fit['kk'][j],inp.fit['ll'][j],inp.fit['rejectvalue'][j]))
  
     f.close()
+    
+def write_gvectors(lsqr):
+    """
+    Write all the model gvectors used in the fit (fcn.gcalc) in _gcalc.txt 
+    and all the experimental gvectors (fcn.gexp) in _gexp.txt
+    """
+    
+    file_gcalc = '%s/%s_gcalc.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
+    file_gexp = '%s/%s_gexp.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
+    
+    fcalc = open(file_gcalc,'w')
+    fexp = open(file_gexp,'w')
+    
+    fcalc.write('# peak omega dety detz gv1 gv2 gv3 h k l IA grainno\n')
+    fexp.write('# peak omega dety detz gv1 gv2 gv3 h k l IA grainno\n')
+
+    format = "%d "*1 + "%f "*3 + "%0.12f "*3 + "%d "*3 + "%0.12f " + "%d " + "\n"
+    
+    for i in range(lsqr.inp.no_grains):
+        if i+1 in lsqr.inp.fit['skip']:
+            pass
+        else:
+            for j in range(lsqr.inp.nrefl[i]):
+                gcalc = fcn.gcalc(lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
+                                  lsqr.inp.rod[i][0]+lsqr.m.values['rodx%s' %i],
+                                  lsqr.inp.rod[i][1]+lsqr.m.values['rodx%s' %i],
+                                  lsqr.inp.rod[i][2]+lsqr.m.values['rodx%s' %i],
+                                  lsqr.m.values['epsaa%s' %i],lsqr.m.values['epsab%s' %i],lsqr.m.values['epsac%s' %i],
+                                  lsqr.m.values['epsbb%s' %i],lsqr.m.values['epsbc%s' %i],lsqr.m.values['epscc%s' %i])
+                gexp = fcn.gexp(lsqr.inp.w[lsqr.inp.id[i][j]],
+                                lsqr.inp.dety[lsqr.inp.id[i][j]],
+                                lsqr.inp.detz[lsqr.inp.id[i][j]],
+                                lsqr.m.values['wx'],lsqr.m.values['wy'],
+                                lsqr.m.values['tx'],lsqr.m.values['ty'],lsqr.m.values['tz'],
+                                lsqr.m.values['py'],lsqr.m.values['pz'],
+                                lsqr.m.values['cy'],lsqr.m.values['cz'],lsqr.m.values['L'],
+                                lsqr.m.values['x%s' %i],lsqr.m.values['y%s' %i],lsqr.m.values['z%s' %i])
+                outcalc = format  %(lsqr.inp.id[i][j],
+                                    lsqr.inp.w[lsqr.inp.id[i][j]],
+                                    lsqr.inp.dety[lsqr.inp.id[i][j]],
+                                    lsqr.inp.detz[lsqr.inp.id[i][j]],
+                                    gcalc[0][0],gcalc[1][0],gcalc[2][0],
+                                    lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
+                                    lsqr.inp.mean_ia[i][j],i+1)
+                outexp = format   %(lsqr.inp.id[i][j],
+                                    lsqr.inp.w[lsqr.inp.id[i][j]],
+                                    lsqr.inp.dety[lsqr.inp.id[i][j]],
+                                    lsqr.inp.detz[lsqr.inp.id[i][j]],
+                                    gexp[0][0],gexp[1][0],gexp[2][0],
+                                    lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
+                                    lsqr.inp.mean_ia[i][j],i+1)
+                fcalc.write(outcalc)       
+                fexp.write(outexp)
+                   
+    fcalc.close()
+    fexp.close()
+                             
+    pos_true = n.array([-421.679, -374.656, -4.720]) 
+    U_true = n.array([[-0.990683685084, -0.136182028039, 0.000539766854],
+                       [0.125499230349, -0.914494074861, -0.384643380583], 
+                       [0.052875129230, -0.380992181394, 0.923065099777]]) 
+    eps_true = n.array([-5.940498e-006, 7.406837e-004, 3.340944e-004, -6.852152e-004, 3.126998e-004, 2.355405e-004])
+    B_true = tools.epsilon_to_b(eps_true,lsqr.inp.param['unit_cell'])
+    UB_true = n.dot(U_true,B_true)
+
+    pos = n.array([lsqr.m.values['x0'],lsqr.m.values['y0'],lsqr.m.values['z0']])
+    U = tools.rod_to_u([lsqr.inp.rod[0][0]+lsqr.m.values['rodx0'],lsqr.inp.rod[0][1]+lsqr.m.values['rody0'],lsqr.inp.rod[0][2]+lsqr.m.values['rodz0']])
+    eps = n.array([lsqr.m.values['epsaa0'],lsqr.m.values['epsab0'],lsqr.m.values['epsac0'],
+                   lsqr.m.values['epsbb0'],lsqr.m.values['epsbc0'],lsqr.m.values['epscc0']])
+    B = tools.epsilon_to_b(eps,lsqr.inp.param['unit_cell'])
+    UB = n.dot(U,B)
+    
+    mislist = symmetry.Umis(U_true,U,7)
+    mis = 1.
+    for k in range(len(mislist)):
+        if mislist[k][1] < mis:
+            mis = mislist[k][1]
+
+    file_ub = '%s/%s_ub.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
+    fub = open(file_ub,'w')
+
+    posformat = "%f "*3 + "\n"
+    format = "%0.12f "*3 + "\n"
+    fub.write('pos_true\n')
+    fub.write(posformat %(pos_true[0],pos_true[1],pos_true[2]))
+    fub.write('U_true\n')
+    fub.write(format %(U_true[0][0],U_true[0][1],U_true[0][2]))
+    fub.write(format %(U_true[1][0],U_true[1][1],U_true[1][2]))
+    fub.write(format %(U_true[2][0],U_true[2][1],U_true[2][2]))    
+    fub.write('B_true\n')
+    fub.write(format %(B_true[0][0],B_true[0][1],B_true[0][2]))
+    fub.write(format %(B_true[1][0],B_true[1][1],B_true[1][2]))
+    fub.write(format %(B_true[2][0],B_true[2][1],B_true[2][2]))    
+    fub.write('UB_true\n')
+    fub.write(format %(UB_true[0][0],UB_true[0][1],UB_true[0][2]))
+    fub.write(format %(UB_true[1][0],UB_true[1][1],UB_true[1][2]))
+    fub.write(format %(UB_true[2][0],UB_true[2][1],UB_true[2][2]))    
+    fub.write('pos\n')
+    fub.write(posformat %(pos[0],pos[1],pos[2]))
+    fub.write('U\n')
+    fub.write(format %(U[0][0],U[0][1],U[0][2]))
+    fub.write(format %(U[1][0],U[1][1],U[1][2]))
+    fub.write(format %(U[2][0],U[2][1],U[2][2]))    
+    fub.write('B\n')
+    fub.write(format %(B[0][0],B[0][1],B[0][2]))
+    fub.write(format %(B[1][0],B[1][1],B[1][2]))
+    fub.write(format %(B[2][0],B[2][1],B[2][2]))    
+    fub.write('UB\n')
+    fub.write(format %(UB[0][0],UB[0][1],UB[0][2]))
+    fub.write(format %(UB[1][0],UB[1][1],UB[1][2]))
+    fub.write(format %(UB[2][0],UB[2][1],UB[2][2]))    
+    fub.write('misorientation: %s\n' %mis)
+    
+    
+    

@@ -36,9 +36,6 @@ def find_refl(inp):
                 U = tools.rod_to_u([inp.rod[grainno][0]+inp.values['rodx%s' %grainno],
                                     inp.rod[grainno][1]+inp.values['rody%s' %grainno],
                                     inp.rod[grainno][2]+inp.values['rodz%s' %grainno]])
-#                U = tools.euler2U(inp.values['phia%s' %grainno]*n.pi/180,
-#                                  inp.values['PHI%s' %grainno]*n.pi/180,
-#                                  inp.values['phib%s' %grainno]*n.pi/180)
                 gr_pos = n.array([inp.values['x%s' %grainno],
                                   inp.values['y%s' %grainno],
                                   inp.values['z%s' %grainno]])

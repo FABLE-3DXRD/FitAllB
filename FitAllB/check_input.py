@@ -3,7 +3,7 @@
 #
 # Checking input  
 #
-
+import ImageD11.columnfile as ic
 from string import split
 import sys, os 
 import write_output 
@@ -11,7 +11,6 @@ import conversion
 from xfab import tools
 from xfab import symmetry
 from xfab import detector
-import ImageD11.columnfile as ic
 import numpy as n
 import logging
 import minuit
@@ -68,7 +67,7 @@ class parse_input:
             'ia': 0.1,
             'min_refl': 12,
             'near_min_refl': 6,
-            'near_const': 1e5,
+            'near_const': 1,
             'goon': 'start',
             'tol_start': 1e-1,
             'tol_euler': 1e-1,
@@ -247,6 +246,23 @@ class parse_input:
         self.detz = []
         sigy = []
         sigz = []
+        pixels = flt.getcolumn('Number_of_pixels')
+        smin = flt.getcolumn('Min_s')
+        smax = flt.getcolumn('Max_s')
+        sstep = smax - smin + 1
+        fmin = flt.getcolumn('Min_f')
+        fmax = flt.getcolumn('Max_f')
+        fstep = fmax - fmin + 1
+        wmin = flt.getcolumn('Min_o')
+        wmax = flt.getcolumn('Max_o')
+        wstep = wmax - wmin + self.fit['w_step']
+        ystep = []
+        zstep = []
+        ymin = []
+        ymax = []
+        zmin = []
+        zmax = []
+        
         for i in range(flt.nrows):
             (dety,detz) = detector.xy_to_detyz([sc[i],fc[i]],
                                                self.param['o11'],
@@ -261,12 +277,28 @@ class parse_input:
                                n.array([sigs[i],sigf[i]]))
             sigy.append(sy)				
             sigz.append(sz)
+            (zs,ys) = n.dot(n.array([[abs(self.param['o11']),abs(self.param['o12'])],[abs(self.param['o21']),abs(self.param['o22'])]]),
+                               n.array([sstep[i],fstep[i]]))
+            ystep.append(ys)				
+            zstep.append(zs)
+            (zmi,ymi) = n.dot(n.array([[abs(self.param['o11']),abs(self.param['o12'])],[abs(self.param['o21']),abs(self.param['o22'])]]),
+                               n.array([smin[i],fmin[i]]))
+            ymin.append(ymi)				
+            zmin.append(zmi)
+            (zma,yma) = n.dot(n.array([[abs(self.param['o11']),abs(self.param['o12'])],[abs(self.param['o21']),abs(self.param['o22'])]]),
+                               n.array([smax[i],fmax[i]]))
+            ymax.append(yma)				
+            zmax.append(zma)
 
         # convert into arrays so sorting according to spotid is possible 
         self.dety = n.array(self.dety)
         self.detz = n.array(self.detz)	
         sigy = n.array(sigy)
         sigz = n.array(sigz)
+        ymin = n.array(ymin)
+        ymax = n.array(ymax)
+        zmin = n.array(zmin)
+        zmax = n.array(zmax)
         # do the sorting
         self.w = self.w[n.argsort(spot)]
         self.dety = self.dety[n.argsort(spot)]
@@ -276,6 +308,12 @@ class parse_input:
         sigz = sigz[n.argsort(spot)]
         self.int = self.int[n.argsort(spot)]
         intmax = intmax[n.argsort(spot)]
+        wmin = wmin[n.argsort(spot)]
+        wmax = wmax[n.argsort(spot)]
+        ymin = ymin[n.argsort(spot)]
+        ymax = ymax[n.argsort(spot)]
+        zmin = zmin[n.argsort(spot)]
+        zmax = zmax[n.argsort(spot)]
 
         # we now have arrays on length len(self.spot), but in the end we want lists of length maxspotno+1
         # therefore create temporary lists with zero values of length maxspotno+1
@@ -323,15 +361,38 @@ class parse_input:
         
         #NB! should be sig**2/int, the -1 term is a temporary fix and so are the limits of 1, this should be 0
         # Error expressions taken from Withers, Daymond and Johnson (2001), J.Appl.Cryst.34,737.
+#        print '# peak omega wstep ystep zstep sigww sigyy sigzz'
         for j in range(len(self.int)):
+#            prefactor = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])/pixels[j]
+#            prefactorw = prefactor
+#            for w in self.fit['w_limit']:
+#                if abs(wmin[j]-w) < self.fit['w_step'] or abs(wmin[j]-w) < self.fit['w_step']: 
+#                    prefactorw = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])
+#            self.Syy[j] = prefactor/ystep[j]**2*(sigy[j]**2-1 + 1/12.)  
+#            self.Szz[j] = prefactor/zstep[j]**2*(sigz[j]**2-1 + 1/12.)  
+#            self.Sww[j] = prefactorw*self.fit['w_step']**2/wstep[j]**2*(sigw[j]**2-1 + 1/12.)  
+#            print j,self.w[j],wstep[j],ystep[j],zstep[j],'%e, %e, %e' %(n.sqrt(self.Sww[j]),n.sqrt(self.Syy[j]),n.sqrt(self.Szz[j]))
+
             if self.int[j] > 0:
-                prefactor = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])
-                if sigw[j] >= 1:
-                    self.Sww[j] = prefactor*(sigw[j]**2-1+self.fit['w_step']**2/12.)/self.int[j]
-                if sigy[j] >= 1:
-                    self.Syy[j] = prefactor*(sigy[j]**2-1+1/12.)/self.int[j]
-                if sigz[j] >= 1:
-                    self.Szz[j] = prefactor*(sigz[j]**2-1+1/12.)/self.int[j]  
+                if intmax[j] > 2**16-2*self.fit['bg']:# and intmax[j]*pixels[j]/self.int[j] < 8.:
+                    self.Sww[j] = -10
+                else:
+                    if sigw[j] > 1:
+#                        self.Sww[j] = (.01+1./self.int[i])*(sigw[j]**2-1) + (self.fit['w_step']**2/12.)*(self.fit['w_step']/wstep[i])**2
+                        self.Sww[j] = (1./self.int[i])*(sigw[j]**2-1) 
+                    if sigy[j] > 1:
+#                        self.Syy[j] = (.001+1./self.int[i])*(sigy[j]**2-1) + (1./12.)*(1./ystep[i])**2
+                        self.Syy[j] = (1./self.int[i])*(sigy[j]**2-1) 
+                    if sigz[j] > 1:
+#                        self.Szz[j] = (.001+1./self.int[i])*(sigz[j]**2-1) + (1./12.)*(1./zstep[i])**2
+                        self.Szz[j] = (1./self.int[i])*(sigz[j]**2-1) 
+                for limit in self.fit['w_limit']:
+                    if abs(limit-wmin[j]) < self.fit['w_step'] or abs(limit-wmax[j]) < self.fit['w_step']:
+                        self.Sww[j] = -100
+                if ymin[j] < 2 or ymax[j] > self.fit['dety_size']-2:
+                        self.Syy[j] = -100
+                if zmin[j] < 2 or zmax[j] > self.fit['detz_size']-2:
+                        self.Szz[j] = -100
         
 #        if self.files['near_flt_file'] == None:
 #            for j in range(len(self.int)):
@@ -347,7 +408,7 @@ class parse_input:
  
     def read_log(self): # read grainspotter.log
         self.nrefl = []
-        self.euler = []
+#        self.euler = []
         self.rod = []
         self.h = []
         self.k = []
@@ -384,9 +445,10 @@ class parse_input:
                 self.z.append(eval(split(input[nn])[3]))
             nn = nn + 9
             self.rod.append([eval(split(input[nn])[0]),eval(split(input[nn])[1]),eval(split(input[nn])[2])])
-            nn = nn + 2
-            self.euler.append([eval(split(input[nn])[0]),eval(split(input[nn])[1]),eval(split(input[nn])[2])])
-            nn = nn + 3
+            nn = nn + 5
+#            nn = nn + 2
+#            self.euler.append([eval(split(input[nn])[0]),eval(split(input[nn])[1]),eval(split(input[nn])[2])])
+#            nn = nn + 3
             idgr = []
             h = []
             k = []
@@ -419,11 +481,36 @@ class parse_input:
             if ia[i] > self.fit['ia']:
                 self.fit['skip'].append(i+1)
                 
+        # check for equal grains and convert orientations to the fundamental zone if crystal system is given
+        crystal_system = [None,'triclinic','monoclinic','orthorhombic','tetragonal','trigonal','hexagonal','cubic','isotropic']
+        cs = crystal_system.index(self.fit['crystal_system'])
+        if cs < 1:
+            cs = 1
+        elif cs > 7:
+            cs = 7
         for i in range(1,self.no_grains):
-            Ui = tools.euler_to_u(self.euler[i][0]*n.pi/180,self.euler[i][1]*n.pi/180,self.euler[i][2]*n.pi/180)
+            Ui = tools.rod_to_u([self.rod[i][0],self.rod[i][1],self.rod[i][2]])
+            p = symmetry.permutations(cs)
+            t = Ui.trace()
+            Ut = Ui.copy()
+            pt = n.eye(3,3) 
+#            print '***',i+1,t,Ut
+            for k in range(len(p)):
+                Urot = n.dot(Ui,p[k])
+                trace = Urot.trace()
+                if trace > t:
+                    t = trace
+                    Ut = Urot
+                    pt = p[k]
+#                    print i+1,t,Ut
+            for j in range(self.nrefl[i]):
+                [self.h[i][j],self.k[i][j],self.l[i][j]] = n.dot(n.transpose(pt),n.array([self.h[i][j],self.k[i][j],self.l[i][j]]))
+            [self.rod[i][0],self.rod[i][1],self.rod[i][2]] = tools.u_to_rod(Ut)
+            
+            
             for j in range(i):
-                Uj = tools.euler_to_u(self.euler[j][0]*n.pi/180,self.euler[j][1]*n.pi/180,self.euler[j][2]*n.pi/180)
-                Umis = symmetry.Umis(Ui,Uj,7)
+                Uj = tools.rod_to_u([self.rod[j][0],self.rod[j][1],self.rod[j][2]])
+                Umis = symmetry.Umis(Ui,Uj,1)
                 mis = 180.
                 for k in range(len(Umis)):
                     if Umis[k][1] < mis:
@@ -475,12 +562,12 @@ class parse_input:
             self.rodx = n.zeros((len(U11)))
             self.rody = n.zeros((len(U11)))
             self.rodz = n.zeros((len(U11)))
-            self.phia = n.zeros((len(U11)))
-            self.PHI = n.zeros((len(U11)))
-            self.phib = n.zeros((len(U11)))
+#            self.phia = n.zeros((len(U11)))
+#            self.PHI = n.zeros((len(U11)))
+#            self.phib = n.zeros((len(U11)))
             for i in range(len(U11)):
                 [self.rodx[i],self.rody[i],self.rodz[i]] = tools.u_to_rod(U[i])
-                [self.phia[i],self.PHI[i],self.phib[i]] = tools.u_to_euler(U[i])*180./n.pi
+#                [self.phia[i],self.PHI[i],self.phib[i]] = tools.u_to_euler(U[i])*180./n.pi
             self.eps11 = res.getcolumn('eps11')
             self.eps22 = res.getcolumn('eps22')
             self.eps33 = res.getcolumn('eps33')
@@ -544,10 +631,10 @@ class parse_input:
         # grain values
         if self.files['res_file'] != None:
             self.no_grains = max(self.grainno)
-            self.euler = []
+#            self.euler = []
             self.rod = []
             for i in range(self.no_grains):
-                self.euler.append([0.0,0.0,0.0])
+#                self.euler.append([0.0,0.0,0.0])
                 self.rod.append([0.0,0.0,0.0])
             self.param['theta_min'] = 0.0
             self.param['theta_max'] = 7.5
@@ -561,9 +648,9 @@ class parse_input:
             self.values['epsbb%s' %i] = 0.0 
             self.values['epsbc%s' %i] = 0.0 
             self.values['epscc%s' %i] = 0.0
-            self.values['phia%s' %i] = self.euler[i][0]
-            self.values['PHI%s' %i]  = self.euler[i][1]
-            self.values['phib%s' %i] = self.euler[i][2]
+#            self.values['phia%s' %i] = self.euler[i][0]
+#            self.values['PHI%s' %i]  = self.euler[i][1]
+#            self.values['phib%s' %i] = self.euler[i][2]
             self.values['rodx%s' %i] = 0.0
             self.values['rody%s' %i] = 0.0
             self.values['rodz%s' %i] = 0.0
@@ -580,9 +667,9 @@ class parse_input:
                     self.values['epsbb%s' %i] = self.eps22[self.grainno.index(i+1)]
                     self.values['epsbc%s' %i] = self.eps23[self.grainno.index(i+1)]
                     self.values['epscc%s' %i] = self.eps33[self.grainno.index(i+1)]
-                    self.values['phia%s' %i] = self.phia[self.grainno.index(i+1)] 
-                    self.values['PHI%s' %i]  = self.PHI[self.grainno.index(i+1)] 
-                    self.values['phib%s' %i] = self.phib[self.grainno.index(i+1)]
+#                    self.values['phia%s' %i] = self.phia[self.grainno.index(i+1)] 
+#                    self.values['PHI%s' %i]  = self.PHI[self.grainno.index(i+1)] 
+#                    self.values['phib%s' %i] = self.phib[self.grainno.index(i+1)]
                     self.rod[i][0] = self.rodx[self.grainno.index(i+1)]
                     self.rod[i][1] = self.rody[self.grainno.index(i+1)]
                     self.rod[i][2] = self.rodz[self.grainno.index(i+1)]
@@ -620,9 +707,9 @@ class parse_input:
             self.errors['epsbb%s' %i] = 0.001
             self.errors['epsbc%s' %i] = 0.001
             self.errors['epscc%s' %i] = 0.001
-            self.errors['phia%s' %i] = 0.1
-            self.errors['PHI%s' %i]  = 0.1
-            self.errors['phib%s' %i] = 0.1
+#            self.errors['phia%s' %i] = 0.1
+#            self.errors['PHI%s' %i]  = 0.1
+#            self.errors['phib%s' %i] = 0.1
 #            self.errors['rodx%s' %i] = .01
 #            self.errors['rody%s' %i] = .01
 #            self.errors['rodz%s' %i] = .01
@@ -649,14 +736,20 @@ class parse_input:
         self.fit['newreject_grain'] = []
         self.residual = []
         self.volume = []
+        self.mean_ia = []
         for i in range(self.no_grains):
             self.residual.append([])
             self.volume.append([])
+            self.mean_ia.append([])
             for j in range(self.nrefl[i]):
                 self.residual[i].append(1)
                 self.volume[i].append(1)
+                self.mean_ia[i].append(1)
         # do the actual rejections
+        reject.overflow(self)
+        reject.edge(self)
         reject.intensity(self)
+        reject.mean_ia(self,2)
         reject.residual(self,self.fit['limit'][0])
         reject.multi(self)
         reject.merge(self)
