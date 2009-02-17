@@ -131,8 +131,8 @@ fit.refine(far)
     
     
     
-#os.remove('%s/fcn.py' %far.fit['direc'])
-#os.remove('%s/fcn.pyc' %far.fit['direc'])
+os.remove('%s/fcn.py' %far.fit['direc'])
+os.remove('%s/fcn.pyc' %far.fit['direc'])
 sys.exit()
 # program ends here after deleting fcn.py and fcn.pyc
 
