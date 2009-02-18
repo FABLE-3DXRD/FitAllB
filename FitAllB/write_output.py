@@ -146,7 +146,7 @@ def write_values(lsqr):
     Save the fitted grain parameters, pos, U and eps
 
     INPUT: The parameter set from the final fitting
-    OUTPUT: grainno x y z rodx rody rodz 
+    OUTPUT: grainno mean_IA grain_volume x y z rodx rody rodz 
             U11 U12 U13 U21 U22 U23 U31 U32 U33 
             eps11   eps22   eps33   eps23   eps13   eps12
             eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s
@@ -160,7 +160,7 @@ def write_values(lsqr):
     filename = '%s/%s_%s.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
     f = open(filename,'w')
     format = "%d "*1 + "%f "*8 + "%0.12f "*9 + "%e "*24 +"\n"
-    out = "# grainno grainsize grainvolume x y z rodx rody rodz U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
+    out = "# grainno mean_IA grainvolume x y z rodx rody rodz U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
     out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s\n"
     f.write(out)
     for i in range(lsqr.inp.no_grains):
@@ -226,7 +226,7 @@ def write_errors(lsqr,i):
     Save the fitted grain error parameters, pos, U and eps
 
     INPUT: The error set from the final fitting
-    OUTPUT: grainno x y z rodx rody rodz
+    OUTPUT: grainno mean_IA grainvolume x y z rodx rody rodz
             U11 U12 U13 U21 U22 U23 U31 U32 U33 
             eps11   eps22   eps33   eps23   eps13   eps12
             eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s
@@ -307,7 +307,7 @@ def write_errors(lsqr,i):
         f.close()
     except:
         f = open(filename,'w')
-        out = "# grainno grainsize grainvolume x y z rodx rody rodz U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
+        out = "# grainno mean_IA grainvolume x y z rodx rody rodz U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
         out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s\n"
         f.write(out)
         f.close()   

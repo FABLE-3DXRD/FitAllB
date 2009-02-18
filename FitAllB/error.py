@@ -67,7 +67,7 @@ def	vars(inp):
                             inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
 #                inp.vars[i].append([Sgg[0,0],Sgg[1,0],Sgg[2,0]]) # propagated errors
 #                inp.vars[i].append([Sgg[0,0]+1e-9,Sgg[1,0]+1e-9,Sgg[2,0]+1e-9]) # propagated errors + constant contribution
-                inp.vars[i].append([1e-8,1e-8,1e-8]) # no error propagation
+                inp.vars[i].append([4e-8,4e-8,1e-8]) # no error propagation
 
 
 def error(w,dety,detz,Sww,Syy,Szz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z):
