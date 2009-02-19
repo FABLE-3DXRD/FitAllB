@@ -9,131 +9,6 @@ import logging
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
 
-def friedel(inp):
-        """
-        This function eliminates the peaks that have an intensity that differs significantly from that of the Friedel mate
-    
-        Jette Oddershede, July 24 2008
-        """
-    
-        # remove peaks assigned more than once to the same grain
-        double = 0
-        for i in range(inp.no_grains):
-            for j in range(inp.nrefl[i]-1,-1,-1): # loop backwards to make pop work
-                if inp.id[i].count(inp.id[i][j]) > 1:
-                    double = double + 1
-                    reject(inp,i,j,'unique')
-        print 'Removed', double, 'reflections which were assigned more than once to the same grain'
-        
-        # remove single Friedel mates with poor match
-        delete = 0
-        for i in range(inp.no_grains):
-            if i+1 in inp.fit['skip']:
-                pass
-            else:   
-                for peak1 in range(len(inp.id[i])-1,-1,-1):
-                    h1 = inp.h[i][peak1]
-                    k1 = inp.k[i][peak1]
-                    l1 = inp.l[i][peak1]
-                    ds1 = tools.sintl(inp.unit_cell,[h1,k1,l1])
-                    iavg = 0
-                    nn = 0
-                    roi = []
-                    for peak2 in range(len(inp.id[i])):
-                        h2 = inp.h[i][peak2]
-                        k2 = inp.k[i][peak2]
-                        l2 = inp.l[i][peak2]
-                        ds2 = tools.sintl(inp.unit_cell,[h2,k2,l2])
-                        if ds2 < ds1:
-                            pass
-                        elif ds2 > ds1:
-                            break
-                        else:
-                            if peak2 != peak1:
-                                roi.append(peak2)
-                            iavg = iavg + inp.F2vol[inp.id[i][peak2]]
-                            nn = nn + 1
-                    if nn !=0:
-                        iavg = iavg/nn
-                    for peak2 in roi:
-                        h2 = inp.h[i][peak2]
-                        k2 = inp.k[i][peak2]
-                        l2 = inp.l[i][peak2]
-                        ds2 = tools.sintl(inp.unit_cell,[h2,k2,l2])
-                        if -h1 == h2 and -k1 == k2 and -l1 == l2:
-                            i1 = inp.F2vol[inp.id[i][peak1]]
-                            i2 = inp.F2vol[inp.id[i][peak2]]
-                            if i2 > 0 and nn > 1:
-                                if (i1/i2 < 0.5 or i1/i2 > 2):
-                                    i_p1 = int((iavg*nn-i1)/(nn-1))
-                                    # test if removing peak1 helps:
-                                    if i2/i_p1 > 0.5 and i2/i_p1 < 2:
-                                        delete = delete + 1
-                                        reject(inp,i,j,'friedel')
-                                        break
-
-        print 'Removed', delete, 'reflections which did not match their Friedel mates in intensity'
-
-        # remove Friedel pairs with poor match
-        delete = 0
-        for i in range(inp.no_grains):
-            if i+1 in inp.fit['skip']:
-                pass
-            else:   
-                for peak1 in range(len(inp.id[i])-1,-1,-1):
-                    if peak1 < len(inp.id[i]):
-                        h1 = inp.h[i][peak1]
-                        k1 = inp.k[i][peak1]
-                        l1 = inp.l[i][peak1]
-                        ds1 = tools.sintl(inp.unit_cell,[h1,k1,l1])
-                        iavg = 0
-                        nn = 0
-                        roi = []
-                        for peak2 in range(len(inp.id[i])-1,-1,-1):
-                            h2 = inp.h[i][peak2]
-                            k2 = inp.k[i][peak2]
-                            l2 = inp.l[i][peak2]
-                            ds2 = tools.sintl(inp.unit_cell,[h2,k2,l2])
-                            if ds2 > ds1:
-                                pass
-                            elif ds2 < ds1:
-                                break
-                            else:
-                                if peak2 != peak1:
-                                    roi.append(peak2)
-                                iavg = iavg + inp.F2vol[inp.id[i][peak2]]
-                                nn = nn + 1
-                        if nn !=0:
-                            iavg = iavg/nn
-                        for peak2 in roi:
-                            h2 = inp.h[i][peak2]
-                            k2 = inp.k[i][peak2]
-                            l2 = inp.l[i][peak2]
-                            ds2 = tools.sintl(inp.unit_cell,[h2,k2,l2])
-                            if -h1 == h2 and -k1 == k2 and -l1 == l2:
-                                i1 = inp.F2vol[inp.id[i][peak1]]
-                                i2 = inp.F2vol[inp.id[i][peak2]]
-                                if (i1/i2 < 0.5 or i1/i2 > 2):
-#                                    delete = delete + 1
-#                                    reject(inp,i,peak1,'friedel')
-#                                    reject(inp,i,peak2,'friedel')
-                                    break
-
-        print 'Removed', delete, 'entire Friedel pairs with non-matching intensities', delete*2, 'reflections'
-        insignificant(inp)
-
-def overflow(inp):
-
-    delete = 0
-    for i in range(inp.no_grains):
-        for j in range(inp.nrefl[i]-1,-1,-1):
-            if inp.Sww[inp.id[i][j]] < 0 and inp.Sww[inp.id[i][j]] > -20:
-                reject(inp,i,j,'overflow')
-                delete = delete + 1
-                    
-    print 'Rejected', delete, 'peaks because of overflow'
-    insignificant(inp)
-
 def edge(inp):
 
     delete = 0
@@ -245,6 +120,47 @@ def mean_ia(inp,limit,only=None):
         import fcn
         reload(fcn)
 
+        delete = 0
+        for i in range(inp.no_grains):
+            if i+1 in inp.fit['skip']:
+                pass
+            else:
+                rod = n.array([inp.rod[i][0]+inp.values['rodx%s' %i],inp.rod[i][1]+inp.values['rody%s' %i],inp.rod[i][2]+inp.values['rodz%s' %i]])
+                for j in range(inp.nrefl[i]-1,-1,-1):
+                    Omega = tools.quart_to_omega(inp.w[inp.id[i][j]],inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)
+                    gexp = fcn.gexp(inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],
+                                    inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],
+                                    inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],
+                                    inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
+                    gcalc = fcn.gcalc(inp.h[i][j],inp.k[i][j],inp.l[i][j],
+                                      rod[0],
+                                      rod[1],
+                                      rod[2],
+                                      inp.values['epsaa%s' %i],inp.values['epsab%s' %i],inp.values['epsac%s' %i],
+                                      inp.values['epsbb%s' %i],inp.values['epsbc%s' %i],inp.values['epscc%s' %i])
+                    gexp = n.dot(Omega,gexp)
+                    gcalc = n.dot(Omega,gcalc)
+                    inp.mean_ia[i][j] = IA(n.transpose(gexp)[0],n.transpose(gcalc)[0])
+                    if inp.mean_ia[i][j] > limit:
+                        delete = delete + 1
+                        reject(inp,i,j,'ia')
+
+        if only != []:
+            print 'Rejected', delete, 'reflection based on internal angles'
+        insignificant(inp)
+
+
+def mean_ia_old(inp,limit,only=None):
+        """
+        Calculate the internal angle for each peak and store in inp.mena_ia[inp.no_grains][inp.nrefl[i]]
+        Jette Oddershede Januar 2009
+        """
+        
+        import build_fcn
+        build_fcn.FCN(inp)
+        import fcn
+        reload(fcn)
+
         for i in range(inp.no_grains):
             if i+1 in inp.fit['skip']:
                 pass
@@ -307,63 +223,113 @@ def mean_ia(inp,limit,only=None):
 
 
                     
-def IAforrod(gv1,gv2,rod):
+def merge(inp):
         """
-        Calculates the internal angle ia between gvectors gv1 and gv2 relative to a 
-        rotation axis given as a rodrigues vector rod.
-        gv1,gv2,rod n.array(1x3)
-        Returns ia in degrees
+        This function merges grain if the fraction of similar peaks exceeds the overlap parameter
     
-        Jette Oddershede, Jan 2009
+        Jette Oddershede, August 20 2008
         """
-    
-        # rotation axis must be projected onto the plane of gv1xgv2 and gv2+gv2
-        gvcross = n.cross(gv1,gv2)
-        gvcross = gvcross/n.linalg.norm(gvcross)
-        gvadd = gv1+gv2
-        gvadd = gvadd/n.linalg.norm(gvadd)
-        # calculate normal of this plane
-        gvnorm = n.cross(gvcross,gvadd)
-        gvnorm = gvnorm/n.linalg.norm(gvnorm)
         
-        # rotation vector in plane of gv1xgv2 and gv2+gv2 now given as
-        rot = rod - n.dot(rod,gvnorm)*gvnorm
-        rot = rot/n.linalg.norm(rot)
+        for gr1 in range(inp.no_grains-1):
+            if gr1+1 not in inp.fit['skip']:
+                for gr2 in range(gr1+1,inp.no_grains):
+                    if gr2+1 not in inp.fit['skip']:
+                        multilimit = inp.fit['overlap'] * min(inp.nrefl[gr1],inp.nrefl[gr2])
+                        multi = 0
+                        for peak1 in range(inp.nrefl[gr1]):
+                            for peak2 in range(inp.nrefl[gr2]): 
+                                if inp.id[gr1][peak1] == inp.id[gr2][peak2]:
+                                    multi = multi + 1
+                        if multi > multilimit:
+                            print 'Equal grains:', gr1+1, 'and', gr2+1, 'with number of equal refl:', multi, '(total', inp.nrefl[gr1], 'and', inp.nrefl[gr2],')'
+                            if inp.nrefl[gr1] < inp.nrefl[gr2]:# and resavg[gr1] > resavg[gr2] and volsig[gr1] > volsig[gr2]: #remove residual and volume criteria
+                                inp.fit['skip'].append(gr1+1)
+                                print 'Skip grain', gr1+1
+                            elif inp.nrefl[gr1] > inp.nrefl[gr2]:# and resavg[gr1] < resavg[gr2] and volsig[gr1] < volsig[gr2]: #remove residual and volume criteria
+                                inp.fit['skip'].append(gr2+1)
+                                print 'Skip grain', gr2+1
+                            else:                                
+                                print 'Merge grains', gr1+1, 'and', gr2+1
+                                inp.fit['skip'].append(gr2+1)
+                                set1 = set(inp.id[gr1][:])
+                                set2 = set(inp.id[gr2][:])
+                                for peak in range(inp.nrefl[gr1]-1,-1,-1): # loop backwards to make pop work
+                                    if inp.id[gr1][peak] not in inp.id[gr2]:
+                                        reject(inp,gr1,peak,'merge')
+        unique_list(inp.fit['skip'])
+        insignificant(inp)
+
+            
+def multi(inp):
+        """
+        Peaks assigned to more than one grain are rejected for a grain if both the residual and the volume are off
+        NB! Define off
         
-        #project gv1 and gv2 onto the plane perpendicular to rot
-        gv1_proj = gv1 - n.dot(gv1,rot)*rot
-        gv2_proj = gv2 - n.dot(gv2,rot)*rot
-    
-        # The desired angle is now the angle between gv1_proj and gv2_proj
-        gv1_proj = gv1_proj/n.linalg.norm(gv1_proj)
-        gv2_proj = gv2_proj/n.linalg.norm(gv2_proj)
-        ia = n.arccos(n.dot(gv1_proj,gv2_proj))
+        Jette Oddershede, 1 September 2008
+        """
+
+        # handling reflection assigned to more than one grain
+        grain = []
+        peak = []
+        for k in range(inp.param['total_refl']):
+            grain.append([])
+            peak.append([])
+            
+        for i in range(inp.no_grains):
+            if i+1 not in inp.fit['skip']:
+                for j in range(inp.nrefl[i]):
+                    grain[inp.id[i][j]].append(i)
+                    peak[inp.id[i][j]].append(j)
+                        
+        multi = 0
+        bad = []
+        if  inp.files['structure_file'] != None:
+            volavg = []
+            for i in range(inp.no_grains):
+                if len(inp.volume[i]) > 0:
+                    volavg.append(sum(inp.volume[i])/len(inp.volume[i]))
+                else:
+                    volavg.append(0)
+            
+        for k in range(inp.param['total_refl']):
+            if len(grain[k]) > 1:
+                multi = multi + 1
+                for m in range(len(grain[k])):
+                    for o in range(len(grain[k])):
+                        #reject if largest residual...
+                        if inp.residual[grain[k][m]][peak[k][m]] > inp.residual[grain[k][o]][peak[k][o]]:
+                            #... and largest distance from mean volume if structure file given
+                            if  inp.files['structure_file'] != None:
+                                if abs(inp.volume[grain[k][m]][peak[k][m]]-volavg[grain[k][m]]) > abs(inp.volume[grain[k][o]][peak[k][o]]-volavg[grain[k][o]]):
+                                    bad.append([grain[k][m],peak[k][m]])
+                            else:
+                                bad.append([grain[k][m],peak[k][m]])
+        unique_list(bad)                      
+        #print bad
+        print 'Number of reflections assigned to more than one grain',multi       
+
+                                        
+
+        # for peaks assigned to more than one grain remove all but the best assignment                
+        for i in range(len(bad)-1,-1,-1):
+            reject(inp,bad[i][0],bad[i][1],'multi')
+        print 'Delete',len(bad), 'reflection because they are assigned to more than one grain' 
+        insignificant(inp)
+                                    
         
-        # ia2 angle between rod and rot around norm
-        rod = rod/n.linalg.norm(rod)
-        ia2 = n.arccos(n.dot(rod,rot))
-        norm = n.cross(rod,rot)
-        norm = norm/n.linalg.norm(norm)
-    
-#        return (ia*180./n.pi,rot,ia2*180./n.pi,norm)
-        return ia*180./n.pi
+def overflow(inp):
+
+    delete = 0
+    for i in range(inp.no_grains):
+        for j in range(inp.nrefl[i]-1,-1,-1):
+            if inp.Sww[inp.id[i][j]] < 0 and inp.Sww[inp.id[i][j]] > -20:
+                reject(inp,i,j,'overflow')
+                delete = delete + 1
+                    
+    print 'Rejected', delete, 'peaks because of overflow'
+    insignificant(inp)
 
     
-def IA(gv1,gv2):
-        """
-        Calculates the internal angle ia between gvectors gv1 and gv2
-        gv1,gv2 n.array(1x3)
-        Returns ia in degrees
-    
-        Jette Oddershede, Jan 2009
-        """
-    
-        gv1 = gv1/n.linalg.norm(gv1)
-        gv2 = gv2/n.linalg.norm(gv2)
-
-        return n.arccos(n.dot(gv1,gv2))*180./n.pi
-
-        
 def residual(inp,limit,only=None):
         """
         Reject outliers peaks with a distance to the calculated peak position of
@@ -436,201 +402,7 @@ def residual(inp,limit,only=None):
         insignificant(inp)
                     
 
-def residual_scale(inp,limit,only=None):
-        """
-        Reject outliers peaks with a distance to the calculated peak position of
-        more than limit times the mean distance for the given grain	
-		
-		Jette Oddershede, Risoe DTU, May 15 2008
-        """
-		
-        import build_fcn
-        build_fcn.FCN(inp)
-        import fcn
-        reload(fcn)
 
-        for i in range(inp.no_grains):
-            if i+1 in inp.fit['skip']:
-                pass
-            else:				
-                for j in range(inp.nrefl[i]): 
-                    inp.residual[i][j] = fcn.peak(inp.h[i][j],inp.k[i][j],inp.l[i][j],
-                                              inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],
-                                              #n.array([inp.Syy[inp.id[i][j]],inp.Szz[inp.id[i][j]],inp.Sww[inp.id[i][j]]]),
-                                              inp.vars[i][j], 
-                                              inp.values['wx'],inp.values['wy'],
-                                              inp.values['tx'],inp.values['ty'],inp.values['tz'],
-                                              inp.values['py'],inp.values['pz'],
-                                              inp.values['cy'],inp.values['cz'],
-                                              inp.values['L'],
-                                              inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i], 
-                                              inp.rod[i][0]+inp.values['rodx%s' %i],
-                                              inp.rod[i][1]+inp.values['rody%s' %i],
-                                              inp.rod[i][2]+inp.values['rodz%s' %i],
-                                              inp.values['epsaa%s' %i],inp.values['epsab%s' %i],inp.values['epsac%s' %i], 
-                                              inp.values['epsbb%s' %i],inp.values['epsbc%s' %i],inp.values['epscc%s' %i])
-                                                    
-        data = deepcopy(inp.residual)
-        maxres = [0]*inp.no_grains
-        for i in range(inp.no_grains):
-            data[i].sort()
-            if i+1 in inp.fit['skip']:
-                pass
-            else:		
-                mean = int(n.sum(data[i])/len(data[i]))
-                medi = median(data[i])
-#                print i, len(data[i]), medi, mean,'\n',data[i]
-                while mean > limit*medi:
-                    data[i].pop()
-                    mean = int(n.sum(data[i])/inp.nrefl[i])
-                    medi = median(data[i])
-                maxres[i] = max(data[i])
-#                print i, len(data[i]),medi,mean,'\n',data[i],'\n'
-        
-        delete = 0
-        if only==None:
-            only = range(1,1+inp.no_grains)        
-        for i in range(inp.no_grains):
-            if i+1 in inp.fit['skip'] or i+1 not in only:
-                pass
-            else:				
-                for j in range(inp.nrefl[i]-1,-1,-1): # loop backwards to make pop work
-                    if inp.residual[i][j] > maxres[i]:
-                        delete = delete + 1
-                        reject(inp,i,j,'residual')
-        if only != []:
-            print 'Rejected', delete, 'reflection based on residuals'
-        insignificant(inp)
-                    
-
-def multi(inp):
-        """
-        Peaks assigned to more than one grain are rejected for a grain if both the residual and the volume are off
-        NB! Define off
-        
-        Jette Oddershede, 1 September 2008
-        """
-
-        # handling reflection assigned to more than one grain
-        grain = []
-        peak = []
-        for k in range(inp.param['total_refl']):
-            grain.append([])
-            peak.append([])
-            
-        for i in range(inp.no_grains):
-            if i+1 not in inp.fit['skip']:
-                for j in range(inp.nrefl[i]):
-                    grain[inp.id[i][j]].append(i)
-                    peak[inp.id[i][j]].append(j)
-                        
-        multi = 0
-        bad = []
-        if  inp.files['structure_file'] != None:
-            volavg = []
-            for i in range(inp.no_grains):
-                if len(inp.volume[i]) > 0:
-                    volavg.append(sum(inp.volume[i])/len(inp.volume[i]))
-                else:
-                    volavg.append(0)
-            
-        for k in range(inp.param['total_refl']):
-            if len(grain[k]) > 1:
-                multi = multi + 1
-                for m in range(len(grain[k])):
-#                    print grain[k][m],peak[k][m],k, \
-#                          inp.residual[grain[k][m]][peak[k][m]], sum(inp.residual[grain[k][m]])/len(inp.residual[grain[k][m]]),\
-#                          inp.volume[grain[k][m]][peak[k][m]], sum(inp.volume[grain[k][m]])/len(inp.volume[grain[k][m]])
-                    for o in range(len(grain[k])):
-                        #reject if largest residual...
-                        if inp.residual[grain[k][m]][peak[k][m]] > inp.residual[grain[k][o]][peak[k][o]]:
-                            #... and largest distance from mean volume if structure file given
-                            if  inp.files['structure_file'] != None:
-                                if abs(inp.volume[grain[k][m]][peak[k][m]]-volavg[grain[k][m]]) > abs(inp.volume[grain[k][o]][peak[k][o]]-volavg[grain[k][o]]):
-                                    bad.append([grain[k][m],peak[k][m]])
-                            else:
-                                bad.append([grain[k][m],peak[k][m]])
-        unique_list(bad)                      
-        #print bad
-        print 'Number of reflections assigned to more than one grain',multi       
-
-                                        
-
-        # for peaks assigned to more than one grain remove all but the best assignment                
-        for i in range(len(bad)-1,-1,-1):
-            reject(inp,bad[i][0],bad[i][1],'multi')
-        print 'Delete',len(bad), 'reflection because they are assigned to more than one grain' 
-        insignificant(inp)
-                                    
-        
-def merge(inp):
-        """
-        This function merges grain if the fraction of similar peaks exceeds the overlap parameter
-    
-        Jette Oddershede, August 20 2008
-        """
-        
-#        volsig = []
-#        for i in range(inp.no_grains):
-#            if i+1 not in inp.fit['skip']:
-#                volsig.append(spread(inp.volume[i]))
-#            else:
-#                volsig.append([])
-#        resavg = []
-#        for i in range(inp.no_grains):
-#            if i+1 not in inp.fit['skip']:
-#                resavg.append(sum(inp.residual[i])/len(inp.residual[i]))
-#            else:
-#                resavg.append([])
-        # merge overlapping grains
-        for gr1 in range(inp.no_grains-1):
-            if gr1+1 not in inp.fit['skip']:
-                for gr2 in range(gr1+1,inp.no_grains):
-                    if gr2+1 not in inp.fit['skip']:
-                        multilimit = inp.fit['overlap'] * min(inp.nrefl[gr1],inp.nrefl[gr2])
-                        multi = 0
-                        for peak1 in range(inp.nrefl[gr1]):
-                            for peak2 in range(inp.nrefl[gr2]): 
-                                if inp.id[gr1][peak1] == inp.id[gr2][peak2]:
-                                    multi = multi + 1
-                        if multi > multilimit:
-                            print 'Equal grains:', gr1+1, 'and', gr2+1, 'with number of equal refl:', multi, '(total', inp.nrefl[gr1], 'and', inp.nrefl[gr2],')'
-                            if inp.nrefl[gr1] < inp.nrefl[gr2]:# and resavg[gr1] > resavg[gr2] and volsig[gr1] > volsig[gr2]: #remove residual and volume criteria
-                                inp.fit['skip'].append(gr1+1)
-                                print 'Skip grain', gr1+1
-                            elif inp.nrefl[gr1] > inp.nrefl[gr2]:# and resavg[gr1] < resavg[gr2] and volsig[gr1] < volsig[gr2]: #remove residual and volume criteria
-                                inp.fit['skip'].append(gr2+1)
-                                print 'Skip grain', gr2+1
-                            else:                                
-                                print 'Merge grains', gr1+1, 'and', gr2+1
-                                inp.fit['skip'].append(gr2+1)
-                                set1 = set(inp.id[gr1][:])
-                                set2 = set(inp.id[gr2][:])
-                                for peak in range(inp.nrefl[gr1]-1,-1,-1): # loop backwards to make pop work
-                                    if inp.id[gr1][peak] not in inp.id[gr2]:
-                                        reject(inp,gr1,peak,'merge')
-        unique_list(inp.fit['skip'])
-        insignificant(inp)
-
-            
-def insignificant(inp):
-        """
-        Remove grains with less than inp.fit['min_refl'] peaks as being insignificant
-        """
-        for i in range(inp.no_grains):
-            if inp.nrefl[i] < inp.fit['min_refl'] and i+1 not in inp.fit['skip']:
-                inp.fit['skip'].append(i+1)
-        inp.fit['skip'].sort()
-        
- 
-def poor(inp):
-    """
-    Remove poor grains
-    """
-    pass
-
-
- 
 # Helpful functions               
                
 def reject(inp,i,j,message):
@@ -652,12 +424,82 @@ def reject(inp,i,j,message):
         inp.volume[i].pop(j)
         inp.mean_ia[i].pop(j)
         
-#        import build_fcn
-#        build_fcn.FCN(inp)
-#        import fcn
-#        reload(fcn)
                
-               
+def insignificant(inp):
+        """
+        Remove grains with less than inp.fit['min_refl'] peaks as being insignificant
+        """
+        for i in range(inp.no_grains):
+            if inp.nrefl[i] < inp.fit['min_refl'] and i+1 not in inp.fit['skip']:
+                inp.fit['skip'].append(i+1)
+        inp.fit['skip'].sort()
+        
+ 
+def unique_list(list):
+        list.sort()
+        for i in range(len(list)-1,0,-1):
+            if list[i] == list[i-1]:
+                list.pop(i)
+        return list
+
+
+def IAforrod(gv1,gv2,rod):
+        """
+        Calculates the internal angle ia between gvectors gv1 and gv2 relative to a 
+        rotation axis given as a rodrigues vector rod.
+        gv1,gv2,rod n.array(1x3)
+        Returns ia in degrees
+    
+        Jette Oddershede, Jan 2009
+        """
+    
+        # rotation axis must be projected onto the plane of gv1xgv2 and gv2+gv2
+        gvcross = n.cross(gv1,gv2)
+        gvcross = gvcross/n.linalg.norm(gvcross)
+        gvadd = gv1+gv2
+        gvadd = gvadd/n.linalg.norm(gvadd)
+        # calculate normal of this plane
+        gvnorm = n.cross(gvcross,gvadd)
+        gvnorm = gvnorm/n.linalg.norm(gvnorm)
+        
+        # rotation vector in plane of gv1xgv2 and gv2+gv2 now given as
+        rot = rod - n.dot(rod,gvnorm)*gvnorm
+        rot = rot/n.linalg.norm(rot)
+        
+        #project gv1 and gv2 onto the plane perpendicular to rot
+        gv1_proj = gv1 - n.dot(gv1,rot)*rot
+        gv2_proj = gv2 - n.dot(gv2,rot)*rot
+    
+        # The desired angle is now the angle between gv1_proj and gv2_proj
+        gv1_proj = gv1_proj/n.linalg.norm(gv1_proj)
+        gv2_proj = gv2_proj/n.linalg.norm(gv2_proj)
+        ia = n.arccos(n.dot(gv1_proj,gv2_proj))
+        
+        # ia2 angle between rod and rot around norm
+        rod = rod/n.linalg.norm(rod)
+        ia2 = n.arccos(n.dot(rod,rot))
+        norm = n.cross(rod,rot)
+        norm = norm/n.linalg.norm(norm)
+    
+#        return (ia*180./n.pi,rot,ia2*180./n.pi,norm)
+        return ia*180./n.pi
+
+    
+def IA(gv1,gv2):
+        """
+        Calculates the internal angle ia between gvectors gv1 and gv2
+        gv1,gv2 n.array(1x3)
+        Returns ia in degrees
+    
+        Jette Oddershede, Jan 2009
+        """
+    
+        gv1 = gv1/n.linalg.norm(gv1)
+        gv2 = gv2/n.linalg.norm(gv2)
+
+        return n.arccos(n.dot(gv1,gv2))*180./n.pi
+
+        
 def median(numbers):
    # Sort the list and take the middle element.
    nn = len(numbers)
@@ -668,18 +510,13 @@ def median(numbers):
    else:
       return (copy[nn // 2 - 1] + copy[nn // 2]) / 2
 
+      
 def spread(data):
         data = n.array(data)
         vars = n.sum(data*data) - n.sum(data)**2/len(data)
         return n.sqrt(vars/(len(data)-1))
-        
-def unique_list(list):
-        list.sort()
-        for i in range(len(list)-1,0,-1):
-            if list[i] == list[i-1]:
-                list.pop(i)
-        return list
-
+      
+      
 def mad(data,reject,limit):
         """
         Perform outlier rejection based on median absolute deviation

@@ -49,8 +49,8 @@ class fit_minuit():
         self.ref = False
         if 'grain' in self.inp.fit['goon'] or 'final' in self.inp.fit['goon'] or 'rotpos' in self.inp.fit['goon']:
             self.ref = True
-        elif 'start' in self.inp.fit['goon'] and (self.inp.fit['w'] != 0 or self.inp.fit['tilt'] != 0 or self.inp.fit['pixel'] != 0 or self.inp.fit['center'] != 0 or self.inp.fit['L'] != 0):
-            self.ref = True
+        elif 'start' in self.inp.fit['goon']:
+            self.ref = False
         elif 'euler' in self.inp.fit['goon'] and self.inp.fit['euler'] != 0:
             self.ref = True		
         elif 'rod' in self.inp.fit['goon'] and self.inp.fit['rod'] != 0:
@@ -76,20 +76,10 @@ class fit_minuit():
             fval = sum(g)
             print '\n%s starting value %e' %(self.inp.fit['goon'],fval)
             t1 = time.clock()
-            if 'start' in self.inp.fit['goon']:
-                self.fitstart()
-                print 'Fit %s tolerance %e' %(self.inp.fit['goon'],self.m.tol)
-                self.m.errors = self.inp.errors
-                self.m.migrad()
-#                if self.inp.fit['hesse'] != 0:
-#                    self.mg.hesse()
-                self.scale_errors(0)
-                write_output.write_global(self)
-            else:
-                self.mg = minuit.Minuit(fcn.FCNgrain)
-                self.mg.values = self.m.values
-                self.mg.errors = self.inp.errors
-                for i in range(self.inp.no_grains):
+            self.mg = minuit.Minuit(fcn.FCNgrain)
+            self.mg.values = self.m.values
+            self.mg.errors = self.inp.errors
+            for i in range(self.inp.no_grains):
                     if i+1 in self.inp.fit['skip']:
                         pass
 #                    elif 'final' in self.inp.fit['goon'] and (i+1 not in self.inp.fit['newreject_grain'] or (self.inp.fit['newreject_grain'].count(i+1) == 1 and g[i]/self.inp.nrefl[i] < sum(g)/sum(self.inp.nrefl))):
@@ -132,11 +122,8 @@ class fit_minuit():
 				
             self.time = time.clock()-t1
             print 'Fit %s time %i s' %(self.inp.fit['goon'],self.time)
-            if 'start' in self.inp.fit['goon']:
-                print 'Fit %s value %e \n' %(self.inp.fit['goon'],self.m.fval)
-            else:
-                fval = sum(g)
-                print 'Fit %s value %e \n' %(self.inp.fit['goon'],fval)
+            fval = sum(g)
+            print 'Fit %s value %e \n' %(self.inp.fit['goon'],fval)
 			    
 			
             # reject outliers and save cycle info	
@@ -179,80 +166,24 @@ class fit_minuit():
         
         # parameters
         parameters = 0
-        if 'start' in self.inp.fit['goon']:
-            for entries in self.m.fixed:
-                if self.m.fixed[entries] == False:
-                    parameters = parameters + 1
-                    example = entries
-        else:
-            for entries in self.m.fixed:
-                if self.mg.fixed[entries] == False:
-                    parameters = parameters + 1
-                    example = entries
-        
-        if 'start' in self.inp.fit['goon']:
-            grains = self.inp.no_grains - len(self.inp.fit['skip'])
-        else:
-            grains = 1
-        
+        for entries in self.m.fixed:
+            if self.mg.fixed[entries] == False:
+                parameters = parameters + 1
+                example = entries
+        #grains
+        grains = 1
         #observations
-        observations = 0
-        if 'start' in self.inp.fit['goon']:
-            for j in range(self.inp.no_grains):
-                if j+1 in self.inp.fit['skip']:
-                    pass
-                else:
-                    observations = observations + self.inp.nrefl[j]
-        else:
-            observations = self.inp.nrefl[i]
+        observations = self.inp.nrefl[i]
               
         # expectation        
         expectation = 3*observations - grains*parameters
         
         #correction
-        if 'start' in self.inp.fit['goon']:
-            correction = self.m.fval/expectation
-            self.m.up = correction
-        else:
-            correction = self.mg.fval/expectation
-            self.mg.up = correction
-            
-        # print - to be deleted after testing
-#        if 'start' in self.inp.fit['goon']:
-#            print '     fval %f %s error %e' %(self.m.fval,example,self.m.errors[example])
-#        else:
-#            print '     fval %f %s error %e' %(self.mg.fval,example,self.mg.errors[example])
+        correction = self.mg.fval/expectation
+        self.mg.up = correction
             
         # perform the  actual scaling task, NB must be done by calling hesse, with adjusted up, otherwise incorrect errors are estimated if the correct value of up is very far from 1
-        if 'start' in self.inp.fit['goon']:
-            self.m.hesse()
-        else:
-            self.mg.hesse()
-#        if 'start' in self.inp.fit['goon']:
-#            for entry1 in self.globals:
-#                if self.m.fixed[entry1] == False:
-#                    self.m.errors[entry1] = self.m.errors[entry1] * n.sqrt(correction)
-#                    for entry2 in self.globals:
-#                        if self.m.fixed[entry2] == False:
-#                            self.m.covariance[('%s' %entry1, '%s' %entry2)] = self.m.covariance[('%s' %entry1, '%s' %entry2)] * correction
-#        else:
-#            for entry1 in self.grains[i]:
-#                if self.mg.fixed[entry1] == False:
-#                    try:
-#                        self.mg.merrors[entry1] = self.mg.merrors[entry1] * n.sqrt(correction)
-#                    except:
-#                        self.mg.errors[entry1] = self.mg.errors[entry1] * n.sqrt(correction)
-#                    for entry2 in self.grains[i]:
-#                        if self.mg.fixed[entry2] == False:
-#                            self.mg.covariance[('%s' %entry1, '%s' %entry2)] = self.mg.covariance[('%s' %entry1, '%s' %entry2)] * correction
-        
-        # print - to be deleted after testing
-#        if 'start' in self.inp.fit['goon']:
-#            print '                 expected %f %s error %e' %(expectation,example,self.m.errors[example])
-#        else:
-#            print '                 expected %f %s error %e' %(expectation,example,self.mg.errors[example])
-        
-        
+        self.mg.hesse()
        
     
     def grain_values(self):
@@ -272,10 +203,7 @@ class fit_minuit():
         temp1 = self.m.values		
         temp2 = self.m.errors		
         temp3 = self.m.fixed
-        if 'start' in self.inp.fit['goon']:
-            temp4 = self.m.tol
-        else:
-            temp4 = self.mg.tol
+        temp4 = self.mg.tol
         # make new instance of minuit        
         self.m = minuit.Minuit(fcn.FCN)
         self.m.values = temp1		
@@ -304,10 +232,7 @@ class fit_minuit():
 		# give back old values	
         self.m.errors = temp2		
         self.m.fixed = temp3		
-        if 'start' in self.inp.fit['goon']:
-            self.m.tol = temp4
-        else:
-            self.mg.tol = temp4
+        self.mg.tol = temp4
             
         return g
 			
@@ -351,7 +276,6 @@ class fit_minuit():
                                         self.m.values['epsbb%s' %i],self.m.values['epsbc%s' %i],self.m.values['epscc%s' %i]) 
                         if value > self.inp.fit['limit'][1]*g[i]/self.inp.nrefl[i]:
                             new = 1
-#                            print 'Rejected peak id %i from grain %i (hkl: %i %i %i, limit: %f): %f' %(self.inp.id[i][j],i+1,self.inp.h[i][j],self.inp.k[i][j],self.inp.l[i][j],self.inp.fit['limit'][1],value*self.inp.nrefl[i]/g[i],g[i],self.inp.nrefl[i])
                             print 'Rejected peak id %i from grain %i (hkl: %i %i %i, limit: %f): %f' %(self.inp.id[i][j],i+1,self.inp.h[i][j],self.inp.k[i][j],self.inp.l[i][j],self.inp.fit['limit'][1],value*self.inp.nrefl[i]/g[i])
                             reject.reject(self.inp,i,j,value*self.inp.nrefl[i]/g[i])
                         
@@ -361,39 +285,29 @@ class fit_minuit():
                 self.inp.mean_ia.append([])
                 for j in range(self.inp.nrefl[i]):
                     self.inp.mean_ia[i].append(1)
-            reject.mean_ia(self.inp,2)
+            reject.mean_ia(self.inp,self.inp.fit['ia'])
 
-            self.inp.residual = []
-            for i in range(self.inp.no_grains):
-                self.inp.residual.append([])
-                for j in range(self.inp.nrefl[i]):
-                    self.inp.residual[i].append(1)
-            reject.residual_scale(self.inp,self.inp.fit['limit'][0])
+        self.inp.residual = []
+        for i in range(self.inp.no_grains):
+            self.inp.residual.append([])
+            for j in range(self.inp.nrefl[i]):
+                self.inp.residual[i].append(1)
+        reject.residual(self.inp,self.inp.fit['limit'][0])
 
-            self.inp.volume = []
-            for i in range(self.inp.no_grains):
-                self.inp.volume.append([])
-                for j in range(self.inp.nrefl[i]):
-                    self.inp.volume[i].append(1)
-            reject.intensity(self.inp)
+        self.inp.volume = []
+        for i in range(self.inp.no_grains):
+            self.inp.volume.append([])
+            for j in range(self.inp.nrefl[i]):
+                self.inp.volume[i].append(1)
+        reject.intensity(self.inp)
 
-            reject.merge(self.inp)
-            reject.multi(self.inp)
-        else: #else added to update self.inp.residual if not final or grain
-            self.inp.residual = []
-            for i in range(self.inp.no_grains):
-                self.inp.residual.append([])
-                for j in range(self.inp.nrefl[i]):
-                    self.inp.residual[i].append(1)
-            reject.residual_scale(self.inp,self.inp.fit['limit'][0],only=[])
+        reject.merge(self.inp)
+        reject.multi(self.inp)
         
                         
         for i in range(self.inp.no_grains):
-            # rerefine if more than 10% change in fcn
             if self.inp.nrefl[i] < self.inp.fit['min_refl'] and i+1 not in self.inp.fit['skip']:
                 self.inp.fit['skip'].append(i+1)
-#            if n.sum(self.inp.residual[i])/len(self.inp.residual[i]) < 2.9 and i+1 not in self.inp.fit['skip']: 
-#                self.inp.rerefine.append(i+1)
         self.inp.fit['skip'].sort()
 
                 		

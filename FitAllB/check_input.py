@@ -64,7 +64,8 @@ class parse_input:
             'bg': 100,
             'near_bg': 67,
             'const': 1,
-            'ia': 0.1,
+            'ia': 0.2,
+            'near_ia': 0.5,
             'min_refl': 12,
             'near_min_refl': 6,
             'near_const': 1,
@@ -477,9 +478,9 @@ class parse_input:
         self.param['theta_max'] = max(self.tth)/2.
         
         # delete grains with an internal angle above the set threshold
-        for i in range(self.no_grains):
-            if ia[i] > self.fit['ia']:
-                self.fit['skip'].append(i+1)
+#        for i in range(self.no_grains):
+#            if ia[i] > self.fit['ia']:
+#                self.fit['skip'].append(i+1)
                 
         # check for equal grains and convert orientations to the fundamental zone if crystal system is given
         crystal_system = [None,'triclinic','monoclinic','orthorhombic','tetragonal','trigonal','hexagonal','cubic','isotropic']
@@ -488,7 +489,7 @@ class parse_input:
             cs = 1
         elif cs > 7:
             cs = 7
-        for i in range(1,self.no_grains):
+        for i in range(self.no_grains):
             Ui = tools.rod_to_u([self.rod[i][0],self.rod[i][1],self.rod[i][2]])
             p = symmetry.permutations(cs)
             t = Ui.trace()
@@ -749,7 +750,7 @@ class parse_input:
         reject.overflow(self)
         reject.edge(self)
         reject.intensity(self)
-        reject.mean_ia(self,2)
+        reject.mean_ia(self,2*self.fit['ia'])
         reject.residual(self,self.fit['limit'][0])
         reject.multi(self)
         reject.merge(self)
