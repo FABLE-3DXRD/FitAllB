@@ -366,7 +366,7 @@ def FCN(inp):
 
     # initialise sum
     string = string + '\t sum = 0 \n \n'
-
+    
     string = string + '\t for j in range(nrefl[i]):\n'
     string = string + '\t\t sum = sum + peak(h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
     string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],rod[i][0]+rodx[i],rod[i][1]+rody[i],rod[i][2]+rodz[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'

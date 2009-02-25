@@ -57,14 +57,14 @@ def	vars(inp):
     for i in range(inp.no_grains):
         inp.vars.append([])
         for j in range(inp.nrefl[i]):
-            if i+1 in inp.fit['skip']:
-                inp.vars[i].append([1,1,1])
-            else:
-                Sgg = error(inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],\
-                            inp.Sww[inp.id[i][j]],inp.Syy[inp.id[i][j]],inp.Szz[inp.id[i][j]],\
-                            inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],\
-                            inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],\
-                            inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
+#            if i+1 in inp.fit['skip']:
+#                inp.vars[i].append([1,1,1])
+#            else:
+#                Sgg = error(inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],\
+#                            inp.Sww[inp.id[i][j]],inp.Syy[inp.id[i][j]],inp.Szz[inp.id[i][j]],\
+#                            inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],\
+#                            inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],\
+#                            inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
 #                inp.vars[i].append([Sgg[0,0],Sgg[1,0],Sgg[2,0]]) # propagated errors
 #                inp.vars[i].append([Sgg[0,0]+1e-9,Sgg[1,0]+1e-9,Sgg[2,0]+1e-9]) # propagated errors + constant contribution
                 inp.vars[i].append([4e-8,4e-8,1e-8]) # no error propagation

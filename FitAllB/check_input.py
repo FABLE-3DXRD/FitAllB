@@ -70,6 +70,7 @@ class parse_input:
             'near_min_refl': 6,
             'near_const': 1,
             'goon': 'start',
+            'tol_global': 1e-2,
             'tol_start': 1e-1,
             'tol_euler': 1e-1,
             'tol_rod': 1e-1,
@@ -694,7 +695,7 @@ class parse_input:
         self.param['z_size_error'] = 0.1
         self.param['y_center_error'] = 0.1
         self.param['z_center_error'] = 0.1
-        self.param['distance_error']  = 1
+        self.param['distance_error']  = 10.
         self.param['i_error']  = 1
         self.param['j_error']  = 1
         # grain errors
@@ -803,7 +804,7 @@ def copy_globals(inp):
         inp.param['tilt_y'] = deepcopy(inp.values['ty']) 
         inp.param['tilt_z'] = deepcopy(inp.values['tz']) 
         inp.param['y_size'] = deepcopy(inp.values['py']) 
-        inp.param['y_size'] = deepcopy(inp.values['pz']) 
+        inp.param['z_size'] = deepcopy(inp.values['pz']) 
         inp.param['y_center'] = deepcopy(inp.values['cy']) 
         inp.param['z_center'] = deepcopy(inp.values['cz']) 
         inp.param['distance'] = deepcopy(inp.values['L'])  

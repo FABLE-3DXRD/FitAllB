@@ -51,8 +51,6 @@ class fit_minuit():
             self.ref = True
         elif 'start' in self.inp.fit['goon']:
             self.ref = False
-        elif 'euler' in self.inp.fit['goon'] and self.inp.fit['euler'] != 0:
-            self.ref = True		
         elif 'rod' in self.inp.fit['goon'] and self.inp.fit['rod'] != 0:
             self.ref = True		
         elif 'eps' in self.inp.fit['goon'] and self.inp.fit['eps'] != 0:
@@ -60,7 +58,7 @@ class fit_minuit():
         elif 'xyz' in self.inp.fit['goon'] and self.inp.fit['xyz'] != 0:
             self.ref = True		
 		
-
+    
 		# carry out refinement
         if self.ref == True:
             self.mg = minuit.Minuit(fcn.FCNgrain)
@@ -73,8 +71,8 @@ class fit_minuit():
             print 'newreject_grain', self.inp.fit['newreject_grain']
             # calculate starting values
             g = self.grain_values()
-            fval = sum(g)
-            print '\n%s starting value %e' %(self.inp.fit['goon'],fval)
+            self.fval = sum(g)
+            print '\n%s starting value %e' %(self.inp.fit['goon'],self.fval)
             t1 = time.clock()
             self.mg = minuit.Minuit(fcn.FCNgrain)
             self.mg.values = self.m.values
@@ -98,8 +96,6 @@ class fit_minuit():
                             self.fitrodgrain(i)
                         elif 'xyz' in self.inp.fit['goon']:
                             self.fitxyzgrain(i)
-                        elif 'euler' in self.inp.fit['goon']:
-                            self.fiteulergrain(i)
                         elif 'rotpos' in self.inp.fit['goon']:
                             self.fitrotposgrain(i)
                         if i == 0:
@@ -122,8 +118,8 @@ class fit_minuit():
 				
             self.time = time.clock()-t1
             print 'Fit %s time %i s' %(self.inp.fit['goon'],self.time)
-            fval = sum(g)
-            print 'Fit %s value %e \n' %(self.inp.fit['goon'],fval)
+            self.fval = sum(g)
+            print 'Fit %s value %e \n' %(self.inp.fit['goon'],self.fval)
 			    
 			
             # reject outliers and save cycle info	
@@ -137,8 +133,9 @@ class fit_minuit():
 
         if 'final' in self.inp.fit['goon'] and (self.inp.newreject > 0):# or len(self.inp.rerefine) > 0):
             self.inp.fit['goon'] = 'grain'+ self.inp.fit['goon'][5:]
-        elif 'rotpos' in self.inp.fit['goon'] and (self.inp.newreject > 0):# or len(self.inp.rerefine) > 0):
-            self.inp.fit['goon'] = 'start'+ self.inp.fit['goon'][6:]
+# delete rotpos rerefine
+#        elif 'rotpos' in self.inp.fit['goon'] and (self.inp.newreject > 0):# or len(self.inp.rerefine) > 0):
+#            self.inp.fit['goon'] = 'start'+ self.inp.fit['goon'][6:]
         elif 'xyz' in self.inp.fit['goon'] and (self.inp.newreject > 0):# or len(self.inp.rerefine) > 0):
             self.inp.fit['goon'] = 'start'+ self.inp.fit['goon'][3:]
         
@@ -204,18 +201,15 @@ class fit_minuit():
         temp2 = self.m.errors		
         temp3 = self.m.fixed
         temp4 = self.mg.tol
-        # make new instance of minuit        
-        self.m = minuit.Minuit(fcn.FCN)
-        self.m.values = temp1		
-        self.m.scan(("L",1,self.m.values['L']-1,self.m.values['L']+1)) # scan to set self.m.fval, function starting value	
         g = n.zeros((self.inp.no_grains))
         self.inp.fit['poor'] = []
         self.poor_value = []
         self.poor_nrefl = []
         for i in range(self.inp.no_grains):
             if i+1 not in self.inp.fit['skip']:
+                # make new instance of minuit        
                 self.mg = minuit.Minuit(fcn.FCNgrain)
-                self.mg.values = self.m.values
+                self.mg.values = temp1
                 self.mg.values['i'] = i
                 self.mg.scan(("L",1,self.mg.values['L']-1,self.mg.values['L']+1)) # scan to set self.m.fval, function starting value
                 g[i] = self.mg.fval
@@ -279,7 +273,7 @@ class fit_minuit():
                             print 'Rejected peak id %i from grain %i (hkl: %i %i %i, limit: %f): %f' %(self.inp.id[i][j],i+1,self.inp.h[i][j],self.inp.k[i][j],self.inp.l[i][j],self.inp.fit['limit'][1],value*self.inp.nrefl[i]/g[i])
                             reject.reject(self.inp,i,j,value*self.inp.nrefl[i]/g[i])
                         
-        if 'final' in self.inp.fit['goon'] or 'grain' in self.inp.fit['goon']:
+        if 'final' in self.inp.fit['goon'] or 'grain' in self.inp.fit['goon']:# or 'rotpos' in self.inp.fit['goon']:
             self.inp.mean_ia = []
             for i in range(self.inp.no_grains):
                 self.inp.mean_ia.append([])
@@ -329,19 +323,6 @@ class fit_minuit():
                 self.m.fixed[entries] = False
 
 		
-    def fiteulergrain(self,i):
-	"""
-	Set tolerance and fixed parameters for fit of orientations for grain i
-	"""
-        self.mg.tol = self.inp.fit['tol_euler']
-        for entries in self.mg.fixed:
-            self.mg.fixed[entries] = True
-
-        for angles in self.grains[i]:
-            if ('phi' in angles or 'PHI' in angles) and self.inp.fit['euler'] != 0:
-                self.mg.fixed[angles] = False
-
-
     def fitrodgrain(self,i):
 	"""
 	Set tolerance and fixed parameters for fit of orientations for grain i
@@ -400,12 +381,8 @@ class fit_minuit():
                 self.mg.fixed[entries] = False
             elif 'eps' in entries and self.inp.fit['eps'] != 0:
                 self.mg.fixed[entries] = False
-            elif (entries[1]=='h' or entries[1]=='H') and self.inp.fit['euler'] != 0:
-                self.mg.fixed[entries] = False
             elif 'rod' in entries and self.inp.fit['rod'] != 0:
                 self.mg.fixed[entries] = False
-#            if self.mg.fixed[entries] == False:
-#                print entries
                 
                 
     def fitrotposgrain(self,i):
@@ -418,8 +395,6 @@ class fit_minuit():
 
         for entries in self.grains[i]:
             if (entries[0]=='x' or entries[0]=='y' or entries[0]=='z') and self.inp.fit['xyz'] != 0:
-                self.mg.fixed[entries] = False
-            elif (entries[1]=='h' or entries[1]=='H') and self.inp.fit['euler'] != 0:
                 self.mg.fixed[entries] = False
             elif 'rod' in entries and self.inp.fit['rod'] != 0:
                 self.mg.fixed[entries] = False

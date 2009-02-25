@@ -141,6 +141,7 @@ def mean_ia(inp,limit,only=None):
                     gexp = n.dot(Omega,gexp)
                     gcalc = n.dot(Omega,gcalc)
                     inp.mean_ia[i][j] = IA(n.transpose(gexp)[0],n.transpose(gcalc)[0])
+#                    print i+1,inp.mean_ia[i][j]
                     if inp.mean_ia[i][j] > limit:
                         delete = delete + 1
                         reject(inp,i,j,'ia')

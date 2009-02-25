@@ -28,6 +28,7 @@ def write_cov(lsqr,i):
     if i == 0:
         f.write('\n \t\n**********%s********** \n\t' %lsqr.inp.fit['goon'])
     lines = 0
+    print 'grain', i+1
     for entry1 in lsqr.grains[i]:
         if lsqr.mg.fixed[entry1] == False:
             if lines == 0:
@@ -406,12 +407,12 @@ def write_log(lsqr):
         else:
             f.write('Tolerance, %e \n' %lsqr.mg.tol)
     f.write('Time %i s \n' %lsqr.time)
-    f.write('Value %e \n \t\n' %lsqr.m.fval)
+    f.write('Value %e \n \t\n' %lsqr.fval)
     f.write('Grain data file: %s_%s.txt \n' %(lsqr.inp.fit['stem'],lsqr.inp.fit['goon']))
     # print values and errors of global parameters
     for entries in lsqr.globals:
         if 'c' not in entries: # skip centres, these must be converted to detector.par convention before output
-            if lsqr.m.fixed[entries] == True or lsqr.mg.fixed[entries] == True:
+            if lsqr.m.fixed[entries] == True or lsqr.m.fixed[entries] == True:
                 f.write('%s %f\n' %(entries, lsqr.m.values[entries]))
             else:
                 f.write('%s %f +- %f\n' %(entries, lsqr.m.values[entries], lsqr.m.errors[entries]))
