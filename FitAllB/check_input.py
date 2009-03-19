@@ -69,6 +69,7 @@ class parse_input:
             'min_refl': 12,
             'near_min_refl': 6,
             'near_const': 1,
+            'cycle': 10,
             'goon': 'start',
             'tol_global': 1e-2,
             'tol_start': 1e-1,

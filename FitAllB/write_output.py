@@ -468,118 +468,57 @@ def write_rej(inp, message = None):
                 %(j+1,inp.fit['rejectid'][j],inp.fit['rejectgrain'][j]+1,inp.fit['hh'][j],inp.fit['kk'][j],inp.fit['ll'][j],inp.fit['rejectvalue'][j]))
  
     f.close()
+
     
-def write_gvectors(lsqr):
+def write_par(lsqr):
     """
-    Write all the model gvectors used in the fit (fcn.gcalc) in _gcalc.txt 
-    and all the experimental gvectors (fcn.gexp) in _gexp.txt
+    Save the detector parameters
+
+    INPUT:  The refined detector info 
+    OUTPUT: The corresponding detector.par file for FitAllB
+            NB! The wedge convention follows FitAllB, thus righthanded, which is opposite of ImageD11
+
+    Jette Oddershede, Risoe DTU, June 17 2008
     """
-    
-    file_gcalc = '%s/%s_gcalc.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
-    file_gexp = '%s/%s_gexp.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
-    
-    fcalc = open(file_gcalc,'w')
-    fexp = open(file_gexp,'w')
-    
-    fcalc.write('# peak omega dety detz gv1 gv2 gv3 h k l IA grainno\n')
-    fexp.write('# peak omega dety detz gv1 gv2 gv3 h k l IA grainno\n')
 
-    format = "%d "*1 + "%f "*3 + "%0.12f "*3 + "%d "*3 + "%0.12f " + "%d " + "\n"
-    
-    for i in range(lsqr.inp.no_grains):
-        if i+1 in lsqr.inp.fit['skip']:
-            pass
-        else:
-            for j in range(lsqr.inp.nrefl[i]):
-                gcalc = fcn.gcalc(lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
-                                  lsqr.inp.rod[i][0]+lsqr.m.values['rodx%s' %i],
-                                  lsqr.inp.rod[i][1]+lsqr.m.values['rodx%s' %i],
-                                  lsqr.inp.rod[i][2]+lsqr.m.values['rodx%s' %i],
-                                  lsqr.m.values['epsaa%s' %i],lsqr.m.values['epsab%s' %i],lsqr.m.values['epsac%s' %i],
-                                  lsqr.m.values['epsbb%s' %i],lsqr.m.values['epsbc%s' %i],lsqr.m.values['epscc%s' %i])
-                gexp = fcn.gexp(lsqr.inp.w[lsqr.inp.id[i][j]],
-                                lsqr.inp.dety[lsqr.inp.id[i][j]],
-                                lsqr.inp.detz[lsqr.inp.id[i][j]],
-                                lsqr.m.values['wx'],lsqr.m.values['wy'],
-                                lsqr.m.values['tx'],lsqr.m.values['ty'],lsqr.m.values['tz'],
-                                lsqr.m.values['py'],lsqr.m.values['pz'],
-                                lsqr.m.values['cy'],lsqr.m.values['cz'],lsqr.m.values['L'],
-                                lsqr.m.values['x%s' %i],lsqr.m.values['y%s' %i],lsqr.m.values['z%s' %i])
-                outcalc = format  %(lsqr.inp.id[i][j],
-                                    lsqr.inp.w[lsqr.inp.id[i][j]],
-                                    lsqr.inp.dety[lsqr.inp.id[i][j]],
-                                    lsqr.inp.detz[lsqr.inp.id[i][j]],
-                                    gcalc[0][0],gcalc[1][0],gcalc[2][0],
-                                    lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
-                                    lsqr.inp.mean_ia[i][j],i+1)
-                outexp = format   %(lsqr.inp.id[i][j],
-                                    lsqr.inp.w[lsqr.inp.id[i][j]],
-                                    lsqr.inp.dety[lsqr.inp.id[i][j]],
-                                    lsqr.inp.detz[lsqr.inp.id[i][j]],
-                                    gexp[0][0],gexp[1][0],gexp[2][0],
-                                    lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
-                                    lsqr.inp.mean_ia[i][j],i+1)
-                fcalc.write(outcalc)       
-                fexp.write(outexp)
-                   
-    fcalc.close()
-    fexp.close()
-                             
-    pos_true = n.array([-421.679, -374.656, -4.720]) 
-    U_true = n.array([[-0.990683685084, -0.136182028039, 0.000539766854],
-                       [0.125499230349, -0.914494074861, -0.384643380583], 
-                       [0.052875129230, -0.380992181394, 0.923065099777]]) 
-    eps_true = n.array([-5.940498e-006, 7.406837e-004, 3.340944e-004, -6.852152e-004, 3.126998e-004, 2.355405e-004])
-    B_true = tools.epsilon_to_b(eps_true,lsqr.inp.param['unit_cell'])
-    UB_true = n.dot(U_true,B_true)
+    filename = '%s/%s_%s_fab.par' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
+    f = open(filename,'w')
+        
+    (z_center, y_center) = detector.detyz_to_xy([lsqr.m.values['cy'],lsqr.m.values['cz']],
+                                                lsqr.inp.param['o11'],lsqr.inp.param['o12'],lsqr.inp.param['o21'],lsqr.inp.param['o22'],
+                                                lsqr.inp.fit['dety_size'],lsqr.inp.fit['detz_size'])
+			
+    dout = "chi %f\n" %lsqr.m.values['wx']
+    dout = dout + "distance %f\n" %(lsqr.m.values['L']) 
+    dout = dout + "fit_tolerance 0.5\n" 
+    dout = dout + "o11 %i\n" %lsqr.inp.param['o11']
+    dout = dout + "o12 %i\n" %lsqr.inp.param['o12']
+    dout = dout + "o21 %i\n" %lsqr.inp.param['o21']
+    dout = dout + "o22 %i\n" %lsqr.inp.param['o22']
+    dout = dout + "omegasign %f\n" %lsqr.inp.param['omegasign']
+    dout = dout + "t_x 0\n" 
+    dout = dout + "t_y 0\n" 
+    dout = dout + "t_z 0\n" 
+    dout = dout + "tilt_x %f\n" %lsqr.m.values['tx']
+    dout = dout + "tilt_y %f\n" %lsqr.m.values['ty']
+    dout = dout + "tilt_z %f\n" %lsqr.m.values['tz']
+    dout = dout + "wavelength %f\n" %lsqr.inp.param['wavelength']
+    dout = dout + "wedge %f\n" %(lsqr.m.values['wy'])
+    dout = dout + "y_center %f\n" %y_center
+    dout = dout + "y_size %f\n" %lsqr.m.values['py']
+    dout = dout + "z_center %f\n" %z_center
+    dout = dout + "z_size %f\n" %lsqr.m.values['pz']
 
-    pos = n.array([lsqr.m.values['x0'],lsqr.m.values['y0'],lsqr.m.values['z0']])
-    U = tools.rod_to_u([lsqr.inp.rod[0][0]+lsqr.m.values['rodx0'],lsqr.inp.rod[0][1]+lsqr.m.values['rody0'],lsqr.inp.rod[0][2]+lsqr.m.values['rodz0']])
-    eps = n.array([lsqr.m.values['epsaa0'],lsqr.m.values['epsab0'],lsqr.m.values['epsac0'],
-                   lsqr.m.values['epsbb0'],lsqr.m.values['epsbc0'],lsqr.m.values['epscc0']])
-    B = tools.epsilon_to_b(eps,lsqr.inp.param['unit_cell'])
-    UB = n.dot(U,B)
-    
-    mislist = symmetry.Umis(U_true,U,7)
-    mis = 1.
-    for k in range(len(mislist)):
-        if mislist[k][1] < mis:
-            mis = mislist[k][1]
+    out = "cell__a %s\n" %lsqr.inp.param['unit_cell'][0]
+    out = out + "cell__b %s\n" %lsqr.inp.param['unit_cell'][1]
+    out = out + "cell__c %s\n" %lsqr.inp.param['unit_cell'][2]
+    out = out + "cell_alpha %s\n" %lsqr.inp.param['unit_cell'][3]
+    out = out + "cell_beta %s\n" %lsqr.inp.param['unit_cell'][4]
+    out = out + "cell_gamma %s\n" %lsqr.inp.param['unit_cell'][5]
+    out = out + "cell_lattice_[P,A,B,C,I,F,R] %s\n" %lsqr.inp.param['cell_lattice_[P,A,B,C,I,F,R]']
+    out = out + dout
 
-    file_ub = '%s/%s_ub.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
-    fub = open(file_ub,'w')
+    f.write(out)
+    f.close()   
 
-    posformat = "%f "*3 + "\n"
-    format = "%0.12f "*3 + "\n"
-    fub.write('pos_true\n')
-    fub.write(posformat %(pos_true[0],pos_true[1],pos_true[2]))
-    fub.write('U_true\n')
-    fub.write(format %(U_true[0][0],U_true[0][1],U_true[0][2]))
-    fub.write(format %(U_true[1][0],U_true[1][1],U_true[1][2]))
-    fub.write(format %(U_true[2][0],U_true[2][1],U_true[2][2]))    
-    fub.write('B_true\n')
-    fub.write(format %(B_true[0][0],B_true[0][1],B_true[0][2]))
-    fub.write(format %(B_true[1][0],B_true[1][1],B_true[1][2]))
-    fub.write(format %(B_true[2][0],B_true[2][1],B_true[2][2]))    
-    fub.write('UB_true\n')
-    fub.write(format %(UB_true[0][0],UB_true[0][1],UB_true[0][2]))
-    fub.write(format %(UB_true[1][0],UB_true[1][1],UB_true[1][2]))
-    fub.write(format %(UB_true[2][0],UB_true[2][1],UB_true[2][2]))    
-    fub.write('pos\n')
-    fub.write(posformat %(pos[0],pos[1],pos[2]))
-    fub.write('U\n')
-    fub.write(format %(U[0][0],U[0][1],U[0][2]))
-    fub.write(format %(U[1][0],U[1][1],U[1][2]))
-    fub.write(format %(U[2][0],U[2][1],U[2][2]))    
-    fub.write('B\n')
-    fub.write(format %(B[0][0],B[0][1],B[0][2]))
-    fub.write(format %(B[1][0],B[1][1],B[1][2]))
-    fub.write(format %(B[2][0],B[2][1],B[2][2]))    
-    fub.write('UB\n')
-    fub.write(format %(UB[0][0],UB[0][1],UB[0][2]))
-    fub.write(format %(UB[1][0],UB[1][1],UB[1][2]))
-    fub.write(format %(UB[2][0],UB[2][1],UB[2][2]))    
-    fub.write('misorientation: %s\n' %mis)
-    
-    
     

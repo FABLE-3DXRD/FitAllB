@@ -39,6 +39,8 @@ far.read_rej()                      # read file containing rejected peaks to res
 far.set_start()                     # set values and errors for refinement start
 check_input.set_globals(far)
 
+#for key in far.param.keys():
+#    print key,far.param[key]
 
 #  Farfield outlier rejection
 if far.fit['resume'] == None: # do outlier rejection

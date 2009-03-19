@@ -55,7 +55,7 @@ def find_refl(inp):
                     Gw = n.dot(S,n.dot(U,Gc))
                     tth = tools.tth2(Gw,inp.param['wavelength'])
                     costth = n.cos(tth)
-                    (Omega, Eta) = tools.find_omega_quart(inp.param['wavelength']/(4.*n.pi)*Gw,tth,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  # correct way to do it except function not yet working
+                    (Omega, Eta) = tools.find_omega_general(inp.param['wavelength']/(4.*n.pi)*Gw,tth,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  
                     if len(Omega) > 0:
                         for solution in range(len(Omega)):
                             omega = Omega[solution]
@@ -64,7 +64,7 @@ def find_refl(inp):
                                 if  (inp.fit['w_limit'][2*i]*n.pi/180) < omega and\
                                     omega < (inp.fit['w_limit'][2*i+1]*n.pi/180):
                                 # form Omega rotation matrix
-                                    Om = tools.quart_to_omega(omega*180./n.pi,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  # correct way to do it except omega incorrectly determined
+                                    Om = tools.form_omega_mat_general(omega,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  
                                     Gt = n.dot(Om,Gw) 
                                 # Calc crystal position at present omega
                                     [tx,ty,tz]= n.dot(Om,gr_pos)

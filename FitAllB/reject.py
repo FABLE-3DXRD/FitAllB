@@ -127,7 +127,7 @@ def mean_ia(inp,limit,only=None):
             else:
                 rod = n.array([inp.rod[i][0]+inp.values['rodx%s' %i],inp.rod[i][1]+inp.values['rody%s' %i],inp.rod[i][2]+inp.values['rodz%s' %i]])
                 for j in range(inp.nrefl[i]-1,-1,-1):
-                    Omega = tools.quart_to_omega(inp.w[inp.id[i][j]],inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)
+                    Omega = tools.form_omega_mat_general(inp.w[inp.id[i][j]]*n.pi/180,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)
                     gexp = fcn.gexp(inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],
                                     inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],
                                     inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],
@@ -138,8 +138,8 @@ def mean_ia(inp,limit,only=None):
                                       rod[2],
                                       inp.values['epsaa%s' %i],inp.values['epsab%s' %i],inp.values['epsac%s' %i],
                                       inp.values['epsbb%s' %i],inp.values['epsbc%s' %i],inp.values['epscc%s' %i])
-                    gexp = n.dot(Omega,gexp)
-                    gcalc = n.dot(Omega,gcalc)
+#                    gexp = n.dot(Omega,gexp)
+#                    gcalc = n.dot(Omega,gcalc)
                     inp.mean_ia[i][j] = IA(n.transpose(gexp)[0],n.transpose(gcalc)[0])
 #                    print i+1,inp.mean_ia[i][j]
                     if inp.mean_ia[i][j] > limit:
@@ -168,7 +168,7 @@ def mean_ia_old(inp,limit,only=None):
             else:
                 rod = n.array([inp.rod[i][0]+inp.values['rodx%s' %i],inp.rod[i][1]+inp.values['rody%s' %i],inp.rod[i][2]+inp.values['rodz%s' %i]])
                 for j in range(inp.nrefl[i]):
-                    Omega = tools.quart_to_omega(inp.w[inp.id[i][j]],inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)
+                    Omega = tools.form_omega_mat_general(inp.w[inp.id[i][j]]*n.pi/180,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)
                     gexp = fcn.gexp(inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],
                                     inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],
                                     inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],

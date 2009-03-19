@@ -110,6 +110,8 @@ class fit_minuit():
             self.reject_outliers()
             write_output.write_rej(self.inp,message=self.inp.fit['goon'])
             write_output.write_log(self)
+            if 'globals' in self.inp.fit['goon']:
+                write_output.write_par(self)
 
        
 		# move onto next refinement given by the reforder list	
@@ -230,6 +232,8 @@ class fit_minuit():
 #        print self.mg.fixed
         for entries in self.mg.fixed:
             if entries=='wy' and self.inp.fit['w'] != 0:
+                self.mg.fixed[entries] = False
+            elif entries=='wx' and self.inp.fit['w'] != 0:
                 self.mg.fixed[entries] = False
             elif entries[0]=='t' and self.inp.fit['tilt'] != 0:
                 self.mg.fixed[entries] = False
