@@ -229,6 +229,8 @@ class parse_input:
                                                           self.fit['dety_size'],self.fit['detz_size'])
         self.param['y_center'] = dety_center
         self.param['z_center'] = detz_center
+        #read Jons wedge convention and convert to Sorens
+        self.param['wedge'] = -1.*self.param['wedge']
 				
                 
     def read_flt(self,flt_file): # read peaks_t##.flt and calculate experimental variances Sww,Syy,Szz

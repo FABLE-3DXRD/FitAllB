@@ -411,24 +411,24 @@ def write_log(lsqr):
     f.write('Grain data file: %s_%s.txt \n' %(lsqr.inp.fit['stem'],lsqr.inp.fit['goon']))
     # print values and errors of global parameters
     for entries in lsqr.globals:
-        if 'c' not in entries: # skip centres, these must be converted to detector.par convention before output
+#        if 'c' not in entries: # skip centres, these must be converted to detector.par convention before output
             if lsqr.m.fixed[entries] == True or lsqr.m.fixed[entries] == True:
                 f.write('%s %f\n' %(entries, lsqr.m.values[entries]))
             else:
                 f.write('%s %f +- %f\n' %(entries, lsqr.m.values[entries], lsqr.m.errors[entries]))
                     
     # convert beam center to detector.par convention
-    (z_center, y_center) = detector.detyz_to_xy([lsqr.m.values['cy'],lsqr.m.values['cz']],
-                                                lsqr.inp.param['o11'],lsqr.inp.param['o12'],lsqr.inp.param['o21'],lsqr.inp.param['o22'],
-                                                lsqr.inp.fit['dety_size'],lsqr.inp.fit['detz_size'])
-    (z_error, y_error) = n.dot(n.array([[abs(lsqr.inp.param['o11']),abs(lsqr.inp.param['o12'])],[abs(lsqr.inp.param['o21']),abs(lsqr.inp.param['o22'])]]),
-                               n.array([lsqr.m.errors['cy'],lsqr.m.errors['cz']]))
-    if lsqr.m.fixed['cy'] == True:
-        f.write('%s %f\n' %('cy', y_center))
-        f.write('%s %f\n' %('cz', z_center))
-    else:
-        f.write('%s %f +- %f\n' %('cy', y_center, y_error))
-        f.write('%s %f +- %f\n' %('cz', z_center, z_error))
+#    (z_center, y_center) = detector.detyz_to_xy([lsqr.m.values['cy'],lsqr.m.values['cz']],
+#                                                lsqr.inp.param['o11'],lsqr.inp.param['o12'],lsqr.inp.param['o21'],lsqr.inp.param['o22'],
+#                                                lsqr.inp.fit['dety_size'],lsqr.inp.fit['detz_size'])
+#    (z_error, y_error) = n.dot(n.array([[abs(lsqr.inp.param['o11']),abs(lsqr.inp.param['o12'])],[abs(lsqr.inp.param['o21']),abs(lsqr.inp.param['o22'])]]),
+#                               n.array([lsqr.m.errors['cy'],lsqr.m.errors['cz']]))
+#    if lsqr.m.fixed['cy'] == True:
+#        f.write('%s %f\n' %('cy', y_center))
+#        f.write('%s %f\n' %('cz', z_center))
+#    else:
+#        f.write('%s %f +- %f\n' %('cy', y_center, y_error))
+#        f.write('%s %f +- %f\n' %('cz', z_center, z_error))
        
 	# print info on poor grains and rejected peaks	
     f.write('\nPoor grains: %s' %lsqr.inp.fit['poor'])
@@ -503,7 +503,7 @@ def write_par(lsqr):
     dout = dout + "tilt_y %f\n" %lsqr.m.values['ty']
     dout = dout + "tilt_z %f\n" %lsqr.m.values['tz']
     dout = dout + "wavelength %f\n" %lsqr.inp.param['wavelength']
-    dout = dout + "wedge %f\n" %(lsqr.m.values['wy'])
+    dout = dout + "wedge %f\n" %(-1.*lsqr.m.values['wy']) #write jons wedge convention even though sorens is used internally in the program
     dout = dout + "y_center %f\n" %y_center
     dout = dout + "y_size %f\n" %lsqr.m.values['py']
     dout = dout + "z_center %f\n" %z_center

@@ -63,6 +63,7 @@ class fit_minuit():
             for entries in self.mg.fixed:
                 self.mg.fixed[entries] = True
             global_parameters = []
+            weight = []
             for i in range(self.inp.no_grains):
                     if i+1 in self.inp.fit['skip']:
                         pass
@@ -77,9 +78,10 @@ class fit_minuit():
 #                        self.scale_errors(i)
                         g[i] = self.mg.fval
                         temp = []
-                        for i in range(len(self.globals)):
-                            temp.append(self.mg.values[self.globals[i]])
+                        for j in range(len(self.globals)):
+                            temp.append(self.mg.values[self.globals[j]])
                         global_parameters.append(temp)
+                        weight.append(len(self.inp.mean_ia[i])/n.sum(self.inp.mean_ia[i]))
                         self.m = self.mg
                         write_output.write_global(self)
 				
@@ -90,14 +92,26 @@ class fit_minuit():
 			    
 			# get global parameters and errors on these as average and spread of global_parameters
             global_parameters = n.array(global_parameters)
-            average_global_parameters = global_parameters.mean(0)
-            spread_global_parameters = global_parameters.std(0)
-#            print global_parameters
-#            print average_global_parameters
-#            print spread_global_parameters
-            for i in range(len(self.globals)):
-                self.mg.values[self.globals[i]] = average_global_parameters[i]
-                self.mg.errors[self.globals[i]] = spread_global_parameters[i]
+            weight = n.array(weight)
+            weight = weight/n.sum(weight)
+#            average_global_parameters = global_parameters.mean(0)
+#            spread_global_parameters = global_parameters.std(0)
+            average_global_parameters = n.zeros(len(self.globals))
+            spread_global_parameters = n.zeros(len(self.globals))
+            for i in range(len(global_parameters)):
+                average_global_parameters = average_global_parameters + global_parameters[i] * weight[i] 
+            for i in range(len(global_parameters)):
+                spread_global_parameters = spread_global_parameters + (global_parameters[i] - average_global_parameters)**2 * weight[i] 
+            spread_global_parameters = spread_global_parameters**.5
+            
+            print global_parameters
+            print weight
+            print average_global_parameters
+            print spread_global_parameters
+            
+            for j in range(len(self.globals)):
+                self.mg.values[self.globals[j]] = average_global_parameters[j]
+                self.mg.errors[self.globals[j]] = spread_global_parameters[j]
 #            print 'mg',self.mg.values['L']
 #            print 'm',self.m.values['L']
 #            print 'inp',self.inp.values['L']
@@ -239,7 +253,7 @@ class fit_minuit():
                 self.mg.fixed[entries] = False
             elif 'p' in entries and len(entries) == 2 and self.inp.fit['pixel'] != 0:
                 self.mg.fixed[entries] = False
-            elif entries[0]=='c' and self.inp.fit['center'] != 0:
+            elif entries=='cy' and self.inp.fit['center'] != 0:
                 self.mg.fixed[entries] = False
             elif 'L' in entries and self.inp.fit['L'] != 0:
                 self.mg.fixed[entries] = False
