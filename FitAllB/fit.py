@@ -311,13 +311,13 @@ class fit_minuit():
 	"""
         self.m.tol = self.inp.fit['tol_start']
         for entries in self.m.fixed:
-            if entries=='wy' and self.inp.fit['w'] != 0:
+            if entries[0]=='w' and self.inp.fit['w'] != 0:
                 self.m.fixed[entries] = False
             elif entries[0]=='t' and self.inp.fit['tilt'] != 0:
                 self.m.fixed[entries] = False
             elif 'p' in entries and len(entries) == 2 and self.inp.fit['pixel'] != 0:
                 self.m.fixed[entries] = False
-            elif entries[0]=='c' and self.inp.fit['center'] != 0:
+            elif entries[0]=='cy' and self.inp.fit['center'] != 0:
                 self.m.fixed[entries] = False
             elif 'L' in entries and self.inp.fit['L'] != 0:
                 self.m.fixed[entries] = False
@@ -407,7 +407,7 @@ def refine(inp):
     while inp.fit['goon'] != 'end':
         check_input.set_globals(inp)
         # calculate experimental errors using the present values 
-        from FitAllB import error
+#        from FitAllB import error
 #        error.vars_scale(inp)   # function to ensure correct relative scaling of variances between grains
 #        error.vars(inp)
         # build functions to minimise
