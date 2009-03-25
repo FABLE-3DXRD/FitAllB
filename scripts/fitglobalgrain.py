@@ -83,8 +83,8 @@ for k in range(far.fit['cycle']):
     # refine globals
     far.fit['reforder'] = ['start%s' %k,'globals%s' %k,'end'] 
     far.fit['goon'] = far.fit['reforder'][0]
-    from FitAllB import fitgg
-    fitgg.refine(far)
+    from FitAllB import globals
+    globals.refine(far)
     far.residual = []
     far.volume = []
     far.mean_ia = []
