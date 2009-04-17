@@ -43,34 +43,17 @@ check_input.set_globals(far)
 #    print key,far.param[key]
 
 #  Farfield outlier rejection
-if far.fit['resume'] == None: # do outlier rejection
-    if far.files['res_file'] != None:
-        from FitAllB import near_field
-        near_field.find_refl(far)
-        near_field.match(far)
-    from FitAllB import error
-    error.vars(far)
-    from FitAllB import build_fcn
-    build_fcn.FCN(far)
-    far.reject()            
-else:                          # if refinement is resumed build residual and volume arrays 
-    far.residual = []
-    far.volume = []
-    far.mean_ia = []
-    for i in range(far.no_grains):
-        far.residual.append([])
-        far.volume.append([])
-        far.mean_ia.append([])
-        for j in range(far.nrefl[i]):
-            far.residual[i].append(1)
-            far.volume[i].append(1)
-            far.mean_ia[i].append(1)
-    from FitAllB import reject
-    reject.intensity(far)       # necessary to get correct volumes in output file, very few peaks actually rejected
+if far.files['res_file'] != None:
+    from FitAllB import near_field
+    near_field.find_refl(far)
+    near_field.match(far)
+from FitAllB import error
+error.vars(far)
+from FitAllB import build_fcn
+build_fcn.FCN(far)
+far.reject()            
 far.write_rej()                 
 
-#for i in range(far.no_grains):
-#    if far.volume[i]
 
 # farfield refinement
 for k in range(far.fit['cycle']):
@@ -78,13 +61,14 @@ for k in range(far.fit['cycle']):
     # refine grain paramters
     far.fit['reforder'] = ['start%s' %k,'rotpos%s' %k,'end'] 
     far.fit['goon'] = far.fit['reforder'][0]
+    far.fit['newreject_grain'] = range(far.no_grains+1)
     from FitAllB import fit
     fit.refine(far)
     # refine globals
-    far.fit['reforder'] = ['start%s' %k,'globals%s' %k,'end'] 
+    far.fit['reforder'] = ['globals%s' %k,'end'] 
     far.fit['goon'] = far.fit['reforder'][0]
-    from FitAllB import fitgg
-    fitgg.refine(far)
+    from FitAllB import fitga
+    fitga.refine(far)
     far.residual = []
     far.volume = []
     far.mean_ia = []
@@ -97,8 +81,8 @@ for k in range(far.fit['cycle']):
             far.volume[i].append(1)
             far.mean_ia[i].append(1)
     from FitAllB import reject
-    reject.residual(far,far.fit['limit'][0])       
-    reject.mean_ia(far,far.fit['ia']*float(k+2)/float(k+1))       
+    reject.residual(far,far.fit['rej_resmedian'])       
+    reject.mean_ia(far,far.fit['rej_ia']*float(k+2)/float(k+1))       
     reject.intensity(far)       
     from FitAllB import write_output
     write_output.write_rej(far,message='globals%i' %k)                 
@@ -119,8 +103,6 @@ if far.files['near_flt_file'] != None:
         if key[0:5] == 'near_': 
             near.fit[key[5:len(key)]] = near.fit[key]
     near.fit['stem'] = far.fit['stem'] + '_near'
-#    print 'far.fit', far.fit
-#    print 'near.fit', near.fit
     near.read_par(near.files['near_par_file'])
     near.read_flt(near.files['near_flt_file'])
     keys = ['cell__a','cell__b','cell__c','cell_alpha','cell_beta','cell_gamma','cell_lattice_[P,A,B,C,I,F,R]','chi','omegasign','wavelength']
@@ -149,13 +131,14 @@ if far.files['near_flt_file'] != None:
         # refine grain paramters
         near.fit['reforder'] = ['start%s' %k,'rotpos%s' %k,'end'] 
         near.fit['goon'] = near.fit['reforder'][0]
+        near.fit['newreject_grain'] = range(near.no_grains+1)
         from FitAllB import fit
         fit.refine(near)
         # refine globals
-        near.fit['reforder'] = ['start%s' %k,'globals%s' %k,'end'] 
+        near.fit['reforder'] = ['globals%s' %k,'end'] 
         near.fit['goon'] = near.fit['reforder'][0]
-        from FitAllB import globals
-        globals.refine(near)
+        from FitAllB import fitga
+        fitga.refine(near)
         near.residual = []
         near.volume = []
         near.mean_ia = []
@@ -168,8 +151,8 @@ if far.files['near_flt_file'] != None:
                 near.volume[i].append(1)
                 near.mean_ia[i].append(1)
         from FitAllB import reject
-        reject.residual(near,near.fit['limit'][0])       
-        reject.mean_ia(near,near.fit['ia']*float(k+2)/float(k+1))       
+        reject.residual(near,near.fit['rej_resmedian'])       
+        reject.mean_ia(near,near.fit['rej_ia']*float(k+2)/float(k+1))       
         reject.intensity(near)       
         from FitAllB import write_output
         write_output.write_rej(near,message='globals%i' %k)                 
@@ -182,6 +165,7 @@ if far.files['near_flt_file'] != None:
 
     
 # program ends here after deleting fcn.py and fcn.pyc
+print '\nNormal termination of FitGlobAll'
 os.remove('%s/fcn.py' %far.fit['direc'])
 os.remove('%s/fcn.pyc' %far.fit['direc'])
 sys.exit()

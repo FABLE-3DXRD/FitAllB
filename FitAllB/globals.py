@@ -247,8 +247,8 @@ class fit_minuit():
         for entries in self.mg.fixed:
             if entries=='wy' and self.inp.fit['w'] != 0:
                 self.mg.fixed[entries] = False
-            elif entries=='wx' and self.inp.fit['w'] != 0:
-                self.mg.fixed[entries] = False
+#            elif entries=='wx' and self.inp.fit['w'] != 0:
+#                self.mg.fixed[entries] = False
             elif entries[0]=='t' and self.inp.fit['tilt'] != 0:
                 self.mg.fixed[entries] = False
             elif 'p' in entries and len(entries) == 2 and self.inp.fit['pixel'] != 0:

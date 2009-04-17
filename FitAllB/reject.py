@@ -71,7 +71,7 @@ def intensity(inp):
                     newreject = 1
                     while newreject > 0:
                         tmp = len(rej)
-                        mad(data[i],rej,inp.fit['mad'][0])
+                        mad(data[i],rej,inp.fit['rej_vol'])
                         newreject = len(rej) - tmp
                     avgdata = n.sum(data[i])/len(data[i])
                     sigdata = spread(data[i])
@@ -215,9 +215,6 @@ def mean_ia_old(inp,limit,only=None):
                     if inp.mean_ia[i][j] > maxia[i]:
                         delete = delete + 1
                         reject(inp,i,j,'ia')
-#                    elif inp.mean_ia[i][j] > 1.:
-#                        delete = delete + 1
-#                        reject(inp,i,j,'ia')
         if only != []:
             print 'Rejected', delete, 'reflection based on internal angles'
         insignificant(inp)
@@ -312,10 +309,11 @@ def multi(inp):
                                         
 
         # for peaks assigned to more than one grain remove all but the best assignment                
-        for i in range(len(bad)-1,-1,-1):
-            reject(inp,bad[i][0],bad[i][1],'multi')
-        print 'Delete',len(bad), 'reflection because they are assigned to more than one grain' 
-        insignificant(inp)
+        if inp.fit['rej_multi'] != 0:
+            for i in range(len(bad)-1,-1,-1):
+                reject(inp,bad[i][0],bad[i][1],'multi')
+            print 'Delete',len(bad), 'reflection because they are assigned to more than one grain' 
+            insignificant(inp)
                                     
         
 def overflow(inp):
@@ -333,8 +331,7 @@ def overflow(inp):
     
 def residual(inp,limit,only=None):
         """
-        Reject outliers peaks with a distance to the calculated peak position of
-        more than limit times the mean distance for the given grain	
+        Reject outliers peaks based on residuals until mean<limit*median	
 		
 		Jette Oddershede, Risoe DTU, May 15 2008
         """
@@ -521,7 +518,7 @@ def spread(data):
 def mad(data,reject,limit):
         """
         Perform outlier rejection based on median absolute deviation
-        Move all data points more than 5 median absolute deviations to the reject list
+        Move all data points more than limit median absolute deviations to the reject list
         
         Jette Oddershede 28 August 2008
         """

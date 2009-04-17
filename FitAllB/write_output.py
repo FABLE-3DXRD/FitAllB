@@ -3,7 +3,6 @@ from xfab import tools
 from xfab import symmetry
 from xfab import detector
 import reject
-#import fcn
 import sys
 import logging
 import conversion
@@ -19,8 +18,8 @@ def write_cov(lsqr,i):
     """
     
     # clear cov file at first visit 
-    filename = '%s/%s_%s_cov.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
-    if i == 0:
+    filename = '%s/%s_cov.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
+    if i == 0 and lsqr.inp.fit['goon'] == 'grain':
         f = open(filename,'w')
         f.close()
     # now open for appending
@@ -28,7 +27,6 @@ def write_cov(lsqr,i):
     if i == 0:
         f.write('\n \t\n**********%s********** \n\t' %lsqr.inp.fit['goon'])
     lines = 0
-    print 'grain', i+1
     for entry1 in lsqr.grains[i]:
         if lsqr.mg.fixed[entry1] == False:
             if lines == 0:
@@ -56,8 +54,8 @@ def write_cor(lsqr,i):
     """
     
     # clear cor file at first visit
-    filename = '%s/%s_%s_cor.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
-    if i == 0:
+    filename = '%s/%s_cor.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
+    if i == 0 and lsqr.inp.fit['goon'] == 'grain':
         f = open(filename,'w')
         f.close()
     # now open for appending
@@ -93,7 +91,7 @@ def write_global(lsqr):
     
     # clear cor file at first visit
     filename = '%s/%s_global.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
-    if lsqr.inp.fit['goon'] == 'start':
+    if lsqr.inp.fit['goon'] == 'globals0':
         f = open(filename,'w')
         f.write('NB! The beam center coordinates refer to the internal coordinate system \n')
         f.write('    unlike the values of cy and cz output in the log file \n')
@@ -158,7 +156,7 @@ def write_values(lsqr):
     """
 
 
-    filename = '%s/%s_%s.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
+    filename = '%s/%s_%s.gff' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
     f = open(filename,'w')
     format = "%d "*1 + "%f "*8 + "%0.12f "*9 + "%e "*24 +"\n"
     out = "# grainno mean_IA grainvolume x y z rodx rody rodz U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
@@ -300,8 +298,8 @@ def write_errors(lsqr,i):
     cov_sig = conversion.CovarianceTransformation(cov_eps,lsqr.inp.C)
     cov_sig_s = conversion.CovarianceRotation(cov_sig,U)
     
-    filename = '%s/%s_errors.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
-    filename2 = '%s/%s_%s_errors.txt' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
+    filename = '%s/%s_errors.gff' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
+    filename2 = '%s/%s_%s_errors.gff' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
     try:
         f = open(filename,'r')
         lines = f.readlines()
@@ -411,32 +409,18 @@ def write_log(lsqr):
     f.write('Grain data file: %s_%s.txt \n' %(lsqr.inp.fit['stem'],lsqr.inp.fit['goon']))
     # print values and errors of global parameters
     for entries in lsqr.globals:
-#        if 'c' not in entries: # skip centres, these must be converted to detector.par convention before output
             if lsqr.m.fixed[entries] == True or lsqr.m.fixed[entries] == True:
                 f.write('%s %f\n' %(entries, lsqr.m.values[entries]))
             else:
                 f.write('%s %f +- %f\n' %(entries, lsqr.m.values[entries], lsqr.m.errors[entries]))
-                    
-    # convert beam center to detector.par convention
-#    (z_center, y_center) = detector.detyz_to_xy([lsqr.m.values['cy'],lsqr.m.values['cz']],
-#                                                lsqr.inp.param['o11'],lsqr.inp.param['o12'],lsqr.inp.param['o21'],lsqr.inp.param['o22'],
-#                                                lsqr.inp.fit['dety_size'],lsqr.inp.fit['detz_size'])
-#    (z_error, y_error) = n.dot(n.array([[abs(lsqr.inp.param['o11']),abs(lsqr.inp.param['o12'])],[abs(lsqr.inp.param['o21']),abs(lsqr.inp.param['o22'])]]),
-#                               n.array([lsqr.m.errors['cy'],lsqr.m.errors['cz']]))
-#    if lsqr.m.fixed['cy'] == True:
-#        f.write('%s %f\n' %('cy', y_center))
-#        f.write('%s %f\n' %('cz', z_center))
-#    else:
-#        f.write('%s %f +- %f\n' %('cy', y_center, y_error))
-#        f.write('%s %f +- %f\n' %('cz', z_center, z_error))
-       
+                          
 	# print info on poor grains and rejected peaks	
     f.write('\nPoor grains: %s' %lsqr.inp.fit['poor'])
     f.write('\nPoor grains values: %s' %lsqr.poor_value)
     f.write('\nPoor grains nrefl: %s\n' %lsqr.poor_nrefl)
     f.write('\nSkip grains: %s\n' %lsqr.inp.fit['skip'])
     f.write('\nNumber of refined grains: %s\n' %(lsqr.inp.no_grains-len(lsqr.inp.fit['skip'])))
-    f.write('Number of rejected outliers using limit %f (new, total): (%i , %i)' %(lsqr.inp.fit['limit'][1],lsqr.inp.newreject,lsqr.inp.fit['outliers']))
+    f.write('Number of rejected outliers (new, total): (%i , %i)' %(lsqr.inp.newreject,lsqr.inp.fit['outliers']))
     observations = 0
     for i in range(lsqr.inp.no_grains):
         if i+1 in lsqr.inp.fit['skip']:

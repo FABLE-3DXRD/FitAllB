@@ -34,75 +34,88 @@ class parse_input:
                     'par_file' : 'Missing input: ImageD11 detector.par file'
                     }
         self.optional_items = {
+            #misc options
+            'title': 'Title',
+            'bg': 1000,
+            'near_bg': 100,
+            'const': 1,
+            'near_const': 1,
+            #fitgloball and fitglobalgrain options
+            'cycle': 20,
+            'near_cycle': 20,
+            #optional files
+            'structure_file': None,
+            'near_flt_file': None,
+            'near_par_file': None,
+            #experimental setup
             'dety_size': 2048,
             'detz_size': 2048,
             'near_dety_size': 1536,
             'near_detz_size': 1024,
+            'w_limit': None,
+            #fit parameters
             'w': 0,
             'tilt': 0,
             'pixel': 0,
             'center': 0,
             'L': 0,
-            'euler': 0,
             'rod': 1,
             'xyz': 1,
             'eps': 1,
-            'printmode': 0,
-            'strategy': 0,
-            'limit': [5,10], 
-            'mad': [5,25],
-            'overlap': 0.8,
-			'hesse': 0,
+            'near_w': 0,
+            'near_tilt': 0,
+            'near_pixel': 0,
+            'near_center': 0,
+            'near_L': 0,
+            'near_rod': 0,
+            'near_xyz': 1,
+            'near_eps': 0,
+            #outlier rejection
             'skip': [],
-            'resume': None,
-            'near_resume':None,
+            'rej_vol': 5,
+            'rej_resmean': 10,
+            'rej_resmedian': 5,
+            'rej_ia': 0.2,
+            'rej_multi': 1,
+            'min_refl': 9,
+            'overlap': 1.,
+            'near_rej_vol': 5,
+            'near_rej_resmean': 10,
+            'near_rej_resmedian': 5,
+            'near_rej_ia': 0.5,
+            'near_rej_multi': 1,
+            'near_min_refl': 3,
+            'overlap': 1.,
+            #tolerances
+            'tol_global': 1e-2,
+            'tol_rotpos': 1e-2,
+            'tol_grain': 1e-3,
+            #resume refinement option
             'res_file': None,
             'rej_file': None,
-            'structure_file': None,
-            'near_flt_file': None,
-            'near_par_file': None,
-            'bg': 100,
-            'near_bg': 67,
-            'const': 1,
-            'ia': 0.2,
-            'near_ia': 0.5,
-            'min_refl': 12,
-            'near_min_refl': 6,
-            'near_const': 1,
-            'cycle': 10,
-            'goon': 'start',
-            'tol_global': 1e-2,
-            'tol_start': 1e-1,
-            'tol_euler': 1e-1,
-            'tol_rod': 1e-1,
-            'tol_xyz': 1e-1,
-            'tol_rotpos': 1e-2,
-            'tol_eps': 1e-2,
-            'tol_grain': 1e-3,
-            'title': 'Title',
-            'w_limit': None,
+            #strain to stress conversion
             'crystal_system': None,
-            'c11': None,
-            'c12': None,
-            'c13': None,
-            'c14': None,
-            'c15': None,
-            'c16': None,
-            'c22': None,
-            'c23': None,
-            'c24': None,
-            'c25': None,
-            'c26': None,
-            'c33': None,
-            'c34': None,
-            'c35': None,
-            'c36': None,
-            'c44': None,
-            'c45': None,
-            'c46': None,
-            'c55': None,
-            'c56': None,
-            'c66': None
+            'c11': 0,
+            'c12': 0,
+            'c13': 0,
+            'c14': 0,
+            'c15': 0,
+            'c16': 0,
+            'c22': 0,
+            'c23': 0,
+            'c24': 0,
+            'c25': 0,
+            'c26': 0,
+            'c33': 0,
+            'c34': 0,
+            'c35': 0,
+            'c36': 0,
+            'c44': 0,
+            'c45': 0,
+            'c46': 0,
+            'c55': 0,
+            'c56': 0,
+            'c66': 0
             }
 
         self.newreject = 0
@@ -135,7 +148,12 @@ class parse_input:
                     val = line[1:]
 
                     valtmp = '['
-                    if len(val) > 1 or key == 'skip':
+                    if key == 'title':
+                        valtmp = ''
+                        for i in val:
+                            valtmp = valtmp + i + ' '
+                        val = valtmp
+                    elif len(val) > 1 or key == 'skip':
                         for i in val:
                             valtmp = valtmp + i +','
 							
@@ -155,6 +173,7 @@ class parse_input:
         stem = split(self.filename,'.')[0]		
         self.fit['stem'] = stem
         self.fit['direc'] = deepcopy(stem)
+        print self.fit['title']
 				
                 
 						
@@ -201,7 +220,7 @@ class parse_input:
         try:
             f=open(par_file,'r')
         except IOError:
-            logging.error('No file named %s' %filename)
+            logging.error('par_file: no file named %s' %par_file)
             raise IOError
         
         input = f.readlines()
@@ -235,6 +254,14 @@ class parse_input:
                 
     def read_flt(self,flt_file): # read peaks_t##.flt and calculate experimental variances Sww,Syy,Szz
         # create parameters, must be lists in order to append
+        try:
+            f=open(flt_file,'r')
+        except IOError:
+            logging.error('flt_file: no file named %s' %flt_file)
+            raise IOError
+        
+        input = f.readlines()
+        f.close()
 		
         #read as columnfile to avoid problems if peaksearch output is changed
         flt = ic.columnfile(flt_file)
@@ -360,23 +387,7 @@ class parse_input:
         self.Sww = [self.fit['w_step']**2/12.]*self.param['total_refl']
         self.Syy = [1.]*self.param['total_refl']
         self.Szz = [1.]*self.param['total_refl']
-#        self.Syy = [1./12.]*self.param['total_refl']
-#        self.Szz = [1./12.]*self.param['total_refl']
-
-        
-        #NB! should be sig**2/int, the -1 term is a temporary fix and so are the limits of 1, this should be 0
-        # Error expressions taken from Withers, Daymond and Johnson (2001), J.Appl.Cryst.34,737.
-#        print '# peak omega wstep ystep zstep sigww sigyy sigzz'
         for j in range(len(self.int)):
-#            prefactor = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])/pixels[j]
-#            prefactorw = prefactor
-#            for w in self.fit['w_limit']:
-#                if abs(wmin[j]-w) < self.fit['w_step'] or abs(wmin[j]-w) < self.fit['w_step']: 
-#                    prefactorw = self.fit['const']*(1+n.sqrt(8)*self.fit['bg']/intmax[j])
-#            self.Syy[j] = prefactor/ystep[j]**2*(sigy[j]**2-1 + 1/12.)  
-#            self.Szz[j] = prefactor/zstep[j]**2*(sigz[j]**2-1 + 1/12.)  
-#            self.Sww[j] = prefactorw*self.fit['w_step']**2/wstep[j]**2*(sigw[j]**2-1 + 1/12.)  
-#            print j,self.w[j],wstep[j],ystep[j],zstep[j],'%e, %e, %e' %(n.sqrt(self.Sww[j]),n.sqrt(self.Syy[j]),n.sqrt(self.Szz[j]))
 
             if self.int[j] > 0:
                 if intmax[j] > 2**16-2*self.fit['bg']:# and intmax[j]*pixels[j]/self.int[j] < 8.:
@@ -399,11 +410,6 @@ class parse_input:
                 if zmin[j] < 2 or zmax[j] > self.fit['detz_size']-2:
                         self.Szz[j] = -100
         
-#        if self.files['near_flt_file'] == None:
-#            for j in range(len(self.int)):
-#                self.Syy[j] = self.Syy[j] + 1./5.**2
-#                self.Szz[j] = self.Szz[j] + 1./20.**2
-#            print '%e, %e, %e' %(self.Sww[j],self.Syy[j],self.Szz[j])
         if self.fit['w_limit'] == None:
             self.fit['w_limit'] = [min(self.w),max(self.w)]
         else:
@@ -413,7 +419,6 @@ class parse_input:
  
     def read_log(self): # read grainspotter.log
         self.nrefl = []
-#        self.euler = []
         self.rod = []
         self.h = []
         self.k = []
@@ -429,7 +434,7 @@ class parse_input:
         try:
             f=open(self.files['log_file'],'r')
         except IOError:
-            logging.error('No file named %s' %self.files['log_file'])
+            logging.error('log_file: no file named %s' %self.files['log_file'])
             raise IOError
         
         input = f.readlines()
@@ -499,7 +504,6 @@ class parse_input:
             t = Ui.trace()
             Ut = Ui.copy()
             pt = n.eye(3,3) 
-#            print '***',i+1,t,Ut
             for k in range(len(p)):
                 Urot = n.dot(Ui,p[k])
                 trace = Urot.trace()
@@ -507,7 +511,6 @@ class parse_input:
                     t = trace
                     Ut = Urot
                     pt = p[k]
-#                    print i+1,t,Ut
             for j in range(self.nrefl[i]):
                 [self.h[i][j],self.k[i][j],self.l[i][j]] = n.dot(n.transpose(pt),n.array([self.h[i][j],self.k[i][j],self.l[i][j]]))
             [self.rod[i][0],self.rod[i][1],self.rod[i][2]] = tools.u_to_rod(Ut)
@@ -530,56 +533,53 @@ class parse_input:
             
 
     def read_res(self): # read file of positions, orientations and strain tensor components to resume refinement
-        try:
-            f=open(self.files['res_file'],'r')
-            f.close()
-            print 'Resume refinement'
-            res = ic.columnfile(self.files['res_file'])
-            self.grainno = res.getcolumn('grainno')
-            self.grainno = self.grainno.astype(n.int)
-            self.grainno = self.grainno.tolist()
-            self.x = res.getcolumn('x')
-            self.y = res.getcolumn('y')
-            self.z = res.getcolumn('z')
-#            self.phia = res.getcolumn('phi1')
-#            self.PHI = res.getcolumn('PHI')
-#            self.phib = res.getcolumn('phi2')
-            U11 = res.getcolumn('U11')            
-            U12 = res.getcolumn('U12')            
-            U13 = res.getcolumn('U13')            
-            U21 = res.getcolumn('U21')            
-            U22 = res.getcolumn('U22')            
-            U23 = res.getcolumn('U23')            
-            U31 = res.getcolumn('U31')            
-            U32 = res.getcolumn('U32')            
-            U33 = res.getcolumn('U33')
-            U = n.zeros((len(U11),3,3))
-            for i in range(len(U11)):
-                U[i][0][0] = U11[i]
-                U[i][0][1] = U12[i]
-                U[i][0][2] = U13[i]
-                U[i][1][0] = U21[i]
-                U[i][1][1] = U22[i]
-                U[i][1][2] = U23[i]
-                U[i][2][0] = U31[i]
-                U[i][2][1] = U32[i]
-                U[i][2][2] = U33[i]
-            self.rodx = n.zeros((len(U11)))
-            self.rody = n.zeros((len(U11)))
-            self.rodz = n.zeros((len(U11)))
-#            self.phia = n.zeros((len(U11)))
-#            self.PHI = n.zeros((len(U11)))
-#            self.phib = n.zeros((len(U11)))
-            for i in range(len(U11)):
-                [self.rodx[i],self.rody[i],self.rodz[i]] = tools.u_to_rod(U[i])
-#                [self.phia[i],self.PHI[i],self.phib[i]] = tools.u_to_euler(U[i])*180./n.pi
-            self.eps11 = res.getcolumn('eps11')
-            self.eps22 = res.getcolumn('eps22')
-            self.eps33 = res.getcolumn('eps33')
-            self.eps23 = res.getcolumn('eps23')
-            self.eps13 = res.getcolumn('eps13')
-            self.eps12 = res.getcolumn('eps12')
-        except:
+        if self.files['res_file'] != None:
+            try:
+                f=open(self.files['res_file'],'r')
+                f.close()
+                print 'Resume refinement'
+                res = ic.columnfile(self.files['res_file'])
+                self.grainno = res.getcolumn('grainno')
+                self.grainno = self.grainno.astype(n.int)
+                self.grainno = self.grainno.tolist()
+                self.x = res.getcolumn('x')
+                self.y = res.getcolumn('y')
+                self.z = res.getcolumn('z')
+                U11 = res.getcolumn('U11')            
+                U12 = res.getcolumn('U12')            
+                U13 = res.getcolumn('U13')            
+                U21 = res.getcolumn('U21')            
+                U22 = res.getcolumn('U22')            
+                U23 = res.getcolumn('U23')            
+                U31 = res.getcolumn('U31')            
+                U32 = res.getcolumn('U32')            
+                U33 = res.getcolumn('U33')
+                U = n.zeros((len(U11),3,3))
+                for i in range(len(U11)):
+                    U[i][0][0] = U11[i]
+                    U[i][0][1] = U12[i]
+                    U[i][0][2] = U13[i]
+                    U[i][1][0] = U21[i]
+                    U[i][1][1] = U22[i]
+                    U[i][1][2] = U23[i]
+                    U[i][2][0] = U31[i]
+                    U[i][2][1] = U32[i]
+                    U[i][2][2] = U33[i]
+                self.rodx = n.zeros((len(U11)))
+                self.rody = n.zeros((len(U11)))
+                self.rodz = n.zeros((len(U11)))
+                for i in range(len(U11)):
+                    [self.rodx[i],self.rody[i],self.rodz[i]] = tools.u_to_rod(U[i])
+                self.eps11 = res.getcolumn('eps11')
+                self.eps22 = res.getcolumn('eps22')
+                self.eps33 = res.getcolumn('eps33')
+                self.eps23 = res.getcolumn('eps23')
+                self.eps13 = res.getcolumn('eps13')
+                self.eps12 = res.getcolumn('eps12')
+            except IOError:
+                logging.error('res_file: no file named %s' %self.files['res_file'])
+                raise IOError
+        else:
             print 'Start refinement from scratch' 
             return
 
@@ -636,10 +636,8 @@ class parse_input:
         # grain values
         if self.files['res_file'] != None:
             self.no_grains = max(self.grainno)
-#            self.euler = []
             self.rod = []
             for i in range(self.no_grains):
-#                self.euler.append([0.0,0.0,0.0])
                 self.rod.append([0.0,0.0,0.0])
             self.param['theta_min'] = 0.0
             self.param['theta_max'] = 7.5
@@ -653,9 +651,6 @@ class parse_input:
             self.values['epsbb%s' %i] = 0.0 
             self.values['epsbc%s' %i] = 0.0 
             self.values['epscc%s' %i] = 0.0
-#            self.values['phia%s' %i] = self.euler[i][0]
-#            self.values['PHI%s' %i]  = self.euler[i][1]
-#            self.values['phib%s' %i] = self.euler[i][2]
             self.values['rodx%s' %i] = 0.0
             self.values['rody%s' %i] = 0.0
             self.values['rodz%s' %i] = 0.0
@@ -672,9 +667,6 @@ class parse_input:
                     self.values['epsbb%s' %i] = self.eps22[self.grainno.index(i+1)]
                     self.values['epsbc%s' %i] = self.eps23[self.grainno.index(i+1)]
                     self.values['epscc%s' %i] = self.eps33[self.grainno.index(i+1)]
-#                    self.values['phia%s' %i] = self.phia[self.grainno.index(i+1)] 
-#                    self.values['PHI%s' %i]  = self.PHI[self.grainno.index(i+1)] 
-#                    self.values['phib%s' %i] = self.phib[self.grainno.index(i+1)]
                     self.rod[i][0] = self.rodx[self.grainno.index(i+1)]
                     self.rod[i][1] = self.rody[self.grainno.index(i+1)]
                     self.rod[i][2] = self.rodz[self.grainno.index(i+1)]
@@ -712,12 +704,6 @@ class parse_input:
             self.errors['epsbb%s' %i] = 0.001
             self.errors['epsbc%s' %i] = 0.001
             self.errors['epscc%s' %i] = 0.001
-#            self.errors['phia%s' %i] = 0.1
-#            self.errors['PHI%s' %i]  = 0.1
-#            self.errors['phib%s' %i] = 0.1
-#            self.errors['rodx%s' %i] = .01
-#            self.errors['rody%s' %i] = .01
-#            self.errors['rodz%s' %i] = .01
             lenrod = n.linalg.norm(self.rod[i])
             ia = 0.1*n.pi/180.
             errorscale = ia*(1+lenrod*lenrod)/(lenrod*(1-0.25*ia*ia*lenrod*lenrod))
@@ -726,7 +712,6 @@ class parse_input:
             self.errors['rodx%s' %i] = errorscale*abs(self.rod[i][0])
             self.errors['rody%s' %i] = errorscale*abs(self.rod[i][1])
             self.errors['rodz%s' %i] = errorscale*abs(self.rod[i][2])
-#            print 'roderr', i,self.errors['rodx%s' %i],self.errors['rody%s' %i],self.errors['rodz%s' %i]
     
 
         self.fit['newreject_grain'] = []
@@ -754,8 +739,8 @@ class parse_input:
         reject.overflow(self)
         reject.edge(self)
         reject.intensity(self)
-        reject.mean_ia(self,2*self.fit['ia'])
-        reject.residual(self,self.fit['limit'][0])
+        reject.mean_ia(self,2*self.fit['rej_ia'])
+        reject.residual(self,self.fit['rej_resmedian'])
         reject.multi(self)
         reject.merge(self)
         #reject.friedel(self)
