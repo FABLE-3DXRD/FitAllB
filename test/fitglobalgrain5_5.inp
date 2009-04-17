@@ -1,0 +1,24 @@
+title 'fitglobalgrain 5 grains of IF steel, 10 cycles'
+log_file if100_globals_wedge_5.log
+flt_file if100_globals_wedge.flt
+par_file if100_globals_wedge.par
+structure_file IF_steel.cif
+w_step 0.5
+w_limit -22.5 22.5 67.5 112.5
+crystal_system cubic
+cycle 5
+min_refl 45
+rej_ia 0.2
+rej_resmedian 5 
+rej_resmean 10     
+rej_vol 5 
+w 1            # Fit omega stage tilt parameter wy
+tilt 1         # Fit detector tilt parameters tx, ty, tx
+pixel 0        # Fit pixel size py and pz
+center 1       # Fit detector centre along y-axis, cy
+L 1            # Fit sample-to-detector distance
+xyz 1		   # Fit grain positions
+rod 1          # Fit orientations and thus Rodrigues vectors
+eps 0          # Fit strain tensors
+tol_global 1e-2
+tol_rotpos 1e-2

@@ -1,0 +1,33 @@
+title '10 grain of IF steel, farfield only, resumed using nearfield positions'
+log_file if100_t50_10.log
+flt_file if100_t50.flt
+par_file if100.par
+res_file if10_near_rotpos.gff
+structure_file IF_steel.cif
+# experimental
+w_step 0.5
+w_limit -22.5 22.5 67.5 112.5
+bg 100
+# strain to stress
+crystal_system cubic
+c11 23.7e10
+c12 14.1e10
+c44 11.6e10
+# outlier rejection
+rej_ia 0.2
+rej_vol 5
+rej_resmean 10
+rej_resmedian 5
+min_refl 36
+# global parameters, do not fit
+w 0            # Fit omega stage tilt parameters wx and wy
+tilt 0         # Fit detector tilt parameters tx, ty, tx
+pixel 0        # Fit pixel size py and pz
+center 0       # Fit detector centre 
+L 0            # Fit sample-to-detector distance
+# grain parameters
+xyz 0		   # Do not fit cms positions on farfield 
+rod 1          # Fit orientations and thus Rodrigues vectors on farfield
+eps 1          # Fit strain tensors on farfield
+# tolerances
+tol_grain 1e-3
