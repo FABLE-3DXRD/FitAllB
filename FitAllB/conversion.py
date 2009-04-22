@@ -230,31 +230,50 @@ def formStiffnessMV(crystal_system,c11=None,c12=None,c13=None,c14=None,c15=None,
     """
     
     if crystal_system == 'isotropic':
+        unique_list = 'c11,c12'
         unique = [c11,c12]
         full = [c11,c12,c12,0,0,0,c11,c12,0,0,0,c11,0,0,0,(c11-c12)/2,0,0,(c11-c12)/2,0,(c11-c12)/2]
     elif crystal_system == 'cubic':
+        unique_list = 'c11,c12,c44'
         unique = [c11,c12,c44]
         full = [c11,c12,c12,0,0,0,c11,c12,0,0,0,c11,0,0,0,c44,0,0,c44,0,c44]
     elif crystal_system == 'hexagonal':
+        unique_list = 'c11,c12,c13,c33,c44'
         unique = [c11,c12,c13,c33,c44]
         full = [c11,c12,c13,0,0,0,c11,c13,0,0,0,c33,0,0,0,c44,0,0,c44,0,(c11-c12)/2]
-#    elif crystal_system == 'tetragonal':
-#        unique = [c11,c12,c13,c33,c44,c66]
-#        full = [c11,c12,c13,0,0,0,c11,c13,0,0,0,c33,0,0,0,c44,0,0,c44,0,c66]
+    elif crystal_system == 'trigonal_high':
+        unique_list = 'c11,c12,c13,c14,c33,c44'
+        unique = [c11,c12,c13,c14,c33,c44]
+        full = [c11,c12,c13,c14,0,0,c11,c13,-c14,0,0,c33,0,0,0,c44,0,0,c44,c14/2,(c11-c12)/2]
+    elif crystal_system == 'trigonal_low':
+        unique_list = 'c11,c12,c13,c14,c25,c33,c44'
+        unique = [c11,c12,c13,c14,c25,c33,c44]
+        full = [c11,c12,c13,c14,-c25,0,c11,c13,-c14,c25,0,c33,0,0,0,c44,0,c25/2,c44,c14/2,(c11-c12)/2]
+    elif crystal_system == 'tetragonal_high':
+        unique_list = 'c11,c12,c13,c33,c44,c66'
+        unique = [c11,c12,c13,c33,c44,c66]
+        full = [c11,c12,c13,0,0,0,c11,c13,0,0,0,c33,0,0,0,c44,0,0,c44,0,c66]
+    elif crystal_system == 'tetragonal_low':
+        unique_list = 'c11,c12,c13,c16c33,c44,c66'
+        unique = [c11,c12,c13,c16c33,c44,c66]
+        full = [c11,c12,c13,0,0,c16,c11,c13,0,0,-c16,c33,0,0,0,c44,0,0,c44,0,c66]
     elif crystal_system == 'orthorhombic':
+        unique_list = 'c11,c12,c13,c22,c23,c33,c44,c55,c66'
         unique = [c11,c12,c13,c22,c23,c33,c44,c55,c66]
         full = [c11,c12,c13,0,0,0,c22,c23,0,0,0,c33,0,0,0,c44,0,0,c55,0,c66]
     elif crystal_system == 'monoclinic':
+        unique_list = 'c11,c12,c13,c15,c22,c23,c25,c33,c35,c44,c46,c55,c66'
         unique = [c11,c12,c13,c15,c22,c23,c25,c33,c35,c44,c46,c55,c66]
         full = [c11,c12,c13,0,c15,0,c22,c23,0,c25,0,c33,0,c35,0,c44,0,c46,c55,0,c66]
     elif crystal_system == 'triclinic':
+        unique_list = 'c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66'
         unique = [c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66]
         full = unique
     else:
         print 'crystal system', crystal_system, 'not supported'
         return
  
-    assert None not in unique, 'Missing constant for %s' %crystal_system
+    assert None not in unique, 'For crytal_system %s, the following must be given:\n %s' %(crystal_system,unique_list)
     
     full = array(full)
     stiffness = zeros((6,6))

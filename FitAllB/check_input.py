@@ -29,6 +29,7 @@ class parse_input:
         
         self.needed_items = {
                     'w_step': 'Missing input: omega step size in deg',
+                    'crystal_system': 'Missing input: crystal_system\n possible values:\n isotropic, cubic, hexagonal, trigonal_high, trigonal_low,\n tetragonal_high, tetragonal_low, orthorhombic, monoclinic, triclinic',
                     'log_file' : 'Missing input: grainspotter log file',
                     'flt_file' : 'Missing input: peaksearch filtered peaks file',
                     'par_file' : 'Missing input: ImageD11 detector.par file'
@@ -94,28 +95,28 @@ class parse_input:
             'res_file': None,
             'rej_file': None,
             #strain to stress conversion
-            'crystal_system': None,
-            'c11': 0,
-            'c12': 0,
-            'c13': 0,
-            'c14': 0,
-            'c15': 0,
-            'c16': 0,
-            'c22': 0,
-            'c23': 0,
-            'c24': 0,
-            'c25': 0,
-            'c26': 0,
-            'c33': 0,
-            'c34': 0,
-            'c35': 0,
-            'c36': 0,
-            'c44': 0,
-            'c45': 0,
-            'c46': 0,
-            'c55': 0,
-            'c56': 0,
-            'c66': 0
+            'stress': 0,
+            'c11': None,
+            'c12': None,
+            'c13': None,
+            'c14': None,
+            'c15': None,
+            'c16': None,
+            'c22': None,
+            'c23': None,
+            'c24': None,
+            'c25': None,
+            'c26': None,
+            'c33': None,
+            'c34': None,
+            'c35': None,
+            'c36': None,
+            'c44': None,
+            'c45': None,
+            'c46': None,
+            'c55': None,
+            'c56': None,
+            'c66': None
             }
 
         self.newreject = 0
@@ -203,9 +204,11 @@ class parse_input:
                 self.fit[item] = self.optional_items[item] 
                 
         # calculate stiffness tensor
-        if self.fit['crystal_system'] == None:
+        if self.fit['stress'] == 0:
+            print 'No strain to stress conversion'
             self.C = n.zeros((6,6))
         else:
+            print 'Both strain and stress given in output'
             self.C = conversion.formStiffnessMV(self.fit['crystal_system'],
                                                 c11=self.fit['c11'],c12=self.fit['c12'],c13=self.fit['c13'],c14=self.fit['c14'],c15=self.fit['c15'],c16=self.fit['c16'],
                                                                     c22=self.fit['c22'],c23=self.fit['c23'],c24=self.fit['c24'],c25=self.fit['c25'],c26=self.fit['c26'],
@@ -383,6 +386,12 @@ class parse_input:
         self.int = tint
         intmax = tintmax
         
+        if self.fit['w_limit'] == None:
+            self.fit['w_limit'] = [min(self.w),max(self.w)]
+        else:
+            assert len(self.fit['w_limit']) % 2 == 0, 'An even number of omega-limits must be given'
+            self.fit['w_limit'].sort()
+
         # set default variances
         self.Sww = [self.fit['w_step']**2/12.]*self.param['total_refl']
         self.Syy = [1.]*self.param['total_refl']
@@ -410,12 +419,6 @@ class parse_input:
                 if zmin[j] < 2 or zmax[j] > self.fit['detz_size']-2:
                         self.Szz[j] = -100
         
-        if self.fit['w_limit'] == None:
-            self.fit['w_limit'] = [min(self.w),max(self.w)]
-        else:
-            assert len(self.fit['w_limit']) % 2 == 0, 'An even number of omega-limits must be given'
-            self.fit['w_limit'].sort()
-
  
     def read_log(self): # read grainspotter.log
         self.nrefl = []
@@ -492,12 +495,19 @@ class parse_input:
 #                self.fit['skip'].append(i+1)
                 
         # check for equal grains and convert orientations to the fundamental zone if crystal system is given
-        crystal_system = [None,'triclinic','monoclinic','orthorhombic','tetragonal','trigonal','hexagonal','cubic','isotropic']
-        cs = crystal_system.index(self.fit['crystal_system'])
-        if cs < 1:
-            cs = 1
-        elif cs > 7:
+        cs = 1
+        if 'isotropic' in self.fit['crystal_system'] or 'cubic' in self.fit['crystal_system']:
             cs = 7
+        elif 'hexagonal' in self.fit['crystal_system']:
+            cs = 6
+        elif 'trigonal' in self.fit['crystal_system']:
+            cs = 5
+        elif 'tetragonal' in self.fit['crystal_system']:
+            cs = 4
+        elif 'orthorhombic' in self.fit['crystal_system']:
+            cs = 3
+        elif 'monoclinic' in self.fit['crystal_system']:
+            cs = 2
         for i in range(self.no_grains):
             Ui = tools.rod_to_u([self.rod[i][0],self.rod[i][1],self.rod[i][2]])
             p = symmetry.permutations(cs)
