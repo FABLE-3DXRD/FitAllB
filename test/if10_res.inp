@@ -10,6 +10,7 @@ w_limit -22.5 22.5 67.5 112.5
 bg 100
 # strain to stress
 crystal_system cubic
+stress 1
 c11 23.7e10
 c12 14.1e10
 c44 11.6e10

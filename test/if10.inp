@@ -12,6 +12,7 @@ bg 100
 near_bg 100
 # strain to stress
 crystal_system cubic
+stress 1
 c11 23.7e10
 c12 14.1e10
 c44 11.6e10
