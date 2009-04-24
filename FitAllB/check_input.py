@@ -54,6 +54,8 @@ class parse_input:
             'near_dety_size': 1536,
             'near_detz_size': 1024,
             'w_limit': None,
+            'beampol_factor':1.,
+            'beampol_direct':0.0,
             #fit parameters
             'w': 0,
             'tilt': 0,
@@ -69,7 +71,7 @@ class parse_input:
             'near_center': 0,
             'near_L': 0,
             'near_rod': 0,
-            'near_xyz': 1,
+            'near_xyz': 0,
             'near_eps': 0,
             #outlier rejection
             'skip': [],
@@ -484,7 +486,10 @@ class parse_input:
         # calculate self.F2vol which is the intensity divided the Lorentz factor, thus the squared structure factor times the volume
         self.F2vol = [0]*self.param['total_refl']
         for i in range(self.param['total_refl']):
-            self.F2vol[i] = self.int[i]*abs(n.sin(self.eta[i]*n.pi/180.))*n.sin(self.tth[i]*n.pi/180.)
+            rho = n.pi/2.0 + self.eta[i]*n.pi/180. + self.fit['beampol_direct']*n.pi/180.0 
+            P = 0.5 * (1 + n.cos(self.tth[i]*n.pi/180.)**2 + self.fit['beampol_factor']*n.cos(2*rho)*n.sin(self.tth[i]*n.pi/180.)**2)
+            L = 1./(n.sin(self.tth[i]*n.pi/180.)*abs(n.sin(self.eta[i]*n.pi/180.)))
+            self.F2vol[i] = self.int[i]/(L*P)
             
         self.param['theta_min'] = min(self.tth)/2.
         self.param['theta_max'] = max(self.tth)/2.

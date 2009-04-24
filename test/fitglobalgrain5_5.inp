@@ -1,4 +1,4 @@
-title 'fitglobalgrain 5 grains of IF steel, 10 cycles'
+title 'fitglobalgrain 5 grains of IF steel, 5 cycles'
 log_file if100_globals_wedge_5.log
 flt_file if100_globals_wedge.flt
 par_file if100_globals_wedge.par
