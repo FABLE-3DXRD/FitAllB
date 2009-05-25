@@ -176,8 +176,10 @@ class parse_input:
         stem = split(self.filename,'.')[0]		
         self.fit['stem'] = stem
         self.fit['direc'] = deepcopy(stem)
-        print self.fit['title']
-				
+        try:
+            print self.fit['title']
+        except:
+            pass
                 
 						
     def check(self):
@@ -356,6 +358,12 @@ class parse_input:
         # therefore create temporary lists with zero values of length maxspotno+1
         self.param['total_refl'] = int(max(spot))+1 #necessary if spots are not consequtively numbered
         tw = [0.]*self.param['total_refl']
+        twmin = [0.]*self.param['total_refl']
+        twmax = [0.]*self.param['total_refl']
+        tymin = [0.]*self.param['total_refl']
+        tymax = [0.]*self.param['total_refl']
+        tzmin = [0.]*self.param['total_refl']
+        tzmax = [0.]*self.param['total_refl']
         tdety = [0.]*self.param['total_refl']
         tdetz = [0.]*self.param['total_refl']
         tsigw = [-1.]*self.param['total_refl']
@@ -368,6 +376,12 @@ class parse_input:
         for i in range(self.param['total_refl']):
             if i in spot:
                 tw[i] = self.w[i-missing]
+                twmin[i] = wmin[i-missing]
+                twmax[i] = wmax[i-missing]
+                tymin[i] = ymin[i-missing]
+                tymax[i] = ymax[i-missing]
+                tzmin[i] = zmin[i-missing]
+                tzmax[i] = zmax[i-missing]
                 tdety[i] = self.dety[i-missing]
                 tdetz[i] = self.detz[i-missing]
                 tsigw[i] = sigw[i-missing]
@@ -387,6 +401,12 @@ class parse_input:
         sigz = tsigz
         self.int = tint
         intmax = tintmax
+        wmin = twmin
+        wmax = twmax
+        ymin = tymin
+        ymax = tymax
+        zmin = tzmin
+        zmax = tzmax
         
         if self.fit['w_limit'] == None:
             self.fit['w_limit'] = [min(self.w),max(self.w)]
@@ -489,7 +509,7 @@ class parse_input:
             rho = n.pi/2.0 + self.eta[i]*n.pi/180. + self.fit['beampol_direct']*n.pi/180.0 
             P = 0.5 * (1. + n.cos(self.tth[i]*n.pi/180.)**2 + self.fit['beampol_factor']*n.cos(2*rho)*n.sin(self.tth[i]*n.pi/180.)**2)
             Linv = (n.sin(self.tth[i]*n.pi/180.)*abs(n.sin(self.eta[i]*n.pi/180.)))
-            print self.tth[i],self.eta[i],rho,P,Linv
+#            print self.tth[i],self.eta[i],rho,P,Linv
             self.F2vol[i] = self.int[i]*Linv/P
             
         self.param['theta_min'] = min(self.tth)/2.
@@ -592,6 +612,11 @@ class parse_input:
                 self.eps23 = res.getcolumn('eps23')
                 self.eps13 = res.getcolumn('eps13')
                 self.eps12 = res.getcolumn('eps12')
+                try:
+                    self.ia = res.getcolumn('mean_IA')
+                    self.grainvolume = res.getcolumn('grainvolume')
+                except:
+                    pass
             except IOError:
                 logging.error('res_file: no file named %s' %self.files['res_file'])
                 raise IOError
