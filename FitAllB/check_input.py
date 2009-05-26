@@ -180,16 +180,23 @@ class parse_input:
             print self.fit['title']
         except:
             pass
+            
                 
 						
     def check(self):
         # Needed items
         self.missing = False
         for item in self.needed_items:
-            if item not in self.files:
-                if item not in self.fit:
-                    print self.needed_items[item]
+            if item == 'log_file':
+                if item not in self.files and 'res_file' not in self.files:
+                    print 'Either log_file or res_file should be supplied.'
+                    print 'If both are given, res_file takes priority.'
                     self.missing = True
+            else:
+                if item not in self.files:
+                    if item not in self.fit:
+                        print self.needed_items[item]
+                        self.missing = True
 
 			
             
