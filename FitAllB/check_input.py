@@ -48,6 +48,8 @@ class parse_input:
             'structure_file': None,
             'near_flt_file': None,
             'near_par_file': None,
+            # Optional space group
+            'sgno' : 1,
             #experimental setup
             'dety_size': 2048,
             'detz_size': 2048,

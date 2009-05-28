@@ -22,6 +22,10 @@ def find_refl(inp):
             inp.param['structure_phase_0'] = inp.files['structure_file']
             xtal_structure = reflections.open_structure(inp.param,0)
             HKL = reflections.gen_miller(inp.param,0)
+	else:
+            inp.param['unit_cell_phase_0'] = inp.unit_cell		
+            inp.param['sgno_phase_0'] = inp.fit['sgno']
+            HKL = reflections.gen_miller(inp.param,0)
 
         for grainno in range(inp.no_grains):
             inp.possible.append([])
@@ -41,21 +45,16 @@ def find_refl(inp):
                                   inp.values['z%s' %grainno]])
             
 
-
-        # if no structure info is given consider the reflections hitting the farfield as the nearfield possibilities
-                if inp.files['structure_file'] == None:
-                    HKL = []
-                    for j in range(inp.nrefl[grainno]):
-                        HKL.append([inp.h[grainno][j],inp.k[grainno][j],inp.l[grainno][j]])
-                    HKL = n.array(HKL)
-
   
                 for hkl in HKL:
                     Gc = n.dot(B,hkl[0:3])
                     Gw = n.dot(S,n.dot(U,Gc))
                     tth = tools.tth2(Gw,inp.param['wavelength'])
                     costth = n.cos(tth)
-                    (Omega, Eta) = tools.find_omega_general(inp.param['wavelength']/(4.*n.pi)*Gw,tth,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  
+                    (Omega, Eta) = tools.find_omega_general(inp.param['wavelength']/(4.*n.pi)*Gw,
+							    tth,
+							    inp.values['wx']*n.pi/180,
+							    inp.values['wy']*n.pi/180)  
                     if len(Omega) > 0:
                         for solution in range(len(Omega)):
                             omega = Omega[solution]
@@ -64,7 +63,9 @@ def find_refl(inp):
                                 if  (inp.fit['w_limit'][2*i]*n.pi/180) < omega and\
                                     omega < (inp.fit['w_limit'][2*i+1]*n.pi/180):
                                 # form Omega rotation matrix
-                                    Om = tools.form_omega_mat_general(omega,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  
+                                    Om = tools.form_omega_mat_general(omega,
+								      inp.values['wx']*n.pi/180,
+								      inp.values['wy']*n.pi/180)  
                                     Gt = n.dot(Om,Gw) 
                                 # Calc crystal position at present omega
                                     [tx,ty,tz]= n.dot(Om,gr_pos)
@@ -82,7 +83,14 @@ def find_refl(inp):
                                         (dety < inp.fit['dety_size']-0.5) and\
                                         (-0.5 < detz) and\
                                         (detz < inp.fit['detz_size']-0.5):
-                                        inp.possible[grainno].append([hkl[0],hkl[1],hkl[2],omega*180/n.pi,dety,detz,tth,eta])
+                                        inp.possible[grainno].append([hkl[0],
+								      hkl[1],
+								      hkl[2],
+								      omega*180/n.pi,
+								      dety,
+								      detz,
+								      tth,
+								      eta])
                                             
 
 def match(inp):
