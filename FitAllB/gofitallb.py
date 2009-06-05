@@ -18,6 +18,13 @@ def run_fitallb(options):
     if options.filename == None:
         raise ValueError, "\nNo input file supplied [-i filename]\n"
 
+    if options.killfile is not None and os.path.exists(options.killfile):
+        print "The purpose of the killfile option is to create that file"
+        print "only when you want fitallb to stop"
+        print "If the file already exists when you run fitallb it is"
+        print "never going to get started"
+        raise ValueError("Your killfile "+options.killfile+" already exists")
+
     #Read and check input
     far = check_input.parse_input(input_file=options.filename)  # Make instance of parse_input class
     far.read()              # read input file
@@ -36,7 +43,8 @@ def run_fitallb(options):
     far.set_start()                     # set values and errors for refinement start
     check_input.set_globals(far)
     
-    
+    if options.killfile is not None and os.path.exists(options.killfile):
+        raise KeyboardInterrupt()
     # optional nearfield info
     if far.files['near_flt_file'] != None:
         assert far.files['near_par_file'] != None, 'near_par_file parameter file for near-field detector is missing'
