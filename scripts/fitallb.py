@@ -13,7 +13,7 @@ if __name__=="__main__":
         parser = OptionParser()
         options  = gofitallb.get_options(parser)
         print options
-        gofitallb.run_fitallb(options)
+        gofitallb.run(options)
     except:
         if options != None:
             parser.print_help()

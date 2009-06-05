@@ -14,7 +14,7 @@ def get_options(parser):
 
     return options
 
-def run_fitallb(options):
+def run(options):
     if options.filename == None:
         raise ValueError, "\nNo input file supplied [-i filename]\n"
 
