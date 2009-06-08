@@ -624,6 +624,12 @@ class parse_input:
                 try:
                     self.ia = res.getcolumn('mean_IA')
                     self.grainvolume = res.getcolumn('grainvolume')
+                    self.eps11_s = res.getcolumn('eps11_s')
+                    self.eps22_s = res.getcolumn('eps22_s')
+                    self.eps33_s = res.getcolumn('eps33_s')
+                    self.eps23_s = res.getcolumn('eps23_s')
+                    self.eps13_s = res.getcolumn('eps13_s')
+                    self.eps12_s = res.getcolumn('eps12_s')
                 except:
                     pass
             except IOError:
