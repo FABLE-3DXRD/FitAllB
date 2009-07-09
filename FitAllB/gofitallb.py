@@ -11,6 +11,7 @@ def get_options(parser):
                       dest="filename", type="string",
                       help="Name of the file containing the input parameters")
     options, args = parser.parse_args()
+    options.killfile = None
 
     return options
 
@@ -18,12 +19,15 @@ def run(options):
     if options.filename == None:
         raise ValueError, "\nNo input file supplied [-i filename]\n"
 
-    if options.killfile is not None and os.path.exists(options.killfile):
-        print "The purpose of the killfile option is to create that file"
-        print "only when you want fitallb to stop"
-        print "If the file already exists when you run fitallb it is"
-        print "never going to get started"
-        raise ValueError("Your killfile "+options.killfile+" already exists")
+    try:
+        if options.killfile is not None and os.path.exists(options.killfile):
+            print "The purpose of the killfile option is to create that file"
+            print "only when you want fitallb to stop"
+            print "If the file already exists when you run fitallb it is"
+            print "never going to get started"
+            raise ValueError("Your killfile "+options.killfile+" already exists")
+    except:
+        pass
 
     #Read and check input
     far = check_input.parse_input(input_file=options.filename)  # Make instance of parse_input class
@@ -43,10 +47,9 @@ def run(options):
     far.set_start()                     # set values and errors for refinement start
     check_input.set_globals(far)
     
-    if options.killfile is not None and os.path.exists(options.killfile):
-        raise KeyboardInterrupt()
     # optional nearfield info
     if far.files['near_flt_file'] != None:
+        check_input.interrupt(options.killfile)
         assert far.files['near_par_file'] != None, 'near_par_file parameter file for near-field detector is missing'
         near = deepcopy(far)
         # take special care of near-field keywords (eg copy near_dety_size to dety_size)
@@ -70,31 +73,37 @@ def run(options):
         check_input.set_globals(near)
         # match peaks on nearfield detector and reject outliers
         from FitAllB import near_field
+        check_input.interrupt(options.killfile)
         near_field.find_refl(near)
+        check_input.interrupt(options.killfile)
         near_field.match(near)
         from FitAllB import error
         error.vars(near)
         from FitAllB import build_fcn
         build_fcn.FCN(near)
+        check_input.interrupt(options.killfile)
         near.reject()
         near.write_rej()
         near.fit['reforder'] = ['start', 'rotpos', 'end']
         near.fit['goon'] = near.fit['reforder'][0]
         # nearfield refinement
         from FitAllB import fit
-        fit.refine(near)
+        fit.refine(near,options.killfile)
     
     
     #  Farfield outlier rejection
     #check_input.set_globals(far)
     if far.files['res_file'] != None:
+        check_input.interrupt(options.killfile)
         from FitAllB import near_field
         near_field.find_refl(far)
+        check_input.interrupt(options.killfile)
         near_field.match(far)
     from FitAllB import error
     error.vars(far)
     from FitAllB import build_fcn
     build_fcn.FCN(far)
+    check_input.interrupt(options.killfile)
     far.reject()            
     far.write_rej()                 
     
@@ -102,7 +111,7 @@ def run(options):
     far.fit['reforder'] = ['grain', 'final', 'end'] 
     far.fit['goon'] = far.fit['reforder'][0]
     from FitAllB import fit
-    fit.refine(far)
+    fit.refine(far,options.killfile)
     
         
     # program ends here after deleting fcn.py and fcn.pyc

@@ -19,6 +19,11 @@ from copy import deepcopy
 
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
+def interrupt(killfile):
+    if killfile is not None and os.path.exists(killfile):
+        print 'keyboard interrupt'
+        raise KeyboardInterrupt
+            
 class parse_input:
     def __init__(self,input_file = None):
         self.filename = input_file
@@ -132,7 +137,6 @@ class parse_input:
         self.fit['ll'] = []
         self.fit['rejectvalue'] = []
 			
-            
     def read(self):     
         try:
             f = open(self.filename,'r')

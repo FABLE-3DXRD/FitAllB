@@ -14,7 +14,6 @@ logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 class fit_minuit():
     def __init__(self,inp):
         self.inp = inp
-        
 			
     def refine(self):	
 	"""
@@ -427,7 +426,8 @@ def scale_errors(lsqr,i=None):
 
             
                 
-def refine(inp):
+def refine(inp,killfile=None):
+    check_input.interrupt(killfile)
     while inp.fit['goon'] != 'end':
         check_input.set_globals(inp)
         # build functions to minimise
