@@ -11,6 +11,7 @@ def get_options(parser):
                       dest="filename", type="string",
                       help="Name of the file containing the input parameters")
     options, args = parser.parse_args()
+    options.killfile = None
 
     return options
 
