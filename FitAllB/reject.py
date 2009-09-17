@@ -281,7 +281,7 @@ def multi(inp):
                         
         multi = 0
         bad = []
-        if  inp.files['structure_file'] != None:
+        if  inp.files['structure_file'] != None and inp.fit['rej_multi'] > 0:
             volavg = []
             for i in range(inp.no_grains):
                 if len(inp.volume[i]) > 0:
@@ -293,15 +293,18 @@ def multi(inp):
             if len(grain[k]) > 1:
                 multi = multi + 1
                 for m in range(len(grain[k])):
-                    for o in range(len(grain[k])):
-                        #reject if largest residual...
-                        if inp.residual[grain[k][m]][peak[k][m]] > inp.residual[grain[k][o]][peak[k][o]]:
-                            #... and largest distance from mean volume if structure file given
-                            if  inp.files['structure_file'] != None:
-                                if abs(inp.volume[grain[k][m]][peak[k][m]]-volavg[grain[k][m]]) > abs(inp.volume[grain[k][o]][peak[k][o]]-volavg[grain[k][o]]):
+                    if inp.fit['rej_multi'] < 0: # reject all multiple assignments
+                        bad.append([grain[k][m],peak[k][m]])
+                    elif inp.fit['rej_multi'] > 0: # let grains fight for reflections
+                        for o in range(len(grain[k])):
+                            #reject if largest residual...
+                            if inp.residual[grain[k][m]][peak[k][m]] > inp.residual[grain[k][o]][peak[k][o]]:
+                                #... and largest distance from mean volume if structure file given
+                                if  inp.files['structure_file'] != None:
+                                    if abs(inp.volume[grain[k][m]][peak[k][m]]-volavg[grain[k][m]]) > abs(inp.volume[grain[k][o]][peak[k][o]]-volavg[grain[k][o]]):
+                                        bad.append([grain[k][m],peak[k][m]])
+                                else:
                                     bad.append([grain[k][m],peak[k][m]])
-                            else:
-                                bad.append([grain[k][m],peak[k][m]])
         unique_list(bad)                      
         #print bad
         print 'Number of reflections assigned to more than one grain',multi       
@@ -536,3 +539,47 @@ def mad(data,reject,limit):
                     reject.append(data.pop(j))
             reject.sort()
     
+def volume_multi(inp):
+        """
+        Calculate the average and spread of the grain volumes
+        disregarding multiple assigned reflections
+        """
+
+
+        # handling reflection assigned to more than one grain
+        grain = []
+        peak = []
+        for k in range(inp.param['total_refl']):
+            grain.append([])
+            peak.append([])
+            
+        for i in range(inp.no_grains):
+            if i+1 not in inp.fit['skip']:
+                for j in range(inp.nrefl[i]):
+                    grain[inp.id[i][j]].append(i)
+                    peak[inp.id[i][j]].append(j)
+                        
+        multi = []
+        for k in range(inp.param['total_refl']):
+            if len(grain[k]) > 1:
+                for m in range(len(grain[k])):
+                    multi.append([grain[k][m],peak[k][m]])
+                    
+        unique_list(multi)
+        volume = deepcopy(inp.volume)
+        
+        for i in range(len(volume)-1,-1,-1):
+            for j in range(len(volume[i])-1,-1,-1):
+                if [i,j] in multi:
+                    volume(i).pop(j)
+                    
+        avg = []
+        spr = []
+        for i in range(len(volume)):
+            avg.append(n.sum(volume[i]))
+            spr.append(spread(volume[i]))
+            
+        return (avg,spr)
+
+                                        
+
