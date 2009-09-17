@@ -550,18 +550,20 @@ class parse_input:
         for i in range(self.no_grains):
             Ui = tools.rod_to_u([self.rod[i][0],self.rod[i][1],self.rod[i][2]])
             p = symmetry.permutations(cs)
+            r = symmetry.rotations(cs)
             t = Ui.trace()
             Ut = Ui.copy()
             pt = n.eye(3,3) 
+            rt = n.eye(3,3) 
             for k in range(len(p)):
-                Urot = n.dot(Ui,p[k])
+                Urot = n.dot(Ui,r[k].transpose())
                 trace = Urot.trace()
                 if trace > t:
                     t = trace
                     Ut = Urot
                     pt = p[k]
             for j in range(self.nrefl[i]):
-                [self.h[i][j],self.k[i][j],self.l[i][j]] = n.dot(n.transpose(pt),n.array([self.h[i][j],self.k[i][j],self.l[i][j]]))
+                [self.h[i][j],self.k[i][j],self.l[i][j]] = n.dot(pt,n.array([self.h[i][j],self.k[i][j],self.l[i][j]]))
             [self.rod[i][0],self.rod[i][1],self.rod[i][2]] = tools.u_to_rod(Ut)
             
             
@@ -634,6 +636,12 @@ class parse_input:
                     self.eps23_s = res.getcolumn('eps23_s')
                     self.eps13_s = res.getcolumn('eps13_s')
                     self.eps12_s = res.getcolumn('eps12_s')
+                    self.sig11_s = res.getcolumn('sig11_s')
+                    self.sig22_s = res.getcolumn('sig22_s')
+                    self.sig33_s = res.getcolumn('sig33_s')
+                    self.sig23_s = res.getcolumn('sig23_s')
+                    self.sig13_s = res.getcolumn('sig13_s')
+                    self.sig12_s = res.getcolumn('sig12_s')  
                 except:
                     pass
             except IOError:
@@ -680,14 +688,17 @@ class parse_input:
                 for i in range(2,len(split(line))):
                     string = string+split(line)[i]
                 self.fit['skip'].extend(eval(string))
-        for i in range(self.no_grains):
-            for j in range(self.nrefl[i]-1,-1,-1): # loop backwards to make pop work
-                if self.id[i][j] in rejectid[i]:
-                    self.id[i].pop(j)
-                    self.h[i].pop(j)
-                    self.k[i].pop(j)
-                    self.l[i].pop(j)
-                    self.nrefl[i] = self.nrefl[i] - 1
+        try:
+            for i in range(self.no_grains):
+                for j in range(self.nrefl[i]-1,-1,-1): # loop backwards to make pop work
+                    if self.id[i][j] in rejectid[i]:
+                        self.id[i].pop(j)
+                        self.h[i].pop(j)
+                        self.k[i].pop(j)
+                        self.l[i].pop(j)
+                        self.nrefl[i] = self.nrefl[i] - 1
+        except:
+            pass # exception for analyse_reject.py
 
 
     def set_start(self): # build fcn, initiate minuit and set starting values and errors
