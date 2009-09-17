@@ -81,7 +81,8 @@ class fit_minuit():
                         for j in range(len(self.globals)):
                             temp.append(self.mg.values[self.globals[j]])
                         global_parameters.append(temp)
-                        weight.append(len(self.inp.mean_ia[i])/n.sum(self.inp.mean_ia[i]))
+                        #weight.append(len(self.inp.mean_ia[i])/n.sum(self.inp.mean_ia[i]))
+                        weight.append(float(sum(self.inp.volume[i])/self.inp.nrefl[i]))
                         self.m = self.mg
                         write_output.write_global(self)
 				
