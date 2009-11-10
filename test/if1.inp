@@ -1,0 +1,46 @@
+title '1 grain of IF steel, 2 detectors'
+skip 2 3 4 5 6 7 8 9 10
+log_file if100_t50_10.log
+flt_file if100_t50.flt
+par_file if100.par
+near_flt_file if100_near_t50.flt
+near_par_file if100_near.par
+structure_file IF_steel.cif
+# experimental
+w_step 0.5
+w_limit -22.5 22.5 67.5 112.5
+bg 100
+near_bg 100
+# strain to stress
+crystal_system cubic
+stress 1
+c11 23.7e10
+c12 14.1e10
+c44 11.6e10
+# outlier rejection
+rej_ia 0.2
+near_rej_ia 0.2
+rej_vol 5
+near_rej_vol 5
+rej_resmean 10
+near_rej_resmean 10
+rej_resmedian 5
+near_rej_resmedian 5
+min_refl 36
+near_min_refl 36
+# global parameters, do not fit
+w 0            # Fit omega stage tilt parameters wx and wy
+tilt 0         # Fit detector tilt parameters tx, ty, tx
+pixel 0        # Fit pixel size py and pz
+center 0       # Fit detector centre 
+L 0            # Fit sample-to-detector distance
+# grain parameters
+xyz 0		   # Do not fit cms positions on farfield 
+rod 1          # Fit orientations and thus Rodrigues vectors on farfield
+eps 1          # Fit strain tensors on farfield
+near_xyz 1     # Fit cms positions on nearfield
+near_rod 0 	   # Do not fit orientations and thus Rodrigues vectors on nearfield
+near_eps 0	   # Do not fit strain tensors on nearfield
+# tolerances
+tol_rotpos 1e-1
+tol_grain 1e-3
