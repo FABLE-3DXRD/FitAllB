@@ -533,7 +533,9 @@ class parse_input:
 #            if ia[i] > self.fit['ia']:
 #                self.fit['skip'].append(i+1)
                 
-        # check for equal grains and convert orientations to the fundamental zone if crystal system is given
+        # Check for equal grains and convert orientations to the fundamental zone if crystal system is given
+        # Fundamental zone definition: trace(U) is maximal
+        # NB! Only possible for U1*B*hkl1 = U2*B*hkl2, where U2 = U1*p[k] and hkl2 = pinv[k]*hkl1 if either B or p is diagonal, hence the checks
         cs = 1
         if 'isotropic' in self.fit['crystal_system'] or 'cubic' in self.fit['crystal_system']:
             cs = 7
@@ -547,21 +549,27 @@ class parse_input:
             cs = 3
         elif 'monoclinic' in self.fit['crystal_system']:
             cs = 2
+        if self.unit_cell[3] == 90. and self.unit_cell[4] == 90. and self.unit_cell[5] == 90.:
+            B_is_diagonal = True
+        else:
+            B_is_diagonal = False        
         for i in range(self.no_grains):
             Ui = tools.rod_to_u([self.rod[i][0],self.rod[i][1],self.rod[i][2]])
             p = symmetry.permutations(cs)
-            r = symmetry.rotations(cs)
             t = Ui.trace()
             Ut = Ui.copy()
             pt = n.eye(3,3) 
-            rt = n.eye(3,3) 
             for k in range(len(p)):
-                Urot = n.dot(Ui,r[k].transpose())
+                if abs(p[k,0,1]) < 1e-12 and abs(p[k,0,2]) < 1e-12 and abs(p[k,1,0]) < 1e-12 and abs(p[k,1,2]) < 1e-12 and abs(p[k,2,0]) < 1e-12 and abs(p[k,2,1]) < 1e-12:
+                    pk_is_diagonal = True
+                else:
+                    pk_is_diagonal = False
+                Urot = n.dot(Ui,p[k])
                 trace = Urot.trace()
-                if trace > t:
+                if trace > t and (B_is_diagonal or pk_is_diagonal):
                     t = trace
                     Ut = Urot
-                    pt = p[k]
+                    pt = n.linalg.inv(p[k])
             for j in range(self.nrefl[i]):
                 [self.h[i][j],self.k[i][j],self.l[i][j]] = n.dot(pt,n.array([self.h[i][j],self.k[i][j],self.l[i][j]]))
             [self.rod[i][0],self.rod[i][1],self.rod[i][2]] = tools.u_to_rod(Ut)
