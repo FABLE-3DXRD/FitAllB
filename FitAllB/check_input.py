@@ -468,7 +468,9 @@ class parse_input:
         self.eta = [0]*self.param['total_refl']
         self.tth = [0]*self.param['total_refl']
         ia = []
-		
+        B = tools.form_b_mat(self.unit_cell)
+        Binv = n.linalg.inv(B)
+        
         try:
             f=open(self.files['log_file'],'r')
         except IOError:
@@ -549,10 +551,6 @@ class parse_input:
             cs = 3
         elif 'monoclinic' in self.fit['crystal_system']:
             cs = 2
-        if self.unit_cell[3] == 90. and self.unit_cell[4] == 90. and self.unit_cell[5] == 90.:
-            B_is_diagonal = True
-        else:
-            B_is_diagonal = False        
         for i in range(self.no_grains):
             Ui = tools.rod_to_u([self.rod[i][0],self.rod[i][1],self.rod[i][2]])
             p = symmetry.permutations(cs)
@@ -560,20 +558,15 @@ class parse_input:
             Ut = Ui.copy()
             pt = n.eye(3,3) 
             for k in range(len(p)):
-                if abs(p[k,0,1]) < 1e-12 and abs(p[k,0,2]) < 1e-12 and abs(p[k,1,0]) < 1e-12 and abs(p[k,1,2]) < 1e-12 and abs(p[k,2,0]) < 1e-12 and abs(p[k,2,1]) < 1e-12:
-                    pk_is_diagonal = True
-                else:
-                    pk_is_diagonal = False
-                Urot = n.dot(Ui,p[k])
+                Urot = n.dot(Ui,n.dot(B,n.dot(p[k],Binv)))
                 trace = Urot.trace()
-                if trace > t and (B_is_diagonal or pk_is_diagonal):
+                if trace > t:
                     t = trace
                     Ut = Urot
                     pt = n.linalg.inv(p[k])
             for j in range(self.nrefl[i]):
                 [self.h[i][j],self.k[i][j],self.l[i][j]] = n.dot(pt,n.array([self.h[i][j],self.k[i][j],self.l[i][j]]))
             [self.rod[i][0],self.rod[i][1],self.rod[i][2]] = tools.u_to_rod(Ut)
-            
             
             for j in range(i):
                 Uj = tools.rod_to_u([self.rod[j][0],self.rod[j][1],self.rod[j][2]])
