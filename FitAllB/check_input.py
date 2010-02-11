@@ -69,6 +69,7 @@ class parse_input:
             'pixel': 0,
             'center': 0,
             'L': 0,
+            'd0': 0,
             'rod': 1,
             'xyz': 1,
             'eps': 1,
@@ -753,6 +754,12 @@ class parse_input:
         
         self.errors = {}
         # global errors
+        self.param['a_error'] = 0.001
+        self.param['b_error'] = 0.001
+        self.param['c_error'] = 0.001
+        self.param['alpha_error'] = 0.001
+        self.param['beta_error'] = 0.001
+        self.param['gamma_error'] = 0.001
         self.param['chi_error'] = 0.001
         self.param['wedge_error'] = 0.001
         self.param['tilt_x_error'] = 0.001
@@ -830,6 +837,12 @@ class parse_input:
         
 def set_globals(inp):
         # global values
+        inp.values['a'] = deepcopy(inp.param['cell__a'])
+        inp.values['b'] = deepcopy(inp.param['cell__b'])
+        inp.values['c'] = deepcopy(inp.param['cell__c'])
+        inp.values['alpha'] = deepcopy(inp.param['cell_alpha'])
+        inp.values['beta'] = deepcopy(inp.param['cell_beta'])
+        inp.values['gamma'] = deepcopy(inp.param['cell_gamma'])
         inp.values['wx'] = deepcopy(inp.param['chi'])
         inp.values['wy'] = deepcopy(inp.param['wedge'])
         inp.values['tx'] = deepcopy(inp.param['tilt_x'])
@@ -841,6 +854,12 @@ def set_globals(inp):
         inp.values['cz'] = deepcopy(inp.param['z_center'])
         inp.values['L']  = deepcopy(inp.param['distance'])
         # global errors
+        inp.errors['a'] = deepcopy(inp.param['a_error'])
+        inp.errors['b'] = deepcopy(inp.param['b_error'])
+        inp.errors['c'] = deepcopy(inp.param['c_error'])
+        inp.errors['alpha'] = deepcopy(inp.param['alpha_error'])
+        inp.errors['beta'] = deepcopy(inp.param['beta_error'])
+        inp.errors['gamma'] = deepcopy(inp.param['gamma_error'])
         inp.errors['wx'] = deepcopy(inp.param['chi_error'])
         inp.errors['wy'] = deepcopy(inp.param['wedge_error'])
         inp.errors['tx'] = deepcopy(inp.param['tilt_x_error'])
@@ -858,6 +877,12 @@ def set_globals(inp):
 def copy_globals(inp):
         # Necessary to save copies of global parameters in param when switching between near and farfiel detectors
         # global values
+        inp.param['cell__a'] = deepcopy(inp.values['a']) 
+        inp.param['cell__b'] = deepcopy(inp.values['b']) 
+        inp.param['cell__c'] = deepcopy(inp.values['c']) 
+        inp.param['cell_alpha'] = deepcopy(inp.values['alpha']) 
+        inp.param['cell_beta'] = deepcopy(inp.values['beta']) 
+        inp.param['cell_gamma'] = deepcopy(inp.values['gamma']) 
         inp.param['chi'] = deepcopy(inp.values['wx']) 
         inp.param['wedge'] = deepcopy(inp.values['wy']) 
         inp.param['tilt_x'] = deepcopy(inp.values['tx']) 
@@ -869,6 +894,12 @@ def copy_globals(inp):
         inp.param['z_center'] = deepcopy(inp.values['cz']) 
         inp.param['distance'] = deepcopy(inp.values['L'])  
         # global errors
+        inp.param['a_error'] = deepcopy(inp.errors['a']) 
+        inp.param['b_error'] = deepcopy(inp.errors['b']) 
+        inp.param['c_error'] = deepcopy(inp.errors['c']) 
+        inp.param['alpha_error'] = deepcopy(inp.errors['alpha']) 
+        inp.param['beta_error'] = deepcopy(inp.errors['beta']) 
+        inp.param['gamma_error'] = deepcopy(inp.errors['gamma']) 
         inp.param['chi_error'] = deepcopy(inp.errors['wx']) 
         inp.param['wedge_error'] = deepcopy(inp.errors['wy']) 
         inp.param['tilt_x_error'] = deepcopy(inp.errors['tx']) 

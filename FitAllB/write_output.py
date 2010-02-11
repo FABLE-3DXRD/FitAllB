@@ -409,7 +409,7 @@ def write_log(lsqr):
     f.write('Grain data file: %s_%s.txt \n' %(lsqr.inp.fit['stem'],lsqr.inp.fit['goon']))
     # print values and errors of global parameters
     for entries in lsqr.globals:
-            if lsqr.m.fixed[entries] == True or lsqr.m.fixed[entries] == True:
+            if lsqr.m.fixed[entries] == True:
                 f.write('%s %f\n' %(entries, lsqr.m.values[entries]))
             else:
                 f.write('%s %f +- %f\n' %(entries, lsqr.m.values[entries], lsqr.m.errors[entries]))
@@ -493,12 +493,12 @@ def write_par(lsqr):
     dout = dout + "z_center %f\n" %z_center
     dout = dout + "z_size %f\n" %lsqr.m.values['pz']
 
-    out = "cell__a %s\n" %lsqr.inp.param['unit_cell'][0]
-    out = out + "cell__b %s\n" %lsqr.inp.param['unit_cell'][1]
-    out = out + "cell__c %s\n" %lsqr.inp.param['unit_cell'][2]
-    out = out + "cell_alpha %s\n" %lsqr.inp.param['unit_cell'][3]
-    out = out + "cell_beta %s\n" %lsqr.inp.param['unit_cell'][4]
-    out = out + "cell_gamma %s\n" %lsqr.inp.param['unit_cell'][5]
+    out = "cell__a %f\n" %lsqr.m.values['a']
+    out = out + "cell__b %f\n" %lsqr.m.values['b']
+    out = out + "cell__c %f\n" %lsqr.m.values['c']
+    out = out + "cell_alpha %0.3f\n" %lsqr.m.values['alpha']
+    out = out + "cell_beta %0.3f\n" %lsqr.m.values['beta']
+    out = out + "cell_gamma %0.3f\n" %lsqr.m.values['gamma']
     out = out + "cell_lattice_[P,A,B,C,I,F,R] %s\n" %lsqr.inp.param['cell_lattice_[P,A,B,C,I,F,R]']
     out = out + dout
 

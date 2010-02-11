@@ -31,7 +31,7 @@ class fit_minuit():
         self.poor_nrefl = []
 
  		# create lists of parameters, global and for each grain
-        self.globals = ["wx","wy","tx","ty","tz","py","pz","cy","cz","L"]
+        self.globals = ["a","b","c","alpha","beta","gamma","wx","wy","tx","ty","tz","py","pz","cy","cz","L"]
         self.grains = []
         for i in range(self.inp.no_grains):
             self.grains.append(["x%s" %i,"y%s" %i,"z%s" %i,"rodx%s" %i,"rody%s" %i,"rodz%s" %i,

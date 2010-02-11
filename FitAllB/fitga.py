@@ -31,7 +31,7 @@ class fit_minuit():
         self.poor_nrefl = []
 
  		# create lists of parameters, global and for each grain
-        self.globals = ["wx","wy","tx","ty","tz","py","pz","cy","cz","L"]
+        self.globals = ["a","b","c","alpha","beta","gamma","wx","wy","tx","ty","tz","py","pz","cy","cz","L"]
         self.grains = []
         for i in range(self.inp.no_grains):
             self.grains.append(["x%s" %i,"y%s" %i,"z%s" %i,"rodx%s" %i,"rody%s" %i,"rodz%s" %i,
@@ -78,6 +78,12 @@ class fit_minuit():
             print 'Fit %s time %i s' %(self.inp.fit['goon'],self.time)
             print 'Fit %s value %e \n' %(self.inp.fit['goon'],self.m.fval)
 			    
+            # apply crystal_system restraints to unit cell parameters
+            if 'hex' in self.inp.fit['crystal_system'] or 'trigonal' in self.inp.fit['crystal_system'] or 'tetra' in self.inp.fit['crystal_system'] :
+                self.m.values['b'] = self.m.values['a'] 
+            elif 'cubic' in self.inp.fit['crystal_system'] or 'isotropic' in self.inp.fit['crystal_system']:
+                self.m.values['b'] = self.m.values['a']
+                self.m.values['c'] = self.m.values['a']
 			
             # reject outliers and save cycle info	
             fit.reject_outliers(self)
@@ -108,7 +114,19 @@ class fit_minuit():
                 self.m.fixed[entries] = False
             elif 'L' in entries and self.inp.fit['L'] != 0:
                 self.m.fixed[entries] = False
-
+            elif self.inp.fit['d0'] != 0:
+                self.m.fixed['a'] = False
+                if 'cubic' not in self.inp.fit['crystal_system'] and 'isotropic' not in self.inp.fit['crystal_system']:
+                    self.m.fixed['c'] = False
+                if 'ortho' in self.inp.fit['crystal_system'] or 'mono' in self.inp.fit['crystal_system'] or 'triclinic' in self.inp.fit['crystal_system'] :
+                    self.m.fixed['b'] = False
+                if 'mono' in self.inp.fit['crystal_system'] or 'triclinic' in self.inp.fit['crystal_system'] :
+                    self.m.fixed['beta'] = False
+                if 'triclinic' in self.inp.fit['crystal_system'] :
+                    self.m.fixed['alpha'] = False
+                    self.m.fixed['gamma'] = False
+                    
+    
 		
 def refine(inp):
     while inp.fit['goon'] != 'end':

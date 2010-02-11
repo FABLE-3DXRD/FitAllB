@@ -20,12 +20,12 @@ def FCN(inp):
 		
     These are all called with the following refinable parameters:
         globals: 		wx,wy,tx,ty,tz,py,pz,cy,cz,L
+                        [a,b,c,alpha,beta,gamma] of unstrained cell (A and deg)
         for each grain: x,y,z,rodx,rody,rodz,
                         epsaa,epsab,epsac,epsbb,epsbc,epscc
 		
     Additional needed parameters that are written in fcn.py
         wavelength:	wavelength (A)	
-        unit_cell:	[a,b,c,alpha,beta,gamma] of unstrained cell (A and deg)
         O:			[[o11,o12],[o21,o22]] detector flip matrix
         no_grains:  number of grains
         nrefl[i]:	list of number of assigned reflections for each grain, 
@@ -43,8 +43,11 @@ def FCN(inp):
                     id[i][j] used for identification, k=range(max(id[i][j])) 
         vars[k]:	error vector of gexp for each measuered reflection, 
                     id[i][j] used for identification, k=range(max(id[i][j])) 
+        crystal_system: 'isotropic', 'cubic', 'hexagonal', 'trigonal_high', 'trigonal_low',
+                        'tetragonal_high', 'tetragonal_low', 'orthorhombic', 'monoclinic', 'triclinic'
 		
     Jette Oddershede, July 2008
+    Updated with d0 fit February 2010
     """
 	
 	
@@ -56,7 +59,7 @@ def FCN(inp):
     # wavelength
     string = string + 'wavelength = %f \n' %inp.param['wavelength']
     # unit cell
-    string = string + 'unit_cell = n.array([%f,%f,%f,%f,%f,%f]) \n' %(inp.param['cell__a'],inp.param['cell__b'],inp.param['cell__c'],inp.param['cell_alpha'],inp.param['cell_beta'],inp.param['cell_gamma'])
+    string = string + "crystal_system = '%s' \n" %inp.fit['crystal_system']
     # detector flip
     string = string + "O = n.array([[%i,%i],[%i,%i]])\n"     %(inp.param['o11'],inp.param['o12'],inp.param['o21'],inp.param['o22'])
     # no_grains
@@ -181,7 +184,19 @@ def FCN(inp):
     string = string + '\t gexp = n.dot(n.transpose(Omega),(d/n.sqrt(n.sum(d**2)) - n.array([[1],[0],[0]])))\n'
     string = string + '\t return gexp \n\n'
 
-    string = string + 'def gcalc(h,k,l,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
+    string = string + 'def gcalc(a,b,c,alpha,beta,gamma,h,k,l,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
+    string = string + "\t if crystal_system == 'triclinic':\n" 
+    string = string + "\t\t unit_cell = [a,b,c,alpha,beta,gamma]\n" 
+    string = string + "\t elif crystal_system == 'monoclinic':\n" 
+    string = string + "\t\t unit_cell = [a,b,c,90,beta,90]\n" 
+    string = string + "\t elif crystal_system == 'orthorhombic':\n" 
+    string = string + "\t\t unit_cell = [a,b,c,90,90,90]\n" 
+    string = string + "\t elif 'tetragonal' in crystal_system:\n" 
+    string = string + "\t\t unit_cell = [a,a,c,90,90,90]\n" 
+    string = string + "\t elif 'trigonal' in crystal_system or crystal_system == 'hexagonal':\n" 
+    string = string + "\t\t unit_cell = [a,a,c,90,90,120]\n" 
+    string = string + "\t elif crystal_system == 'cubic' or crystal_system == 'isotropic':\n" 
+    string = string + "\t\t unit_cell = [a,a,a,90,90,90]\n" 
     string = string + "\t B = tools.epsilon_to_b(n.array([epsaa,epsab,epsac,epsbb,epsbc,epscc]),unit_cell)\n" 
     string = string + '\t U = tools.rod_to_u([rodx,rody,rodz])\n'
     string = string + '\t Bhkl = n.dot(B,n.array([[h],[k],[l]]))\n'
@@ -189,9 +204,9 @@ def FCN(inp):
     string = string + '\t return gcalc \n\n'
 	
     # refine residual*IA in stead of residual
-    string = string + 'def peak(h,k,l,w,dety,detz,vars,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
+    string = string + 'def peak(a,b,c,alpha,beta,gamma,h,k,l,w,dety,detz,vars,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
     string = string + '\t ge = gexp(w,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z)\n'
-    string = string + '\t gc = gcalc(h,k,l,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc)\n'
+    string = string + '\t gc = gcalc(a,b,c,alpha,beta,gamma,h,k,l,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc)\n'
     string = string + '\t diff = ge-gc\n'
     string = string + '\t result = n.sum(diff*diff/n.array([[vars[0]],[vars[1]],[vars[2]]]))\n'
 #    string = string + '\t ia = n.arccos(n.sum(ge*gc)/(n.sqrt(n.sum(ge*ge))*n.sqrt(n.sum(gc*gc)))) \n\n'
@@ -226,7 +241,7 @@ def FCN(inp):
 	
 # FCN function for all grains
 	
-    string = string + 'def FCN(wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
+    string = string + 'def FCN(a,b,c,alpha,beta,gamma,wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
     for i in range(inp.no_grains):
         string = string + ',\n \t x%s,y%s,z%s,rodx%s,rody%s,rodz%s,epsaa%s,epsab%s,epsac%s,epsbb%s,epsbc%s,epscc%s' \
 	                          %(i,i,i,i,i,i,i,i,i,i,i,i)
@@ -294,7 +309,7 @@ def FCN(inp):
     string = string + '\t\t\t pass \n'
     string = string + '\t\t else:\n'
     string = string + '\t\t\t for j in range(nrefl[i]):\n'
-    string = string + '\t\t\t\t sum = sum + peak(h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
+    string = string + '\t\t\t\t sum = sum + peak(a,b,c,alpha,beta,gamma,h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
     string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],rod[i][0]+rodx[i],rod[i][1]+rody[i],rod[i][2]+rodz[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
     string = string + '\n'
     string = string + '\t return sum \n\n\n'
@@ -303,7 +318,7 @@ def FCN(inp):
 	
 # FCNgrain function for a single grain 
 	
-    string = string + 'def FCNgrain(i,wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
+    string = string + 'def FCNgrain(i,a,b,c,alpha,beta,gamma,wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
     for i in range(inp.no_grains):
         string = string + ',\n \t x%s,y%s,z%s,rodx%s,rody%s,rodz%s,epsaa%s,epsab%s,epsac%s,epsbb%s,epsbc%s,epscc%s' \
 	                          %(i,i,i,i,i,i,i,i,i,i,i,i)
@@ -368,7 +383,7 @@ def FCN(inp):
     string = string + '\t sum = 0 \n \n'
     
     string = string + '\t for j in range(nrefl[i]):\n'
-    string = string + '\t\t sum = sum + peak(h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
+    string = string + '\t\t sum = sum + peak(a,b,c,alpha,beta,gamma,h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
     string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],rod[i][0]+rodx[i],rod[i][1]+rody[i],rod[i][2]+rodz[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
     string = string + '\n'
     string = string + '\t return sum \n\n\n'
@@ -377,7 +392,7 @@ def FCN(inp):
 	
 # FCNpeak function calculating the contribution from a single peak including all variables	
 	
-    string = string + 'def FCNpeak(i,j,wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
+    string = string + 'def FCNpeak(i,j,a,b,c,alpha,beta,gamma,wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
     for i in range(inp.no_grains):
         string = string + ',\n \t x%s,y%s,z%s,rodx%s,rody%s,rodz%s,epsaa%s,epsab%s,epsac%s,epsbb%s,epsbc%s,epscc%s' \
 	                          %(i,i,i,i,i,i,i,i,i,i,i,i)
@@ -439,7 +454,7 @@ def FCN(inp):
         string = string + 'epscc%i,' %i
     string = string + ']\n\n'
 
-    string = string + '\t sum = peak(h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
+    string = string + '\t sum = peak(a,b,c,alpha,beta,gamma,h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
     string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],rod[i][0]+rodx[i],rod[i][1]+rody[i],rod[i][2]+rodz[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
     string = string + '\t return sum \n\n\n'
 	

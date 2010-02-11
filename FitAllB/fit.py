@@ -29,7 +29,7 @@ class fit_minuit():
         self.poor_nrefl = []
 
  		# create lists of parameters, global and for each grain
-        self.globals = ["wx","wy","tx","ty","tz","py","pz","cy","cz","L"]
+        self.globals = ["a","b","c","alpha","beta","gamma","wx","wy","tx","ty","tz","py","pz","cy","cz","L"]
         self.grains = []
         for i in range(self.inp.no_grains):
             self.grains.append(["x%s" %i,"y%s" %i,"z%s" %i,"rodx%s" %i,"rody%s" %i,"rodz%s" %i,
@@ -257,7 +257,8 @@ def grain_values(lsqr):
                 pass
             else:		
                 for j in range(lsqr.inp.nrefl[i]):
-                    g[i] = g[i] + fcn.peak(lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
+                    g[i] = g[i] + fcn.peak(lsqr.m.values['a'],lsqr.m.values['b'],lsqr.m.values['c'],lsqr.m.values['alpha'],lsqr.m.values['beta'],lsqr.m.values['gamma'],
+                                     lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
                                      lsqr.inp.w[lsqr.inp.id[i][j]],lsqr.inp.dety[lsqr.inp.id[i][j]],lsqr.inp.detz[lsqr.inp.id[i][j]],
                                      lsqr.inp.vars[i][j], 
                                      lsqr.m.values['wx'],lsqr.m.values['wy'],
@@ -317,7 +318,8 @@ def reject_outliers(lsqr):
                     pass
                 else:		
                     for j in range(lsqr.inp.nrefl[i]-1,-1,-1): # loop backwards to make pop work
-                        value = fcn.peak(lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
+                        value = fcn.peak(lsqr.m.values['a'],lsqr.m.values['b'],lsqr.m.values['c'],lsqr.m.values['alpha'],lsqr.m.values['beta'],lsqr.m.values['gamma'],
+                                        lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
                                         lsqr.inp.w[lsqr.inp.id[i][j]],lsqr.inp.dety[lsqr.inp.id[i][j]],lsqr.inp.detz[lsqr.inp.id[i][j]],
                                         lsqr.inp.vars[i][j], 
                                         lsqr.m.values['wx'],lsqr.m.values['wy'],

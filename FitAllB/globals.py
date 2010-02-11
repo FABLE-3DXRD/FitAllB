@@ -30,7 +30,7 @@ class fit_minuit():
         self.poor_nrefl = []
 
  		# create lists of parameters, global and for each grain
-        self.globals = ["wx","wy","tx","ty","tz","py","pz","cy","cz","L"]
+        self.globals = ["a","b","c","alpha","beta","gamma","wx","wy","tx","ty","tz","py","pz","cy","cz","L"]
         self.grains = []
         for i in range(self.inp.no_grains):
             self.grains.append(["x%s" %i,"y%s" %i,"z%s" %i,"rodx%s" %i,"rody%s" %i,"rodz%s" %i,
@@ -211,7 +211,8 @@ class fit_minuit():
                     pass
                 else:		
                     for j in range(self.inp.nrefl[i]-1,-1,-1): # loop backwards to make pop work
-                        value = fcn.peak(self.inp.h[i][j],self.inp.k[i][j],self.inp.l[i][j],
+                        value = fcn.peak(lsqr.mg.values['a'],lsqr.mg.values['b'],lsqr.mg.values['c'],lsqr.mg.values['alpha'],lsqr.mg.values['beta'],lsqr.mg.values['gamma'],
+                                        self.inp.h[i][j],self.inp.k[i][j],self.inp.l[i][j],
                                         self.inp.w[self.inp.id[i][j]],self.inp.dety[self.inp.id[i][j]],self.inp.detz[self.inp.id[i][j]],
                                         #n.array([self.inp.Syy[self.inp.id[i][j]],self.inp.Szz[self.inp.id[i][j]],self.inp.Sww[self.inp.id[i][j]]]),
                                         self.inp.vars[i][j], 

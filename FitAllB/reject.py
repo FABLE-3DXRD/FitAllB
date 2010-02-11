@@ -132,10 +132,9 @@ def mean_ia(inp,limit,only=None):
                                     inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],
                                     inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],
                                     inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
-                    gcalc = fcn.gcalc(inp.h[i][j],inp.k[i][j],inp.l[i][j],
-                                      rod[0],
-                                      rod[1],
-                                      rod[2],
+                    gcalc = fcn.gcalc(inp.values['a'],inp.values['b'],inp.values['c'],inp.values['alpha'],inp.values['beta'],inp.values['gamma'],
+                                      inp.h[i][j],inp.k[i][j],inp.l[i][j],
+                                      rod[0],rod[1],rod[2],
                                       inp.values['epsaa%s' %i],inp.values['epsab%s' %i],inp.values['epsac%s' %i],
                                       inp.values['epsbb%s' %i],inp.values['epsbc%s' %i],inp.values['epscc%s' %i])
 #                    gexp = n.dot(Omega,gexp)
@@ -173,10 +172,9 @@ def mean_ia_old(inp,limit,only=None):
                                     inp.values['wx'],inp.values['wy'],inp.values['tx'],inp.values['ty'],inp.values['tz'],
                                     inp.values['py'],inp.values['pz'],inp.values['cy'],inp.values['cz'],inp.values['L'],
                                     inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
-                    gcalc = fcn.gcalc(inp.h[i][j],inp.k[i][j],inp.l[i][j],
-                                      rod[0],
-                                      rod[1],
-                                      rod[2],
+                    gcalc = fcn.gcalc(inp.values['a'],inp.values['b'],inp.values['c'],inp.values['alpha'],inp.values['beta'],inp.values['gamma'],
+                                      inp.h[i][j],inp.k[i][j],inp.l[i][j],
+                                      rod[0],rod[1],rod[2],
                                       inp.values['epsaa%s' %i],inp.values['epsab%s' %i],inp.values['epsac%s' %i],
                                       inp.values['epsbb%s' %i],inp.values['epsbc%s' %i],inp.values['epscc%s' %i])
                     gexp = n.dot(Omega,gexp)
@@ -354,7 +352,8 @@ def residual(inp,limit,only=None):
                 pass
             else:				
                 for j in range(inp.nrefl[i]): 
-                    inp.residual[i][j] = fcn.peak(inp.h[i][j],inp.k[i][j],inp.l[i][j],
+                    inp.residual[i][j] = fcn.peak(inp.values['a'],inp.values['b'],inp.values['c'],inp.values['alpha'],inp.values['beta'],inp.values['gamma'],
+                                              inp.h[i][j],inp.k[i][j],inp.l[i][j],
                                               inp.w[inp.id[i][j]],inp.dety[inp.id[i][j]],inp.detz[inp.id[i][j]],
                                               #n.array([inp.Syy[inp.id[i][j]],inp.Szz[inp.id[i][j]],inp.Sww[inp.id[i][j]]]),
                                               inp.vars[i][j], 
