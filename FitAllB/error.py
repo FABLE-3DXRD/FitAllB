@@ -2,6 +2,7 @@ import numpy as n
 from xfab import tools
 import check_input
 import reject
+from copy import deepcopy
 
 def vars_scale(inp):
     """
@@ -53,6 +54,26 @@ def	vars(inp):
     """
     
     check_input.set_globals(inp)
+    # start preparing for volume weighted errors
+    volavg = []
+    try:
+        for i in range(inp.no_grains):
+            if len(inp.volume[i]) > 0:
+                volavg.append(sum(inp.volume[i])/len(inp.volume[i]))
+            else:
+                volavg.append(0)
+    except:
+        volavg = [1]*inp.no_grains
+    volavg_significant = deepcopy(volavg)
+    for i in range(inp.no_grains-1,-1,-1):
+        if volavg_significant == 0:
+            volavg_significant.pop(i)
+    if len(volavg_significant) > 0:
+        volmedian = reject.median(volavg_significant)
+    else:
+        volmedian = 1
+    # end preparing for volume weighted errors
+    
     inp.vars = []
     for i in range(inp.no_grains):
         inp.vars.append([])
@@ -67,7 +88,10 @@ def	vars(inp):
 #                            inp.values['x%s' %i],inp.values['y%s' %i],inp.values['z%s' %i])
 #                inp.vars[i].append([Sgg[0,0],Sgg[1,0],Sgg[2,0]]) # propagated errors
 #                inp.vars[i].append([Sgg[0,0]+1e-9,Sgg[1,0]+1e-9,Sgg[2,0]+1e-9]) # propagated errors + constant contribution
-                inp.vars[i].append([4e-8,4e-8,1e-8]) # no error propagation
+            if volavg[i] != 0:
+                inp.vars[i].append([4e-8*volmedian/volavg[i],4e-8*volmedian/volavg[i],1e-8*volmedian/volavg[i]]) # no error propagation
+            else:
+                inp.vars[i].append([4.,4.,1.]) # no error propagation
 
 
 def error(w,dety,detz,Sww,Syy,Szz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z):
