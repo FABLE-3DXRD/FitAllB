@@ -37,6 +37,19 @@ class fit_minuit():
             self.grains.append(["x%s" %i,"y%s" %i,"z%s" %i,"rodx%s" %i,"rody%s" %i,"rodz%s" %i,
                                 "epsaa%s" %i,"epsbb%s" %i,"epscc%s" %i,"epsbc%s" %i,"epsac%s" %i,"epsab%s" %i])
 
+        # correct for z-offset
+        zcom = 0
+        vol = 0
+        for i in range(self.inp.no_grains):
+            vol = vol + sum(self.inp.volume[i])/self.inp.nrefl[i]
+            zcom = zcom + self.inp.values['z%s' %i]*sum(self.inp.volume[i])/self.inp.nrefl[i]
+        zcom = zcom / vol
+        
+        for i in range(self.inp.no_grains):
+            self.inp.values['z%s' %i] = self.inp.values['z%s' %i] - zcom
+           
+        self.inp.values['cz'] = self.inp.values['cz'] + zcom/self.inp.values['pz']
+
         #refinement update
         reload(fcn)
         self.m = minuit.Minuit(fcn.FCN)
@@ -49,7 +62,7 @@ class fit_minuit():
         self.ref = False
         if 'globals' in self.inp.fit['goon']:
             self.ref = True
-		
+            
 
 		# carry out refinement
         if self.ref == True:
@@ -112,6 +125,8 @@ class fit_minuit():
                 self.m.fixed[entries] = False
             elif entries=='cy' and self.inp.fit['center'] != 0:
                 self.m.fixed[entries] = False
+#            elif entries=='cz' and self.inp.fit['center'] != 0:
+#                self.m.fixed[entries] = False
             elif 'L' in entries and self.inp.fit['L'] != 0:
                 self.m.fixed[entries] = False
             elif self.inp.fit['d0'] != 0:
