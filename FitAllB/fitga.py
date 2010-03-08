@@ -105,6 +105,7 @@ class fit_minuit():
             write_output.write_par(self)
 
 		# move onto next refinement given by the reforder list	
+        write_output.write_values(self)
         self.inp.fit['goon'] = self.inp.fit['reforder'][self.inp.fit['reforder'].index(self.inp.fit['goon'])+1]
 
         return
@@ -125,8 +126,8 @@ class fit_minuit():
                 self.m.fixed[entries] = False
             elif entries=='cy' and self.inp.fit['center'] != 0:
                 self.m.fixed[entries] = False
-#            elif entries=='cz' and self.inp.fit['center'] != 0:
-#                self.m.fixed[entries] = False
+            elif entries=='cz' and self.inp.fit['center'] != 0:
+                self.m.fixed[entries] = False
             elif 'L' in entries and self.inp.fit['L'] != 0:
                 self.m.fixed[entries] = False
             elif self.inp.fit['d0'] != 0:
