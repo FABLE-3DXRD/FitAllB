@@ -509,7 +509,15 @@ def median(numbers):
       return copy[nn // 2]
    else:
       return (copy[nn // 2 - 1] + copy[nn // 2]) / 2
-
+      
+      
+def median_absolute_deviation(numbers):
+    med = median(numbers)    
+    ad = []
+    for i in range(len(numbers)):
+        ad.append(abs(numbers[i]-med))
+    mad = median(ad)
+    return mad
       
 def spread(data):
         data = n.array(data)

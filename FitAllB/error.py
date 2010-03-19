@@ -59,7 +59,8 @@ def	vars(inp):
     try:
         for i in range(inp.no_grains):
             if len(inp.volume[i]) > 0:
-                volavg.append(sum(inp.volume[i])/len(inp.volume[i]))
+#                volavg.append(sum(inp.volume[i])/len(inp.volume[i])) #mean
+                volavg.append(reject.median(inp.volume[i]))         #median
             else:
                 volavg.append(0)
     except:

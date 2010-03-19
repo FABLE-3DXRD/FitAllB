@@ -38,14 +38,22 @@ class fit_minuit():
                                 "epsaa%s" %i,"epsbb%s" %i,"epscc%s" %i,"epsbc%s" %i,"epsac%s" %i,"epsab%s" %i])
 
         # correct for z-offset
+        xcom = 0
+        ycom = 0
         zcom = 0
         vol = 0
         for i in range(self.inp.no_grains):
-            vol = vol + sum(self.inp.volume[i])/self.inp.nrefl[i]
-            zcom = zcom + self.inp.values['z%s' %i]*sum(self.inp.volume[i])/self.inp.nrefl[i]
+            vol = vol + reject.median(self.inp.volume[i])
+            xcom = xcom + self.inp.values['x%s' %i]*reject.median(self.inp.volume[i])
+            ycom = ycom + self.inp.values['y%s' %i]*reject.median(self.inp.volume[i])
+            zcom = zcom + self.inp.values['z%s' %i]*reject.median(self.inp.volume[i])
+        xcom = xcom / vol
+        ycom = ycom / vol
         zcom = zcom / vol
         
         for i in range(self.inp.no_grains):
+#            self.inp.values['x%s' %i] = self.inp.values['x%s' %i] - xcom
+#            self.inp.values['y%s' %i] = self.inp.values['y%s' %i] - ycom
             self.inp.values['z%s' %i] = self.inp.values['z%s' %i] - zcom
            
         self.inp.values['cz'] = self.inp.values['cz'] + zcom/self.inp.values['pz']
@@ -131,6 +139,7 @@ class fit_minuit():
             elif 'L' in entries and self.inp.fit['L'] != 0:
                 self.m.fixed[entries] = False
             elif self.inp.fit['d0'] != 0:
+#                self.m.fixed['L'] = False
                 self.m.fixed['a'] = False
                 if 'cubic' not in self.inp.fit['crystal_system'] and 'isotropic' not in self.inp.fit['crystal_system']:
                     self.m.fixed['c'] = False

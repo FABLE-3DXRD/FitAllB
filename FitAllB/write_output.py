@@ -175,7 +175,8 @@ def write_values(lsqr):
             sig_s = conversion.grain2sample(sig,U)            
             out = format %(i+1,
     			           n.sum(lsqr.inp.mean_ia[i])/len(lsqr.inp.mean_ia[i]),#0,
-	    				   sum(lsqr.inp.volume[i])/lsqr.inp.nrefl[i],
+#	    				   sum(lsqr.inp.volume[i])/lsqr.inp.nrefl[i],
+	    				   reject.median(lsqr.inp.volume[i]),
                            lsqr.m.values['x%s' %i]/1000,
                            lsqr.m.values['y%s' %i]/1000,
                            lsqr.m.values['z%s' %i]/1000,
@@ -327,7 +328,8 @@ def write_errors(lsqr,i):
     
     lines[index] = format %(i+1,
 			       reject.spread(lsqr.inp.mean_ia[i]),#0
-                   reject.spread(lsqr.inp.volume[i]),
+#                   reject.spread(lsqr.inp.volume[i]),
+                   reject.median_absolute_deviation(lsqr.inp.volume[i]),
                    lsqr.mg.errors['x%s' %i]/1000,
                    lsqr.mg.errors['y%s' %i]/1000,
                    lsqr.mg.errors['z%s' %i]/1000,

@@ -82,7 +82,8 @@ class fit_minuit():
                             temp.append(self.mg.values[self.globals[j]])
                         global_parameters.append(temp)
                         #weight.append(len(self.inp.mean_ia[i])/n.sum(self.inp.mean_ia[i]))
-                        weight.append(float(sum(self.inp.volume[i])/self.inp.nrefl[i]))
+#                        weight.append(float(sum(self.inp.volume[i])/self.inp.nrefl[i])) #mean
+                        weight.append(float(reject.median(self.inp.volume[i])))         #median
                         self.m = self.mg
                         write_output.write_global(self)
 				
