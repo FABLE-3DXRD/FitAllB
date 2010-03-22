@@ -686,6 +686,8 @@ class parse_input:
                     except:
                         self.fit['rejectvalue'].append(split(line)[13])
                     self.fit['outliers'] = self.fit['outliers'] + 1
+                except:
+                    pass
             if 'Skip grains' in line:
                 string = ''
                 for i in range(2,len(split(line))):
