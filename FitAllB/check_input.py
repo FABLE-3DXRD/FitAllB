@@ -595,7 +595,6 @@ class parse_input:
                 self.grainno = res.getcolumn('grainno')
                 self.grainno = self.grainno.astype(n.int)
                 self.grainno = self.grainno.tolist()
-                self.no_grains = max(len(self.grainno),max(self.grainno))
                 self.x = res.getcolumn('x')
                 self.y = res.getcolumn('y')
                 self.z = res.getcolumn('z')
@@ -709,7 +708,7 @@ class parse_input:
         self.values = {}
         # grain values
         if self.files['res_file'] != None:
-            self.no_grains = max(self.grainno)
+            self.no_grains = max(len(self.grainno),max(self.grainno))
             self.rod = []
             for i in range(self.no_grains):
                 self.rod.append([0.0,0.0,0.0])
