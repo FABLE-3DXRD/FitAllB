@@ -674,17 +674,18 @@ class parse_input:
         # read parameters by appending
         for line in input:
             if 'Rejected peak id' in line:
-                rejectid[int(split(line)[7])-1].append(int(split(line)[4]))
-                self.fit['rejectid'].append(int(split(line)[4]))
-                self.fit['rejectgrain'].append(int(split(line)[7]))
-                self.fit['hh'].append(int(split(line)[9]))
-                self.fit['kk'].append(int(split(line)[10]))
-                self.fit['ll'].append(int(split(line)[11]))
                 try:
-                    self.fit['rejectvalue'].append(eval(split(line)[13]))
-                except:
-                    self.fit['rejectvalue'].append(split(line)[13])
-                self.fit['outliers'] = self.fit['outliers'] + 1
+                    rejectid[int(split(line)[7])-1].append(int(split(line)[4]))
+                    self.fit['rejectid'].append(int(split(line)[4]))
+                    self.fit['rejectgrain'].append(int(split(line)[7]))
+                    self.fit['hh'].append(int(split(line)[9]))
+                    self.fit['kk'].append(int(split(line)[10]))
+                    self.fit['ll'].append(int(split(line)[11]))
+                    try:
+                        self.fit['rejectvalue'].append(eval(split(line)[13]))
+                    except:
+                        self.fit['rejectvalue'].append(split(line)[13])
+                    self.fit['outliers'] = self.fit['outliers'] + 1
             if 'Skip grains' in line:
                 string = ''
                 for i in range(2,len(split(line))):
