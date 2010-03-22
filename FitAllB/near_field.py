@@ -22,7 +22,7 @@ def find_refl(inp):
             inp.param['structure_phase_0'] = inp.files['structure_file']
             xtal_structure = reflections.open_structure(inp.param,0)
             HKL = reflections.gen_miller(inp.param,0)
-	else:
+        else:
             inp.param['unit_cell_phase_0'] = inp.unit_cell		
             inp.param['sgno_phase_0'] = inp.fit['sgno']
             HKL = reflections.gen_miller(inp.param,0)
@@ -52,9 +52,9 @@ def find_refl(inp):
                     tth = tools.tth2(Gw,inp.param['wavelength'])
                     costth = n.cos(tth)
                     (Omega, Eta) = tools.find_omega_general(inp.param['wavelength']/(4.*n.pi)*Gw,
-							    tth,
-							    inp.values['wx']*n.pi/180,
-							    inp.values['wy']*n.pi/180)  
+                                                            tth,
+                                                            inp.values['wx']*n.pi/180,
+                                                            inp.values['wy']*n.pi/180)  
                     if len(Omega) > 0:
                         for solution in range(len(Omega)):
                             omega = Omega[solution]
@@ -63,9 +63,7 @@ def find_refl(inp):
                                 if  (inp.fit['w_limit'][2*i]*n.pi/180) < omega and\
                                     omega < (inp.fit['w_limit'][2*i+1]*n.pi/180):
                                 # form Omega rotation matrix
-                                    Om = tools.form_omega_mat_general(omega,
-								      inp.values['wx']*n.pi/180,
-								      inp.values['wy']*n.pi/180)  
+                                    Om = tools.form_omega_mat_general(omega,inp.values['wx']*n.pi/180,inp.values['wy']*n.pi/180)  
                                     Gt = n.dot(Om,Gw) 
                                 # Calc crystal position at present omega
                                     [tx,ty,tz]= n.dot(Om,gr_pos)
@@ -84,13 +82,13 @@ def find_refl(inp):
                                         (-0.5 < detz) and\
                                         (detz < inp.fit['detz_size']-0.5):
                                         inp.possible[grainno].append([hkl[0],
-								      hkl[1],
-								      hkl[2],
-								      omega*180/n.pi,
-								      dety,
-								      detz,
-								      tth,
-								      eta])
+                                                                      hkl[1],
+                                                                      hkl[2],
+                                                                      omega*180/n.pi,
+                                                                      dety,
+                                                                      detz,
+                                                                      tth,
+                                                                      eta])
                                             
 
 def match(inp):

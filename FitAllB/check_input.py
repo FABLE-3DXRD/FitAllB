@@ -595,6 +595,7 @@ class parse_input:
                 self.grainno = res.getcolumn('grainno')
                 self.grainno = self.grainno.astype(n.int)
                 self.grainno = self.grainno.tolist()
+                self.no_grains = max(len(self.grainno),max(self.grainno))
                 self.x = res.getcolumn('x')
                 self.y = res.getcolumn('y')
                 self.z = res.getcolumn('z')
