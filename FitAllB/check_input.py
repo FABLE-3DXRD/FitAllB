@@ -482,6 +482,7 @@ class parse_input:
         f.close()
 
         self.no_grains = int(split(input[0])[1])
+        self.grainno = range(self.no_grains)
         nn = 23 # jumping to first grain
 
         for gr in range(self.no_grains):
@@ -693,6 +694,9 @@ class parse_input:
                 for i in range(2,len(split(line))):
                     string = string+split(line)[i]
                 self.fit['skip'].extend(eval(string))
+        for i in range(len(self.fit['skip'])-1,-1,-1):
+            if self.fit['skip'][i] not in self.grainno:
+                self.fit['skip'].pop(i)
         try:
             for i in range(self.no_grains):
                 for j in range(self.nrefl[i]-1,-1,-1): # loop backwards to make pop work
