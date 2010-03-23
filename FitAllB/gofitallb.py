@@ -43,7 +43,7 @@ def run(options):
     far.read_res()                      # read paramters file to resume refinement                              NB! optional
     if far.files['res_file'] == None:
         far.read_log()                  # read grainspotter.log file
-    #far.read_rej()                      # read file containing rejected peaks to resume refinement   NB! optional
+        far.read_rej(far.files['rej_file'])                      # read file containing rejected peaks to resume refinement   NB! optional
     far.set_start()                     # set values and errors for refinement start
     check_input.set_globals(far)
     
@@ -57,8 +57,8 @@ def run(options):
             if key[0:5] == 'near_': 
                 near.fit[key[5:len(key)]] = near.fit[key]
         near.fit['stem'] = far.fit['stem'] + '_near'
-    #    print 'far.fit', far.fit
-    #    print 'near.fit', near.fit
+#        print 'far.files', far.files
+#        print 'near.files', near.files
         near.read_par(near.files['near_par_file'])
         near.read_flt(near.files['near_flt_file'])
         keys = ['cell__a', 'cell__b', 'cell__c', 'cell_alpha', 'cell_beta', 'cell_gamma', 'cell_lattice_[P,A,B,C,I,F,R]', 'chi', 'omegasign', 'wavelength']
@@ -77,6 +77,7 @@ def run(options):
         near_field.find_refl(near)
         check_input.interrupt(options.killfile)
         near_field.match(near)
+        near.read_rej(near.files['near_rej_file'])                      # read file containing rejected peaks to resume refinement   NB! optional
         from FitAllB import error
         error.vars(near)
         from FitAllB import build_fcn
@@ -99,6 +100,7 @@ def run(options):
         near_field.find_refl(far)
         check_input.interrupt(options.killfile)
         near_field.match(far)
+        far.read_rej(far.files['rej_file'])                      # read file containing rejected peaks to resume refinement   NB! optional
     from FitAllB import error
     error.vars(far)
     from FitAllB import build_fcn

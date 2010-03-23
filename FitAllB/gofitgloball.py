@@ -35,7 +35,7 @@ def run(options):
     far.read_res()                      # read paramters file to resume refinement                              NB! optional
     if far.files['res_file'] == None:
         far.read_log()                  # read grainspotter.log file
-        far.read_rej()                      # read file containing rejected peaks to resume refinement   NB! optional
+        far.read_rej(far.files['rej_file'])                      # read file containing rejected peaks to resume refinement   NB! optional
     far.set_start()                     # set values and errors for refinement start
     check_input.set_globals(far)
     
@@ -47,7 +47,7 @@ def run(options):
         from FitAllB import near_field
         near_field.find_refl(far)
         near_field.match(far)
-        far.read_rej()                      # read file containing rejected peaks to resume refinement   NB! optional
+        far.read_rej(far.files['rej_file'])                      # read file containing rejected peaks to resume refinement   NB! optional
     from FitAllB import error
     error.vars(far)
     from FitAllB import build_fcn

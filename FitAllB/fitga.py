@@ -43,10 +43,11 @@ class fit_minuit():
         zcom = 0
         vol = 0
         for i in range(self.inp.no_grains):
-            vol = vol + reject.median(self.inp.volume[i])
-            xcom = xcom + self.inp.values['x%s' %i]*reject.median(self.inp.volume[i])
-            ycom = ycom + self.inp.values['y%s' %i]*reject.median(self.inp.volume[i])
-            zcom = zcom + self.inp.values['z%s' %i]*reject.median(self.inp.volume[i])
+            if i+1 not in self.inp.fit['skip']:
+                vol = vol + reject.median(self.inp.volume[i])
+                xcom = xcom + self.inp.values['x%s' %i]*reject.median(self.inp.volume[i])
+                ycom = ycom + self.inp.values['y%s' %i]*reject.median(self.inp.volume[i])
+                zcom = zcom + self.inp.values['z%s' %i]*reject.median(self.inp.volume[i])
         xcom = xcom / vol
         ycom = ycom / vol
         zcom = zcom / vol

@@ -104,6 +104,7 @@ class parse_input:
             #resume refinement option
             'res_file': None,
             'rej_file': None,
+            'near_rej_file': None,
             #strain to stress conversion
             'stress': 0,
             'c11': None,
@@ -482,7 +483,7 @@ class parse_input:
         f.close()
 
         self.no_grains = int(split(input[0])[1])
-        self.grainno = range(self.no_grains)
+        self.grainno = range(1,self.no_grains+1)
         nn = 23 # jumping to first grain
 
         for gr in range(self.no_grains):
@@ -656,9 +657,9 @@ class parse_input:
 
 
                 
-    def read_rej(self): # read file containing rejected peaks to resume refinement
+    def read_rej(self,rej_file): # read file containing rejected peaks to resume refinement
         try:
-            f=open(self.files['rej_file'],'r')
+            f=open(rej_file,'r')
         except:
             print 'Start refinement without apriori information about peak rejection' 
             return
@@ -695,7 +696,7 @@ class parse_input:
                     string = string+split(line)[i]
                 self.fit['skip'].extend(eval(string))
         for i in range(len(self.fit['skip'])-1,-1,-1):
-            if self.fit['skip'][i] not in self.grainno:
+            if self.fit['skip'][i] > self.no_grains:
                 self.fit['skip'].pop(i)
         try:
             for i in range(self.no_grains):
@@ -759,6 +760,10 @@ class parse_input:
                 self.values['y%s' %i] = 1000.*self.y[i]
                 self.values['z%s' %i] = 1000.*self.z[i]
         
+        for i in range(len(self.fit['skip'])-1,-1,-1):
+            if self.fit['skip'][i] > self.no_grains:
+                self.fit['skip'].pop(i)
+
         self.errors = {}
         # global errors
         self.param['a_error'] = 0.001
@@ -806,7 +811,8 @@ class parse_input:
     def reject(self): # carry out initial rejections
 
         import reject
-        print '\n\nNumber of assigned reflections (from GrainSpotter): ', n.sum(self.nrefl)
+        print '\n\nNumber of read grains', self.no_grains
+        print 'Number of assigned reflections: ', n.sum(self.nrefl)
         # set starting values
         self.newreject = 0
         self.fit['newreject_grain'] = []
@@ -837,8 +843,14 @@ class parse_input:
         import reject
         reject.unique_list(self.fit['skip'])
         print 'Skip the following grains:', self.fit['skip']
-        print 'Number of grains from grainspotter', self.no_grains
-        print 'Actual number of grains in fit', self.no_grains - len(self.fit['skip']),'\n'	
+        print 'Actual number of grains in fit', self.no_grains - len(self.fit['skip'])
+        observations = 0
+        for i in range(self.no_grains):
+            if i+1 in self.fit['skip']:
+                pass
+            else:
+                observations = observations + self.nrefl[i]
+        print 'Total number of reflections in these', observations,'\n'	
        
         write_output.write_rej(self,message=('%s\n\ncheck_input' %self.fit['title']))
         

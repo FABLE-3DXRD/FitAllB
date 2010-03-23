@@ -64,15 +64,15 @@ def	vars(inp):
             else:
                 volavg.append(0)
     except:
-        volavg = [1]*inp.no_grains
+        volavg = [1.]*inp.no_grains
     volavg_significant = deepcopy(volavg)
     for i in range(inp.no_grains-1,-1,-1):
-        if volavg_significant == 0:
+        if volavg_significant[i] == 0:
             volavg_significant.pop(i)
     if len(volavg_significant) > 0:
         volmedian = reject.median(volavg_significant)
     else:
-        volmedian = 1
+        volmedian = 1.
     # end preparing for volume weighted errors
     
     inp.vars = []
