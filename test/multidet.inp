@@ -1,0 +1,37 @@
+title 'fit of global parameters for 3 detectors'
+res_file si.gff
+no_det 3
+flt_file frelon_t2000.flt
+par_file frelon.par
+flt_file_1 star1_t2000c.flt
+par_file_1 star1.par
+flt_file_2 star2_t500c.flt
+par_file_2 star2.par
+w_step 0.25
+w_limit -100 100
+dety_size 2048
+detz_size 2048
+dety_size1 2048
+detz_size1 2048
+dety_size2 2048
+detz_size2 2048
+vars_scale1 10
+vars_scale2 10
+crystal_system cubic
+sgno 227
+cycle 10
+min_refl 45
+rej_ia 0.2
+rej_resmedian 10 
+rej_resmean 50     
+rej_vol 5 
+w 1            # Fit omega stage tilt parameter wy
+tilt 1         # Fit detector tilt parameters tx, ty, tx
+pixel 0        # Fit pixel size py and pz
+center 1       # Fit detector centre along y-axis, cy
+L 1            # Fit sample-to-detector distance
+xyz 1		   # Fit grain positions
+rod 1          # Fit orientations and thus Rodrigues vectors
+eps 0          # Fit strain tensors
+tol_global 1e-2
+tol_rotpos 1e-4
