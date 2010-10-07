@@ -411,6 +411,7 @@ def reject(inp,i,j,message):
         """
         inp.vars[i].pop(j)
         inp.fit['rejectgrain'].append(i)
+        inp.fit['rejectdet'].append(0)
         inp.fit['rejectid'].append(inp.id[i].pop(j))
         inp.fit['hh'].append(inp.h[i].pop(j))
         inp.fit['kk'].append(inp.k[i].pop(j))

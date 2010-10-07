@@ -50,6 +50,7 @@ def find_refl(inp):
                     Gc = n.dot(B,hkl[0:3])
                     Gw = n.dot(S,n.dot(U,Gc))
                     tth = tools.tth2(Gw,inp.param['wavelength'])
+#                    print hkl[0:3],tth*180./n.pi
                     costth = n.cos(tth)
                     (Omega, Eta) = tools.find_omega_general(inp.param['wavelength']/(4.*n.pi)*Gw,
                                                             tth,
@@ -118,6 +119,7 @@ def match(inp):
             inp.k.append([])
             inp.l.append([])
             for m in range(len(inp.possible[i])):
+#                print inp.possible[i][m]
                 w_tol = 0
                 dety_tol = 0
                 detz_tol = 0

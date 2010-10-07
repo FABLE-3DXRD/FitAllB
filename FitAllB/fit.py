@@ -391,7 +391,7 @@ def scale_errors(lsqr,i=None):
                 if lsqr.m.fixed[entries] == False:
                     parameters = parameters + 1
         else:
-            for entries in lsqr.m.fixed:
+            for entries in lsqr.mg.fixed:
                 if lsqr.mg.fixed[entries] == False:
                     parameters = parameters + 1
 

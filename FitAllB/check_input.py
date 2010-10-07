@@ -133,6 +133,7 @@ class parse_input:
         self.newreject = 0
         self.fit['outliers'] = 0
         self.fit['rejectgrain'] = []
+        self.fit['rejectdet'] = []
         self.fit['rejectid'] = []
         self.fit['hh'] = []
         self.fit['kk'] = []
