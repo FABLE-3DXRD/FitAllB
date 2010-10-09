@@ -124,7 +124,9 @@ def match(inp):
                 dety_tol = 0
                 detz_tol = 0
                 matches = 0
-                for k in range(2):
+                
+                cycles = int(round(inp.fit['tol_fw_proj']))
+                for k in range(cycles):
                     if matches > 0:
                         break
                     else:

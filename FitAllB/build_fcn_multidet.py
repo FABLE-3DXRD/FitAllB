@@ -233,8 +233,16 @@ def FCN(inp):
 	
     # refine residual*IA in stead of residual
     string = string + 'def peak(a,b,c,alpha,beta,gamma,h,k,l,w,dety,detz,vars,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
-    string = string + '\t ge = gexp(w,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z)\n'
-    string = string + '\t gc = gcalc(a,b,c,alpha,beta,gamma,h,k,l,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc)\n'
+    if inp.fit['pixel'] == 1:    
+        string = string + '\t ge = gexp(w,dety,detz,wx,wy,tx,ty,tz,py,py,cy,cz,L,x,y,z)\n'
+    else:
+        string = string + '\t ge = gexp(w,dety,detz,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z)\n'
+    if 'cubic' in inp.fit['crystal_system'] or 'isotropic' in inp.fit['crystal_system']:
+        string = string + '\t gc = gcalc(a,a,a,alpha,beta,gamma,h,k,l,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc)\n'
+    elif 'tetra' in inp.fit['crystal_system'] or 'tetra' in inp.fit['crystal_system']: 
+        string = string + '\t gc = gcalc(a,a,c,alpha,beta,gamma,h,k,l,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc)\n'
+    else: 
+        string = string + '\t gc = gcalc(a,b,c,alpha,beta,gamma,h,k,l,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc)\n'
     string = string + '\t diff = ge-gc\n'
     string = string + '\t result = n.sum(diff*diff/n.array([[vars[0]],[vars[1]],[vars[2]]]))\n'
 #    string = string + '\t ia = n.arccos(n.sum(ge*gc)/(n.sqrt(n.sum(ge*ge))*n.sqrt(n.sum(gc*gc)))) \n\n'

@@ -68,7 +68,8 @@ class fit_minuit():
 #            self.inp.values['y%s' %i] = self.inp.values['y%s' %i] - ycom
             self.inp.values['z%s' %i] = self.inp.values['z%s' %i] - zcom
            
-        self.inp.values['cz'] = self.inp.values['cz'] + zcom/self.inp.values['pz']
+        for i in range(self.inp.fit['no_det']):
+            self.inp.values['cz%s' %i] = self.inp.values['cz%s' %i] + zcom/self.inp.values['pz%s' %i]
 
         #refinement update
         reload(fcn)
@@ -79,7 +80,7 @@ class fit_minuit():
             self.m.fixed[entries] = True
         for entries in self.globals:
             self.m.fixed[entries] = True
-#            print entries, self.inp.values[entries]
+            print entries, self.inp.values[entries]
 
 		# determine whether to refine
         self.ref = False
@@ -120,7 +121,11 @@ class fit_minuit():
             elif 'cubic' in self.inp.fit['crystal_system'] or 'isotropic' in self.inp.fit['crystal_system']:
                 self.m.values['b'] = self.m.values['a']
                 self.m.values['c'] = self.m.values['a']
-			
+			#constrain pixels to be square
+            if self.inp.fit['pixel'] == 1:
+                for k in range(self.inp.fit['no_det']):
+                    self.m.values['pz%s' %k] = self.m.values['py%s' %k]
+            
             # reject outliers and save cycle info	
             fit_multidet.reject_outliers(self)
             write_output_multidet.write_rej(self.inp,message=self.inp.fit['goon'])
@@ -145,7 +150,7 @@ class fit_minuit():
                 self.m.fixed[entries] = False
             elif entries[0]=='t' and self.inp.fit['tilt'] != 0:
                 self.m.fixed[entries] = False
-            elif 'p' in entries and len(entries) == 3 and self.inp.fit['pixel'] != 0:
+            elif 'py' in entries and len(entries) == 3 and self.inp.fit['pixel'] != 0 and entries[2] != '0':
                 self.m.fixed[entries] = False
             elif entries[0:2]=='cy' and self.inp.fit['center'] != 0:
                 self.m.fixed[entries] = False

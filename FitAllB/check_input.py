@@ -101,6 +101,7 @@ class parse_input:
             'tol_global': 1e-2,
             'tol_rotpos': 1e-2,
             'tol_grain': 1e-3,
+            'tol_fw_proj': 2,
             #resume refinement option
             'res_file': None,
             'rej_file': None,

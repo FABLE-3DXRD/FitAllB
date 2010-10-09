@@ -159,7 +159,8 @@ def run(options):
     #while len(far.fit['newreject_grain']) > 0:
         # refine grain paramters
         far.fit['reforder'] = ['start%s' %k,'rotpos%s' %k,'end'] 
-#        far.fit['reforder'] = ['start%s' %k,'end'] 
+ #       if k==0:
+ #           far.fit['reforder'] = ['start%s' %k,'end'] 
         far.fit['goon'] = far.fit['reforder'][0]
         far.fit['newreject_grain'] = range(far.no_grains+1)
         # refine grains
