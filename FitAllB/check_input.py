@@ -627,12 +627,21 @@ class parse_input:
                 self.rodz = n.zeros((len(U11)))
                 for i in range(len(U11)):
                     [self.rodx[i],self.rody[i],self.rodz[i]] = tools.u_to_rod(U[i])
-                self.eps11 = res.getcolumn('eps11')
-                self.eps22 = res.getcolumn('eps22')
-                self.eps33 = res.getcolumn('eps33')
-                self.eps23 = res.getcolumn('eps23')
-                self.eps13 = res.getcolumn('eps13')
-                self.eps12 = res.getcolumn('eps12')
+                try:
+                    self.eps11 = res.getcolumn('eps11')
+                    self.eps22 = res.getcolumn('eps22')
+                    self.eps33 = res.getcolumn('eps33')
+                    self.eps23 = res.getcolumn('eps23')
+                    self.eps13 = res.getcolumn('eps13')
+                    self.eps12 = res.getcolumn('eps12')
+                except:
+                    self.eps11 = [0.0]*len(self.grainno)
+                    self.eps22 = [0.0]*len(self.grainno)
+                    self.eps33 = [0.0]*len(self.grainno)
+                    self.eps23 = [0.0]*len(self.grainno)
+                    self.eps13 = [0.0]*len(self.grainno)
+                    self.eps12 = [0.0]*len(self.grainno)
+                    
                 try:
                     self.ia = res.getcolumn('mean_IA')
                     self.grainvolume = res.getcolumn('grainvolume')
@@ -714,7 +723,7 @@ class parse_input:
 
 
     def set_start(self): # build fcn, initiate minuit and set starting values and errors
-
+        print self.eps11
         self.values = {}
         # grain values
         if self.files['res_file'] != None:
