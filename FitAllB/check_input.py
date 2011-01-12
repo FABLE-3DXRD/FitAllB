@@ -723,7 +723,6 @@ class parse_input:
 
 
     def set_start(self): # build fcn, initiate minuit and set starting values and errors
-        print self.eps11
         self.values = {}
         # grain values
         if self.files['res_file'] != None:
