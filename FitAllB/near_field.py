@@ -142,10 +142,15 @@ def match(inp):
                                 inp.h[i].append(inp.possible[i][m][0])
                                 inp.k[i].append(inp.possible[i][m][1])
                                 inp.l[i].append(inp.possible[i][m][2])
-                                inp.tth[j] = inp.possible[i][m][6]
-                                inp.eta[j] = inp.possible[i][m][7]
-                                inp.F2vol[j] = inp.int[j]*abs(n.sin(inp.eta[j]*n.pi/180.))*n.sin(inp.tth[j]*n.pi/180.)
-            
+                                inp.tth[j] = inp.possible[i][m][6]*180./n.pi #NB! was radians, now degrees
+                                inp.eta[j] = inp.possible[i][m][7]*180./n.pi #NB! was radians, now degrees
+                                
+                                rho = n.pi/2.0 + inp.eta[j]*n.pi/180.0 + inp.fit['beampol_direct']*n.pi/180.0 
+                                P = 0.5 * (1. + n.cos(inp.tth[j]*n.pi/180.0)**2 + inp.fit['beampol_factor']*n.cos(2*rho)*n.sin(inp.tth[j]*n.pi/180.0)**2)
+                                Linv = (n.sin(inp.tth[j]*n.pi/180.0)*abs(n.sin(inp.eta[j]*n.pi/180.0)))
+                                inp.F2vol[j] = inp.int[j]*Linv/P
+
+                                
             inp.nrefl.append(len(inp.id[i]))            
             print 'grain', i+1, 'possible', len(inp.possible[i]),'actual', inp.nrefl[i]
                        

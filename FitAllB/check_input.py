@@ -529,9 +529,7 @@ class parse_input:
             rho = n.pi/2.0 + self.eta[i]*n.pi/180. + self.fit['beampol_direct']*n.pi/180.0 
             P = 0.5 * (1. + n.cos(self.tth[i]*n.pi/180.)**2 + self.fit['beampol_factor']*n.cos(2*rho)*n.sin(self.tth[i]*n.pi/180.)**2)
             Linv = (n.sin(self.tth[i]*n.pi/180.)*abs(n.sin(self.eta[i]*n.pi/180.)))
-#            print self.tth[i],self.eta[i],rho,P,Linv
             self.F2vol[i] = self.int[i]*Linv/P
-            
         self.param['theta_min'] = min(self.tth)/2.
         self.param['theta_max'] = max(self.tth)/2.
         
