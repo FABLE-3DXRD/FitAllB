@@ -131,8 +131,8 @@ def match(inp):
                         break
                     else:
                         w_tol = w_tol + inp.fit['w_step']
-                        dety_tol = dety_tol + 10
-                        detz_tol = detz_tol + 5
+                        dety_tol = dety_tol + 4
+                        detz_tol = detz_tol + 3
                         for j in range(inp.param['total_refl']):
                             if abs(inp.possible[i][m][3]-inp.w[j]) < w_tol and \
                                 abs(inp.possible[i][m][4]-inp.dety[j]) < dety_tol and \
