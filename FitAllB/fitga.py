@@ -61,7 +61,7 @@ class fit_minuit():
 
         #refinement update
         reload(fcn)
-        self.m = minuit.Minuit(fcn.FCN)
+        self.m = minuit.Minuit(fcn.FCN_fitga)
         self.m.values = self.inp.values
         self.m.errors = self.inp.errors
         for entries in self.m.fixed:
@@ -106,6 +106,20 @@ class fit_minuit():
             elif 'cubic' in self.inp.fit['crystal_system'] or 'isotropic' in self.inp.fit['crystal_system']:
                 self.m.values['b'] = self.m.values['a']
                 self.m.values['c'] = self.m.values['a']
+             
+            #unit cell constraints
+            if self.inp.fit['constrx'] != 0:
+                for i in range(self.inp.no_grains): 
+                    self.m.values['x%i' %i] = self.m.values['x0'] 
+                    self.m.errors['x%i' %i] = self.m.errors['x0'] 
+            if self.inp.fit['constry'] != 0:
+                for i in range(self.inp.no_grains): 
+                    self.m.values['y%i' %i] = self.m.values['y0'] 
+                    self.m.errors['y%i' %i] = self.m.errors['y0'] 
+            if self.inp.fit['constrz'] != 0:
+                for i in range(self.inp.no_grains): 
+                    self.m.values['z%i' %i] = self.m.values['z0'] 
+                    self.m.errors['z%i' %i] = self.m.errors['z0'] 
 			
             # reject outliers and save cycle info	
             fit.reject_outliers(self)
@@ -126,6 +140,24 @@ class fit_minuit():
 	"""
         self.m.tol = self.inp.fit['tol_global']
         self.mg.tol = self.m.tol
+        if self.inp.fit['d0'] != 0:
+#                self.m.fixed['L'] = False
+                self.m.fixed['a'] = False
+                if 'cubic' not in self.inp.fit['crystal_system'] and 'isotropic' not in self.inp.fit['crystal_system']:
+                    self.m.fixed['c'] = False
+                if 'ortho' in self.inp.fit['crystal_system'] or 'mono' in self.inp.fit['crystal_system'] or 'triclinic' in self.inp.fit['crystal_system'] :
+                    self.m.fixed['b'] = False
+                if 'mono' in self.inp.fit['crystal_system'] or 'triclinic' in self.inp.fit['crystal_system'] :
+                    self.m.fixed['beta'] = False
+                if 'triclinic' in self.inp.fit['crystal_system'] :
+                    self.m.fixed['alpha'] = False
+                    self.m.fixed['gamma'] = False
+        if self.inp.fit['constrx'] != 0:
+                self.m.fixed['x0'] = False
+        if self.inp.fit['constry'] != 0:
+                self.m.fixed['y0'] = False
+        if self.inp.fit['constrz'] != 0:
+                self.m.fixed['z0'] = False
         for entries in self.m.fixed:
             if entries=='wy' and self.inp.fit['w'] != 0:
                 self.m.fixed[entries] = False
@@ -139,19 +171,9 @@ class fit_minuit():
                 self.m.fixed[entries] = False
             elif 'L' in entries and self.inp.fit['L'] != 0:
                 self.m.fixed[entries] = False
-            elif self.inp.fit['d0'] != 0:
-#                self.m.fixed['L'] = False
-                self.m.fixed['a'] = False
-                if 'cubic' not in self.inp.fit['crystal_system'] and 'isotropic' not in self.inp.fit['crystal_system']:
-                    self.m.fixed['c'] = False
-                if 'ortho' in self.inp.fit['crystal_system'] or 'mono' in self.inp.fit['crystal_system'] or 'triclinic' in self.inp.fit['crystal_system'] :
-                    self.m.fixed['b'] = False
-                if 'mono' in self.inp.fit['crystal_system'] or 'triclinic' in self.inp.fit['crystal_system'] :
-                    self.m.fixed['beta'] = False
-                if 'triclinic' in self.inp.fit['crystal_system'] :
-                    self.m.fixed['alpha'] = False
-                    self.m.fixed['gamma'] = False
-                    
+#            if self.m.fixed[entries] == False:
+#                print entries
+                                
     
 		
 def refine(inp):

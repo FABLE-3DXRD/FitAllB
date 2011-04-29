@@ -247,8 +247,92 @@ def FCN(inp):
 
     
 	
-# FCN function for all grains
+# FCN function for all grains customizes to constrain grain positions together
 	
+    string = string + 'def FCN_fitga(a,b,c,alpha,beta,gamma,wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
+    for i in range(inp.no_grains):
+        string = string + ',\n \t x%s,y%s,z%s,rodx%s,rody%s,rodz%s,epsaa%s,epsab%s,epsac%s,epsbb%s,epsbc%s,epscc%s' \
+	                          %(i,i,i,i,i,i,i,i,i,i,i,i)
+    string = string + '):\n \n'
+
+    # xyz 
+    string = string + "\t x = ["
+    for i in range(inp.no_grains):
+        if inp.fit['constrx'] == 0:
+            string = string + 'x%i,' %i
+        else:
+            string = string + 'x%i,' %0
+    string = string + ']\n'
+    string = string + "\t y = ["
+    for i in range(inp.no_grains):
+        if inp.fit['constry'] == 0:
+            string = string + 'y%i,' %i
+        else:
+            string = string + 'y%i,' %0
+    string = string + ']\n'
+    string = string + "\t z = ["
+    for i in range(inp.no_grains):
+        if inp.fit['constrz'] == 0:
+            string = string + 'z%i,' %i
+        else:
+            string = string + 'z%i,' %0
+    string = string + ']\n'
+
+    # Rodrigues vectors
+    string = string + "\t rodx = ["
+    for i in range(inp.no_grains):
+        string = string + 'rodx%i,' %i
+    string = string + ']\n'
+    string = string + "\t rody = ["
+    for i in range(inp.no_grains):
+        string = string + 'rody%i,' %i
+    string = string + ']\n'
+    string = string + "\t rodz = ["
+    for i in range(inp.no_grains):
+        string = string + 'rodz%i,' %i
+    string = string + ']\n'
+	
+    # strain tensor
+    string = string + "\t epsaa = ["
+    for i in range(inp.no_grains):
+        string = string + 'epsaa%i,' %i
+    string = string + ']\n'
+    string = string + "\t epsab = ["
+    for i in range(inp.no_grains):
+        string = string + 'epsab%i,' %i
+    string = string + ']\n'
+    string = string + "\t epsac = ["
+    for i in range(inp.no_grains):
+        string = string + 'epsac%i,' %i
+    string = string + ']\n'
+    string = string + "\t epsbb = ["
+    for i in range(inp.no_grains):
+        string = string + 'epsbb%i,' %i
+    string = string + ']\n'
+    string = string + "\t epsbc = ["
+    for i in range(inp.no_grains):
+        string = string + 'epsbc%i,' %i
+    string = string + ']\n'
+    string = string + "\t epscc = ["
+    for i in range(inp.no_grains):
+        string = string + 'epscc%i,' %i
+    string = string + ']\n\n'
+
+    # initialise sum
+    string = string + '\t sum = 0 \n \n'
+
+    string = string + '\t for i in range(no_grains):\n'
+    string = string + '\t\t if i+1 in skip:\n'
+    string = string + '\t\t\t pass \n'
+    string = string + '\t\t else:\n'
+    string = string + '\t\t\t for j in range(nrefl[i]):\n'
+    string = string + '\t\t\t\t sum = sum + peak(a,b,c,alpha,beta,gamma,h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
+    string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],rod[i][0]+rodx[i],rod[i][1]+rody[i],rod[i][2]+rodz[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
+    string = string + '\n'
+    string = string + '\t return sum \n\n\n'
+
+# FCN function for all grains
+
     string = string + 'def FCN(a,b,c,alpha,beta,gamma,wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
     for i in range(inp.no_grains):
         string = string + ',\n \t x%s,y%s,z%s,rodx%s,rody%s,rodz%s,epsaa%s,epsab%s,epsac%s,epsbb%s,epsbc%s,epscc%s' \
@@ -323,7 +407,8 @@ def FCN(inp):
     string = string + '\t return sum \n\n\n'
 
 
-	
+
+    
 # FCNgrain function for a single grain 
 	
     string = string + 'def FCNgrain(i,a,b,c,alpha,beta,gamma,wx,wy,tx,ty,tz,py,pz,cy,cz,L' 

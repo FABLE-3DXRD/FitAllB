@@ -224,7 +224,11 @@ class fit_minuit():
             self.mg.fixed[entries] = True
 
         for entries in self.grains[i]:
-            if (entries[0]=='x' or entries[0]=='y' or entries[0]=='z') and self.inp.fit['xyz'] != 0:
+            if entries[0]=='x' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrx'] == 0:
+                self.mg.fixed[entries] = False
+            elif entries[0]=='y' and self.inp.fit['xyz'] != 0 and self.inp.fit['constry'] == 0:
+                self.mg.fixed[entries] = False
+            elif entries[0]=='z' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrz'] == 0:
                 self.mg.fixed[entries] = False
             elif 'rod' in entries and self.inp.fit['rod'] != 0:
                 self.mg.fixed[entries] = False
