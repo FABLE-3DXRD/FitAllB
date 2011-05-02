@@ -101,18 +101,18 @@ def write_global(lsqr):
     f.write('\n\n\n**********%s********** \n' %lsqr.inp.fit['goon'])
     f.write('\n\n**********correlation matrix**********\n')
     lines = 0
-    for entry1 in lsqr.globals:
+    for entry1 in lsqr.globals+["x0","y0","z0"]:
         if lsqr.m.fixed[entry1] == False:
             if lines == 0:
                 string = '\n         '
-                for entry2 in lsqr.globals:
+                for entry2 in lsqr.globals+["x0","y0","z0"]:
                     if lsqr.m.fixed[entry2] == False:
                         string = string + '%8s  ' %entry2
                 string = string + '\n'
                 f.write(string)
                 lines = 1					
             string = '%8s  ' %entry1
-            for entry2 in lsqr.globals:
+            for entry2 in lsqr.globals+["x0","y0","z0"]:
                 if lsqr.m.fixed[entry2] == False:
                     string = string + '%8f  ' %(lsqr.m.covariance[('%s' %entry1, '%s' %entry2)]/(n.sqrt(lsqr.m.covariance[('%s' %entry1, '%s' %entry1)])*n.sqrt(lsqr.m.covariance[('%s' %entry2, '%s' %entry2)]))) 
             string = string + '\n'
@@ -120,18 +120,18 @@ def write_global(lsqr):
         
     f.write('\n\n**********covariance matrix********** \n')
     lines = 0
-    for entry1 in lsqr.globals:
+    for entry1 in lsqr.globals+["x0","y0","z0"]:
         if lsqr.m.fixed[entry1] == False:
             if lines == 0:
                 string = '\n         '
-                for entry2 in lsqr.globals:
+                for entry2 in lsqr.globals+["x0","y0","z0"]:
                     if lsqr.m.fixed[entry2] == False:
                         string = string + '%8s  ' %entry2
                 string = string + '\n'
                 f.write(string)
                 lines = 1					
             string = '%8s  ' %entry1
-            for entry2 in lsqr.globals:
+            for entry2 in lsqr.globals+["x0","y0","z0"]:
                 if lsqr.m.fixed[entry2] == False:
                     string = string + '%8e  ' %(lsqr.m.covariance[('%s' %entry1, '%s' %entry2)]) 
             string = string + '\n'
