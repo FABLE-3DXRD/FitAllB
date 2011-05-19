@@ -151,6 +151,7 @@ def write_values(lsqr):
             eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s
             sig11   sig22   sig33   sig23   sig13   sig12
             sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s
+            sig_tth sig_eta
  
     Jette Oddershede, Risoe DTU, April 21 2008
     """
@@ -158,9 +159,9 @@ def write_values(lsqr):
 
     filename = '%s/%s_%s.gff' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'],lsqr.inp.fit['goon'])
     f = open(filename,'w')
-    format = "%d "*1 + "%f "*8 + "%0.12f "*9 + "%e "*24 +"\n"
+    format = "%d "*1 + "%f "*8 + "%0.12f "*9 + "%e "*24 + "%f "*2 + "\n"
     out = "# grainno mean_IA grainvolume x y z rodx rody rodz U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
-    out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s\n"
+    out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s sig_tth sig_eta\n"
     f.write(out)
     for i in range(lsqr.inp.no_grains):
         if i+1 in lsqr.inp.fit['skip']:
@@ -215,7 +216,9 @@ def write_values(lsqr):
                            sig_s[2][2],
                            sig_s[1][2],
                            sig_s[0][2],
-                           sig_s[0][1]
+                           sig_s[0][1],
+	    				   reject.median(lsqr.inp.spr_tth[i]),
+	    				   reject.median(lsqr.inp.spr_eta[i])
                           )
             f.write(out)
     f.close()   
@@ -232,6 +235,7 @@ def write_errors(lsqr,i):
             eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s
             sig11   sig22   sig33   sig23   sig13   sig12
             sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s
+            sig_tth sig_eta
  
     Jette Oddershede, Risoe DTU, June 23 2008
     """
@@ -308,7 +312,7 @@ def write_errors(lsqr,i):
     except:
         f = open(filename,'w')
         out = "# grainno mean_IA grainvolume x y z rodx rody rodz U11 U12 U13 U21 U22 U23 U31 U32 U33 eps11 eps22 eps33 eps23 eps13 eps12 "
-        out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s\n"
+        out = out + "eps11_s eps22_s eps33_s eps23_s eps13_s eps12_s sig11 sig22 sig33 sig23 sig13 sig12 sig11_s sig22_s sig33_s sig23_s sig13_s sig12_s sig_tth sig_eta\n"
         f.write(out)
         f.close()   
         f = open(filename,'r')
@@ -324,7 +328,7 @@ def write_errors(lsqr,i):
         index = len(lines)
         lines.append('')
     
-    format = "%d "*1 + "%f "*8 + "%0.1f "*9 + "%e "*24 +"\n"
+    format = "%d "*1 + "%f "*8 + "%0.12f "*9 + "%e "*24 + "%f "*2 + "\n"
     
     lines[index] = format %(i+1,
 			       reject.spread(lsqr.inp.mean_ia[i]),#0
@@ -368,7 +372,9 @@ def write_errors(lsqr,i):
                    n.sqrt(cov_sig_s[2][2]),
                    n.sqrt(cov_sig_s[3][3]),
                    n.sqrt(cov_sig_s[4][4]),
-                   n.sqrt(cov_sig_s[5][5])
+                   n.sqrt(cov_sig_s[5][5]),
+                   reject.median_absolute_deviation(lsqr.inp.spr_tth[i]),
+                   reject.median_absolute_deviation(lsqr.inp.spr_eta[i])
                   )
     f = open(filename,'w')
     for j in range(len(lines)):

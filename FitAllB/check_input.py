@@ -294,6 +294,8 @@ class parse_input:
         flt = ic.columnfile(flt_file)
         self.int = flt.getcolumn('sum_intensity')
         intmax = flt.getcolumn('IMax_int')
+        pixels = flt.getcolumn('Number_of_pixels')
+        
         self.w = flt.getcolumn('omega')
         sigw = flt.getcolumn('sigo')
         spot = flt.getcolumn('spot3d_id')        
@@ -301,11 +303,13 @@ class parse_input:
         fc = flt.getcolumn('fc')
         sigs = flt.getcolumn('sigs')
         sigf = flt.getcolumn('sigf')
+        covsf = flt.getcolumn('covsf')
         self.dety = []
         self.detz = []
         sigy = []
         sigz = []
-        pixels = flt.getcolumn('Number_of_pixels')
+        covyz = covsf*n.linalg.det([[self.param['o11'],self.param['o12']],[self.param['o12'],self.param['o22']]])
+        
         smin = flt.getcolumn('Min_s')
         smax = flt.getcolumn('Max_s')
         sstep = smax - smin + 1
@@ -321,7 +325,9 @@ class parse_input:
         ymax = []
         zmin = []
         zmax = []
-        
+        eta = n.zeros(flt.nrows)
+        rr = n.zeros(flt.nrows)
+     
         for i in range(flt.nrows):
             (dety,detz) = detector.xy_to_detyz([sc[i],fc[i]],
                                                self.param['o11'],
@@ -332,10 +338,16 @@ class parse_input:
                                                self.fit['detz_size'])
             self.dety.append(dety)				
             self.detz.append(detz)
+            (eta[i],rr[i]) = detector.detyz_to_eta_and_radpix([dety*self.param['y_size'],detz*self.param['z_size']], 
+                                                               self.param['y_center']*self.param['y_size'], 
+                                                               self.param['z_center']*self.param['z_size'])
+
             (sz,sy) = n.dot(n.array([[abs(self.param['o11']),abs(self.param['o12'])],[abs(self.param['o21']),abs(self.param['o22'])]]),
                                n.array([sigs[i],sigf[i]]))
             sigy.append(sy)				
             sigz.append(sz)
+            
+            
             (zs,ys) = n.dot(n.array([[abs(self.param['o11']),abs(self.param['o12'])],[abs(self.param['o21']),abs(self.param['o22'])]]),
                                n.array([sstep[i],fstep[i]]))
             ystep.append(ys)				
@@ -350,6 +362,25 @@ class parse_input:
             zmax.append(zma)
 
         # convert into arrays so sorting according to spotid is possible 
+        Syy = n.array(sigy)**2-1
+        Szz = n.array(sigz)**2-1
+        Syz = n.array(covyz)*n.sqrt(Syy*Szz)
+        Srr =  (self.param['z_size']**4*(self.detz-self.param['z_center'])**2*Szz+
+                self.param['y_size']**4*(self.dety-self.param['y_center'])**2*Syy+
+                2*self.param['z_size']**2*self.param['y_size']**2*(self.dety-self.param['y_center'])*(self.detz-self.param['z_center'])*Syz)/rr**2
+        self.sig_eta = n.zeros(flt.nrows)
+        for i in range(flt.nrows):
+            if -2*(self.detz[i]-self.param['z_center'])*(self.dety[i]-self.param['y_center'])*Syz[i] >0:
+                self.sig_eta[i] = 180/n.pi/rr[i]**2*self.param['y_size']*self.param['z_size']*n.sqrt((self.detz[i]-self.param['z_center'])**2*Syy[i]+(self.dety[i]-self.param['y_center'])**2*Szz[i]-2*(self.detz[i]-self.param['z_center'])*(self.dety[i]-self.param['y_center'])*Syz[i])
+            else:
+                self.sig_eta[i] = 180/n.pi/rr[i]**2*self.param['y_size']*self.param['z_size']*n.sqrt((self.detz[i]-self.param['z_center'])**2*Syy[i]+(self.dety[i]-self.param['y_center'])**2*Szz[i])
+        self.sig_tth = n.zeros(flt.nrows)
+        for i in range(flt.nrows):
+            if Srr[i] > 0:
+                self.sig_tth[i] = 180*self.param['distance']/n.pi/(self.param['distance']**2+rr[i]**2)*n.sqrt(Srr[i])
+            else:
+                self.sig_tth[i] = 0
+
         self.dety = n.array(self.dety)
         self.detz = n.array(self.detz)	
         sigy = n.array(sigy)
@@ -373,6 +404,8 @@ class parse_input:
         ymax = ymax[n.argsort(spot)]
         zmin = zmin[n.argsort(spot)]
         zmax = zmax[n.argsort(spot)]
+        self.sig_eta = self.sig_eta[n.argsort(spot)]
+        self.sig_tth = self.sig_tth[n.argsort(spot)]
 
         # we now have arrays on length len(self.spot), but in the end we want lists of length maxspotno+1
         # therefore create temporary lists with zero values of length maxspotno+1
@@ -391,6 +424,8 @@ class parse_input:
         tsigz = [-1.]*self.param['total_refl']
         tint = [0.]*self.param['total_refl']
         tintmax = [1.]*self.param['total_refl']
+        tsigeta = [1.]*self.param['total_refl']
+        tsigtth = [1.]*self.param['total_refl']
         missing = 0
         # update temporary lists for all read reflections
         for i in range(self.param['total_refl']):
@@ -409,6 +444,8 @@ class parse_input:
                 tsigz[i] = sigz[i-missing]
                 tint[i] = self.int[i-missing]
                 tintmax[i] = intmax[i-missing]
+                tsigeta[i] = self.sig_eta[i-missing]
+                tsigtth[i] = self.sig_tth[i-missing]
             else:
                 missing = missing+1
 
@@ -427,6 +464,8 @@ class parse_input:
         ymax = tymax
         zmin = tzmin
         zmax = tzmax
+        self.sig_eta = tsigeta
+        self.sig_tth = tsigtth
         
         if self.fit['w_limit'] == None:
             self.fit['w_limit'] = [min(self.w),max(self.w)]
@@ -830,18 +869,25 @@ class parse_input:
         self.residual = []
         self.volume = []
         self.mean_ia = []
+        self.spr_eta = []
+        self.spr_tth = []
         for i in range(self.no_grains):
             self.residual.append([])
             self.volume.append([])
             self.mean_ia.append([])
+            self.spr_eta.append([])
+            self.spr_tth.append([])
             for j in range(self.nrefl[i]):
                 self.residual[i].append(1)
                 self.volume[i].append(1)
                 self.mean_ia[i].append(1)
+                self.spr_eta[i].append(1)
+                self.spr_tth[i].append(1)
         # do the actual rejections
         reject.overflow(self)
         reject.edge(self)
         reject.intensity(self)
+        reject.peak_spread(self)
         reject.mean_ia(self,2*self.fit['rej_ia'])
         reject.residual(self,self.fit['rej_resmedian'])
         reject.multi(self)

@@ -402,6 +402,21 @@ def residual(inp,limit,only=None):
         insignificant(inp)
                     
 
+def peak_spread(inp):
+        """
+        Calculate peak spread per grain in eta and tth
+        So far no peak rejection based on these values
+        
+        Jette Oddershede, May 18 2011
+        """
+        
+        for i in range(inp.no_grains):
+            for j in range(inp.nrefl[i]):
+                inp.spr_eta[i][j] = inp.sig_eta[inp.id[i][j]]
+                inp.spr_tth[i][j] = inp.sig_tth[inp.id[i][j]]
+                        
+          
+                    			
 
 # Helpful functions               
                
@@ -424,6 +439,8 @@ def reject(inp,i,j,message):
         inp.residual[i].pop(j)
         inp.volume[i].pop(j)
         inp.mean_ia[i].pop(j)
+        inp.spr_eta[i].pop(j)
+        inp.spr_tth[i].pop(j)
         
                
 def insignificant(inp):
