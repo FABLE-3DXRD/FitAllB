@@ -39,8 +39,8 @@ def run(options):
     far.initialize()        # if ok initialize
     # mandatory farfield info 
     far.read_par(far.files['par_file']) # read detector.par file
-    far.read_flt(far.files['flt_file']) # read peaks_t##.flt file
     far.read_res()                      # read paramters file to resume refinement                              NB! optional
+    far.read_flt(far.files['flt_file']) # read peaks_t##.flt file
     if far.files['res_file'] == None:
         far.read_log()                  # read grainspotter.log file
         far.read_rej(far.files['rej_file'])                      # read file containing rejected peaks to resume refinement   NB! optional
@@ -94,7 +94,7 @@ def run(options):
     
     #  Farfield outlier rejection
     #check_input.set_globals(far)
-    if far.files['res_file'] != None:
+    if far.files['res_file'] != None and far.labels == None:
         check_input.interrupt(options.killfile)
         from FitAllB import near_field
         near_field.find_refl(far)
