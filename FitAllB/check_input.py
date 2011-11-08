@@ -497,7 +497,7 @@ class parse_input:
                     teta[i] = self.eta[i-missing]
                     tlabels[i] = self.labels[i-missing]
                 except:
-                    pass
+                    tlabels = None
             else:
                 missing = missing+1
 
