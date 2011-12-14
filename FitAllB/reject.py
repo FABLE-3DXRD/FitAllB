@@ -34,6 +34,7 @@ def intensity(inp):
         Reject peaks based on intensity
         
         Jette Oddershede, August 27 2008
+        Absorption correction added December 2011
         """
         
         if  inp.files['structure_file'] != None:
@@ -43,15 +44,78 @@ def intensity(inp):
             hkl = reflections.calc_intensity(hkl,xtal_structure)
 #            print hkl
             
+            if inp.fit['abs_mu'] > 0:
+                xmin = min(inp.fit['abs_xlim'])*1e3
+                xmax = max(inp.fit['abs_xlim'])*1e3
+                ymin = min(inp.fit['abs_ylim'])*1e3
+                ymax = max(inp.fit['abs_ylim'])*1e3
+            
             for i in range(inp.no_grains):
+                x = deepcopy(inp.values['x%s' %i])
+                y = deepcopy(inp.values['y%s' %i])
+                z = deepcopy(inp.values['z%s' %i])
+                #Make sure that grain not outside of bounds for doing the correction
+                if inp.fit['abs_mu'] > 0:
+                    if x < xmin:
+                        x = xmin
+                    elif x > xmax:
+                        x = xmax
+                    if y < ymin:
+                        y = ymin                
+                    elif y > ymax:
+                        y = ymax                
                 for j in range(inp.nrefl[i]):
                     h = inp.h[i][j]
                     k = inp.k[i][j]
                     l = inp.l[i][j]
+                    # Absorption correction start
+                    if inp.fit['abs_mu'] > 0:
+                        w = inp.w[inp.id[i][j]]
+                        dety = inp.dety[inp.id[i][j]]
+                        detz = inp.detz[inp.id[i][j]]
+                        Omega = tools.form_omega_mat_general(w*n.pi/180.,inp.values['wx']*n.pi/180.,inp.values['wy']*n.pi/180.)
+                        R = tools.detect_tilt(inp.values['tx'],inp.values['ty'],inp.values['tz'])
+                        d_out = n.dot(R,n.array([[0],
+                                                [(dety-inp.values['cy'])*inp.values['py']],
+                                                [(detz-inp.values['cz'])*inp.values['pz']]])) 
+                        d_out = d_out + n.array([[inp.values['L']],[0],[0]]) - n.dot(Omega,n.array([[x],[y],[z]]))
+                        d_out = n.dot(n.transpose(Omega),d_out/n.sqrt(n.sum(d_out**2)))
+                        d_in = n.dot(n.transpose(Omega),n.array([[-1],[0],[0]])) #from grain to source!
+                        # distance to bounding planes assuming d_in and d_out unit vectors
+                        xdist_in = 1e6
+                        xdist_out = 1e6
+                        ydist_in = 1e6
+                        ydist_out = 1e6
+                        if d_in[0] < 0:
+                            xdist_in = (x-xmin)/abs(d_in[0,0])
+                        elif d_in[0] > 0:
+                            xdist_in = (xmax-x)/abs(d_in[0,0])
+                        if d_in[1] < 0:
+                            ydist_in = (y-ymin)/abs(d_in[1,0])
+                        elif d_in[1] > 0:
+                            ydist_in = (ymax-y)/abs(d_in[1,0])
+                        dist_in = min(xdist_in,ydist_in)
+                        if d_out[0] < 0:
+                            xdist_out = (x-xmin)/abs(d_out[0,0])
+                        elif d_out[0] > 0:
+                            xdist_out = (xmax-x)/abs(d_out[0,0])
+                        if d_out[1] < 0:
+                            ydist_out = (y-ymin)/abs(d_out[1,0])
+                        elif d_out[1] > 0:
+                            ydist_out = (ymax-y)/abs(d_out[1,0])
+                        dist_out = min(xdist_out,ydist_out)
+                        dist = dist_in + dist_out
+                        # abs_mu in mm-1 and dist in microns
+                        exponential = n.exp(inp.fit['abs_mu']*dist*1e-3)
+                        #print h,k,l,w,x,y,z,dist_in*1e-3,dist_out*1e-3,dist*1e-3,exponential
+                    else:
+                        exponential = 1.
+                    
+                    # Absorption correction end
                     value = False
                     for m in range(len(hkl)):
                         if hkl[m][0] == h and hkl[m][1] == k and hkl[m][2] == l:
-                            inp.volume[i][j] = inp.F2vol[inp.id[i][j]]/hkl[m][3]
+                            inp.volume[i][j] = inp.F2vol[inp.id[i][j]]/hkl[m][3]*exponential
                             value = True
                             break
                         else:
@@ -108,7 +172,7 @@ def intensity(inp):
             print 'Rejected', delete, 'peaks because of different intensity scales'
             insignificant(inp)
             
-                    			
+                                
 def mean_ia(inp,limit,only=None):
         """
         Calculate the internal angle for each peak and store in inp.mena_ia[inp.no_grains][inp.nrefl[i]]
@@ -191,7 +255,7 @@ def mean_ia_old(inp,limit,only=None):
             data[i].sort()
             if i+1 in inp.fit['skip']:
                 pass
-            else:		
+            else:       
                 mean = n.sum(data[i])/len(data[i])
                 medi = median(data[i])
 #                print i, len(data[i]), medi, mean,'\n',data[i]
@@ -208,7 +272,7 @@ def mean_ia_old(inp,limit,only=None):
         for i in range(inp.no_grains):
             if i+1 in inp.fit['skip'] or i+1 not in only:
                 pass
-            else:				
+            else:               
                 for j in range(inp.nrefl[i]-1,-1,-1): # loop backwards to make pop work
                     if inp.mean_ia[i][j] > maxia[i]:
                         delete = delete + 1
@@ -332,11 +396,11 @@ def overflow(inp):
     
 def residual(inp,limit,only=None):
         """
-        Reject outliers peaks based on residuals until mean<limit*median	
-		
-		Jette Oddershede, Risoe DTU, May 15 2008
+        Reject outliers peaks based on residuals until mean<limit*median    
+        
+        Jette Oddershede, Risoe DTU, May 15 2008
         """
-		
+        
         # must update inp.vars because the order here is [i][j] in stead of [id[i][j]], the latter doesn't change when peaks are rejected, the former does.
         # calculate experimental errors using the present values 
         import error
@@ -350,7 +414,7 @@ def residual(inp,limit,only=None):
         for i in range(inp.no_grains):
             if i+1 in inp.fit['skip']:
                 pass
-            else:				
+            else:               
                 for j in range(inp.nrefl[i]): 
                     inp.residual[i][j] = fcn.peak(inp.values['a'],inp.values['b'],inp.values['c'],inp.values['alpha'],inp.values['beta'],inp.values['gamma'],
                                               inp.h[i][j],inp.k[i][j],inp.l[i][j],
@@ -375,7 +439,7 @@ def residual(inp,limit,only=None):
             data[i].sort()
             if i+1 in inp.fit['skip']:
                 pass
-            else:		
+            else:       
                 mean = int(n.sum(data[i])/len(data[i]))
                 medi = median(data[i])
 #                print i, len(data[i]), medi, mean,'\n',data[i]
@@ -392,7 +456,7 @@ def residual(inp,limit,only=None):
         for i in range(inp.no_grains):
             if i+1 in inp.fit['skip'] or i+1 not in only:
                 pass
-            else:				
+            else:               
                 for j in range(inp.nrefl[i]-1,-1,-1): # loop backwards to make pop work
                     if inp.residual[i][j] > maxres[i]:
                         delete = delete + 1
@@ -416,7 +480,7 @@ def peak_spread(inp):
                 inp.spr_tth[i][j] = inp.sig_tth[inp.id[i][j]]
                         
           
-                    			
+                                
 
 # Helpful functions               
                

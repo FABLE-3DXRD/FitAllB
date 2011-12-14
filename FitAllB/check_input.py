@@ -131,7 +131,11 @@ class parse_input:
             'c46': None,
             'c55': None,
             'c56': None,
-            'c66': None
+            'c66': None,
+            #absorption correction
+            'abs_xlim': None,
+            'abs_ylim': None,
+            'abs_mu' : 0        #mm-1    
             }
 
         self.newreject = 0
@@ -226,7 +230,22 @@ class parse_input:
                 self.files[item] = self.optional_items[item] 
             elif 'file' not in item and item not in self.fit:
                 self.fit[item] = self.optional_items[item] 
-                
+        
+        # absorption correction
+        if self.fit['abs_mu'] > 0:
+            assert self.fit['abs_xlim'] != None, 'To do absorption correction xmin and xmax must be given as abs_xlim'
+            assert len(self.fit['abs_xlim']) == 2, 'To do absorption correction xmin and xmax must be given as abs_xlim'
+            self.fit['abs_xlim'].sort()
+            assert max(self.fit['abs_xlim'])>min(self.fit['abs_xlim']), 'Sample must have a nonzero dimension along x'
+            assert self.fit['abs_ylim'] != None, 'To do absorption correction ymin and ymax must be given as abs_ylim'
+            assert len(self.fit['abs_ylim']) == 2, 'To do absorption correction ymin and ymax must be given as abs_ylim'
+            self.fit['abs_ylim'].sort()
+            assert max(self.fit['abs_ylim'])>min(self.fit['abs_ylim']), 'Sample must have a nonzero dimension along y'
+            print '\nAbsorption correction performed with mu = %0.3f mm-1' %self.fit['abs_mu']
+            print 'For sample dimensions: %0.3f < x < %0.3f mm, %0.3f < y < %0.3f mm\n' %(min(self.fit['abs_xlim']),max(self.fit['abs_xlim']),min(self.fit['abs_ylim']),max(self.fit['abs_ylim']))
+        else:
+            print '\nNo absorption correction performed\n'
+
         # calculate stiffness tensor
         if self.fit['stress'] == 0:
             print 'No strain to stress conversion'
@@ -560,7 +579,9 @@ class parse_input:
                         
         if self.files['res_file'] != None:
             try:
-        # calculate self.F2vol which is the intensity divided the Lorentz factor, thus the squared structure factor times the volume
+        # calculate self.F2vol which is the intensity divided the Lorentz factor, 
+        #thus the squared structure factor times the volume
+        # absorption correction in reject.intensity where F2vol is converted to volume
                 self.F2vol = [0]*self.param['total_refl']
                 for i in range(self.param['total_refl']):
                     rho = n.pi/2.0 + self.eta[i]*n.pi/180. + self.fit['beampol_direct']*n.pi/180.0 
@@ -639,7 +660,9 @@ class parse_input:
             self.l.append(l)
             nn = nn + 2
         
-        # calculate self.F2vol which is the intensity divided the Lorentz factor, thus the squared structure factor times the volume
+        # calculate self.F2vol which is the intensity divided the Lorentz factor, 
+        #thus the squared structure factor times the volume
+        # absorption correction in reject.intensity where F2vol is converted to volume
         self.F2vol = [0]*self.param['total_refl']
         for i in range(self.param['total_refl']):
             rho = n.pi/2.0 + self.eta[i]*n.pi/180. + self.fit['beampol_direct']*n.pi/180.0 
@@ -880,6 +903,7 @@ class parse_input:
                 else:
                     self.fit['skip'].append(i+1)
         # else if start from scratch with new grainspotter log file use positions from this
+        # py, pz and L input as microns while x,y,z in mm. Internally do everything in microns.
         elif len(self.x) == self.no_grains:
             for i in range(self.no_grains):
                 self.values['x%s' %i] = 1000.*self.x[i]

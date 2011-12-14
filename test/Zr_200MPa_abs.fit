@@ -1,0 +1,38 @@
+title '1x1 mm Zr at 78.4 keV incl absorption correction for volumes'
+no_det 1
+res_file Zr_200MPa_10grains.gff
+flt_file Zr_200MPa.flt.new
+par_file Zr.par
+w_step 0.25
+w_limit -144 -35 36 145  
+dety_size 2048
+detz_size 2048
+crystal_system hexagonal
+structure_file Zr.cif
+stress 1
+c11 143e3
+c12 73e3
+c13 65e3
+c33 165e3
+c44 32e3
+sgno 194
+min_refl 20
+rej_ia 0.5
+rej_resmedian 10 
+rej_resmean 10     
+rej_vol 15 
+rej_multi -1
+w 0            # Fit omega stage tilt parameter wy
+tilt 0         # Fit detector tilt parameters tx, ty, tx
+pixel 0        # Fit pixel size py and pz
+center 0       # Fit detector centre along y-axis, cy
+L 0            # Fit sample-to-detector distance
+xyz 1	       # Fit grain positions
+rod 1          # Fit orientations and thus Rodrigues vectors
+eps 1          # Fit strain tensors
+tol_global 1e-2
+tol_rotpos 1e-4
+tol_fw_proj 4
+abs_xlim -0.5 0.5
+abs_ylim -0.5 0.5
+abs_mu 1.12 #mu in mm-1 for Zr at 80 keV
