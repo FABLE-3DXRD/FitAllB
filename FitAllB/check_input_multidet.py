@@ -74,6 +74,9 @@ class parse_input:
             'rod': 1,
             'xyz': 1,
             'eps': 1,
+            'constrx': 0,
+            'constry': 0,
+            'constrz': 0,
             'near_w': 0,
             'near_tilt': 0,
             'near_pixel': 0,
@@ -106,6 +109,7 @@ class parse_input:
             'tol_global': 1e-2,
             'tol_rotpos': 1e-2,
             'tol_grain': 1e-3,
+            'tol_fw_proj': 2,
             #resume refinement option
             'res_file': None,
             'rej_file': None,
@@ -290,11 +294,13 @@ class parse_input:
         
         input = f.readlines()
         f.close()
-		
+        
         #read as columnfile to avoid problems if peaksearch output is changed
         flt = ic.columnfile(flt_file)
         self.int = flt.getcolumn('sum_intensity')
         intmax = flt.getcolumn('IMax_int')
+        pixels = flt.getcolumn('Number_of_pixels')
+        
         self.w = flt.getcolumn('omega')
         sigw = flt.getcolumn('sigo')
         spot = flt.getcolumn('spot3d_id')        
@@ -302,11 +308,13 @@ class parse_input:
         fc = flt.getcolumn('fc')
         sigs = flt.getcolumn('sigs')
         sigf = flt.getcolumn('sigf')
+        covsf = flt.getcolumn('covsf')
         self.dety = []
         self.detz = []
         sigy = []
         sigz = []
-        pixels = flt.getcolumn('Number_of_pixels')
+        covyz = covsf*n.linalg.det([[self.param['o11'],self.param['o12']],[self.param['o12'],self.param['o22']]])
+        
         smin = flt.getcolumn('Min_s')
         smax = flt.getcolumn('Max_s')
         sstep = smax - smin + 1
@@ -322,7 +330,45 @@ class parse_input:
         ymax = []
         zmin = []
         zmax = []
-        
+        eta = n.zeros(flt.nrows)
+        rr = n.zeros(flt.nrows)
+        self.labels = None
+        if self.files['res_file'] != None:
+            try:
+                self.labels = flt.getcolumn('labels')
+                if 0 in self.labels:    
+                    self.labels = self.labels+1
+                h = flt.getcolumn('h')
+                k = flt.getcolumn('k')
+                l = flt.getcolumn('l')
+                self.tth = flt.getcolumn('tth_per_grain')
+                self.eta = flt.getcolumn('eta_per_grain')
+                self.nrefl = []
+                self.id = []
+                self.h = []
+                self.k = []
+                self.l = []
+                for no in self.grainno:
+                    idgr = []
+                    hgr = []
+                    kgr = []
+                    lgr = []
+                    for i in range(flt.nrows):
+                        if self.labels[i] == no:
+                            idgr.append(int(spot[i]))
+                            hgr.append(int(h[i]))
+                            kgr.append(int(k[i]))
+                            lgr.append(int(l[i]))
+                    self.nrefl.append(len(idgr))
+                    self.id.append(idgr)        
+                    self.h.append(hgr)
+                    self.k.append(kgr)
+                    self.l.append(lgr)
+                            
+                    
+            except:
+                pass
+     
         for i in range(flt.nrows):
             (dety,detz) = detector.xy_to_detyz([sc[i],fc[i]],
                                                self.param['o11'],
@@ -331,28 +377,53 @@ class parse_input:
                                                self.param['o22'],
                                                self.fit['dety_size'],
                                                self.fit['detz_size'])
-            self.dety.append(dety)				
+            self.dety.append(dety)              
             self.detz.append(detz)
+            (eta[i],rr[i]) = detector.detyz_to_eta_and_radpix([dety*self.param['y_size'],detz*self.param['z_size']], 
+                                                               self.param['y_center']*self.param['y_size'], 
+                                                               self.param['z_center']*self.param['z_size'])
+
             (sz,sy) = n.dot(n.array([[abs(self.param['o11']),abs(self.param['o12'])],[abs(self.param['o21']),abs(self.param['o22'])]]),
                                n.array([sigs[i],sigf[i]]))
-            sigy.append(sy)				
+            sigy.append(sy)             
             sigz.append(sz)
+            
+            
             (zs,ys) = n.dot(n.array([[abs(self.param['o11']),abs(self.param['o12'])],[abs(self.param['o21']),abs(self.param['o22'])]]),
                                n.array([sstep[i],fstep[i]]))
-            ystep.append(ys)				
+            ystep.append(ys)                
             zstep.append(zs)
             (zmi,ymi) = n.dot(n.array([[abs(self.param['o11']),abs(self.param['o12'])],[abs(self.param['o21']),abs(self.param['o22'])]]),
                                n.array([smin[i],fmin[i]]))
-            ymin.append(ymi)				
+            ymin.append(ymi)                
             zmin.append(zmi)
             (zma,yma) = n.dot(n.array([[abs(self.param['o11']),abs(self.param['o12'])],[abs(self.param['o21']),abs(self.param['o22'])]]),
                                n.array([smax[i],fmax[i]]))
-            ymax.append(yma)				
+            ymax.append(yma)                
             zmax.append(zma)
 
         # convert into arrays so sorting according to spotid is possible 
+        Syy = n.array(sigy)**2-1
+        Szz = n.array(sigz)**2-1
+        Syz = n.array(covyz)*n.sqrt(Syy*Szz)
+        Srr =  (self.param['z_size']**4*(self.detz-self.param['z_center'])**2*Szz+
+                self.param['y_size']**4*(self.dety-self.param['y_center'])**2*Syy+
+                2*self.param['z_size']**2*self.param['y_size']**2*(self.dety-self.param['y_center'])*(self.detz-self.param['z_center'])*Syz)/rr**2
+        self.sig_eta = n.zeros(flt.nrows)
+        for i in range(flt.nrows):
+            if -2*(self.detz[i]-self.param['z_center'])*(self.dety[i]-self.param['y_center'])*Syz[i] >0:
+                self.sig_eta[i] = 180/n.pi/rr[i]**2*self.param['y_size']*self.param['z_size']*n.sqrt((self.detz[i]-self.param['z_center'])**2*Syy[i]+(self.dety[i]-self.param['y_center'])**2*Szz[i]-2*(self.detz[i]-self.param['z_center'])*(self.dety[i]-self.param['y_center'])*Syz[i])
+            else:
+                self.sig_eta[i] = 180/n.pi/rr[i]**2*self.param['y_size']*self.param['z_size']*n.sqrt((self.detz[i]-self.param['z_center'])**2*Syy[i]+(self.dety[i]-self.param['y_center'])**2*Szz[i])
+        self.sig_tth = n.zeros(flt.nrows)
+        for i in range(flt.nrows):
+            if Srr[i] > 0:
+                self.sig_tth[i] = 180*self.param['distance']/n.pi/(self.param['distance']**2+rr[i]**2)*n.sqrt(Srr[i])
+            else:
+                self.sig_tth[i] = 0
+
         self.dety = n.array(self.dety)
-        self.detz = n.array(self.detz)	
+        self.detz = n.array(self.detz)  
         sigy = n.array(sigy)
         sigz = n.array(sigz)
         ymin = n.array(ymin)
@@ -360,20 +431,29 @@ class parse_input:
         zmin = n.array(zmin)
         zmax = n.array(zmax)
         # do the sorting
-        self.w = self.w[n.argsort(spot)]
-        self.dety = self.dety[n.argsort(spot)]
-        self.detz = self.detz[n.argsort(spot)]
-        sigw = sigw[n.argsort(spot)]
-        sigy = sigy[n.argsort(spot)]
-        sigz = sigz[n.argsort(spot)]
-        self.int = self.int[n.argsort(spot)]
-        intmax = intmax[n.argsort(spot)]
-        wmin = wmin[n.argsort(spot)]
-        wmax = wmax[n.argsort(spot)]
-        ymin = ymin[n.argsort(spot)]
-        ymax = ymax[n.argsort(spot)]
-        zmin = zmin[n.argsort(spot)]
-        zmax = zmax[n.argsort(spot)]
+        index = n.argsort(spot)
+        self.w = self.w[index]
+        self.dety = self.dety[index]
+        self.detz = self.detz[index]
+        sigw = sigw[index]
+        sigy = sigy[index]
+        sigz = sigz[index]
+        self.int = self.int[index]
+        intmax = intmax[index]
+        wmin = wmin[index]
+        wmax = wmax[index]
+        ymin = ymin[index]
+        ymax = ymax[index]
+        zmin = zmin[index]
+        zmax = zmax[index]
+        self.sig_eta = self.sig_eta[index]
+        self.sig_tth = self.sig_tth[index]
+        try:
+            self.tth = self.tth[index]
+            self.eta = self.eta[index]
+            self.labels = self.labels[index]
+        except:
+            pass
 
         # we now have arrays on length len(self.spot), but in the end we want lists of length maxspotno+1
         # therefore create temporary lists with zero values of length maxspotno+1
@@ -392,6 +472,11 @@ class parse_input:
         tsigz = [-1.]*self.param['total_refl']
         tint = [0.]*self.param['total_refl']
         tintmax = [1.]*self.param['total_refl']
+        tsigeta = [1.]*self.param['total_refl']
+        tsigtth = [1.]*self.param['total_refl']
+        ttth = [-1.]*self.param['total_refl']
+        teta = [-1.]*self.param['total_refl']
+        tlabels = [-1.]*self.param['total_refl']
         missing = 0
         # update temporary lists for all read reflections
         for i in range(self.param['total_refl']):
@@ -410,6 +495,14 @@ class parse_input:
                 tsigz[i] = sigz[i-missing]
                 tint[i] = self.int[i-missing]
                 tintmax[i] = intmax[i-missing]
+                tsigeta[i] = self.sig_eta[i-missing]
+                tsigtth[i] = self.sig_tth[i-missing]
+                try:
+                    ttth[i] = self.tth[i-missing]
+                    teta[i] = self.eta[i-missing]
+                    tlabels[i] = self.labels[i-missing]
+                except:
+                    tlabels = None
             else:
                 missing = missing+1
 
@@ -428,6 +521,14 @@ class parse_input:
         ymax = tymax
         zmin = tzmin
         zmax = tzmax
+        self.sig_eta = tsigeta
+        self.sig_tth = tsigtth
+        try:
+            self.tth = ttth
+            self.eta = teta
+            self.labels = tlabels
+        except:
+            pass
         
         if self.fit['w_limit'] == None:
             self.fit['w_limit'] = [min(self.w),max(self.w)]
@@ -461,7 +562,23 @@ class parse_input:
                         self.Syy[j] = -100
                 if zmin[j] < 2 or zmax[j] > self.fit['detz_size']-2:
                         self.Szz[j] = -100
-        
+                        
+        if self.files['res_file'] != None:
+            try:
+        # calculate self.F2vol which is the intensity divided the Lorentz factor, 
+        #thus the squared structure factor times the volume
+        # absorption correction in reject.intensity where F2vol is converted to volume
+                self.F2vol = [0]*self.param['total_refl']
+                for i in range(self.param['total_refl']):
+                    rho = n.pi/2.0 + self.eta[i]*n.pi/180. + self.fit['beampol_direct']*n.pi/180.0 
+                    P = 0.5 * (1. + n.cos(self.tth[i]*n.pi/180.)**2 + self.fit['beampol_factor']*n.cos(2*rho)*n.sin(self.tth[i]*n.pi/180.)**2)
+                    Linv = (n.sin(self.tth[i]*n.pi/180.)*abs(n.sin(self.eta[i]*n.pi/180.)))
+                    self.F2vol[i] = self.int[i]*Linv/P
+                self.param['theta_min'] = min(self.tth)/2.
+                self.param['theta_max'] = max(self.tth)/2.
+            except:
+                pass
+                                
  
     def read_log(self): # read grainspotter.log
         self.nrefl = []
@@ -842,14 +959,20 @@ class parse_input:
         self.residual = []
         self.volume = []
         self.mean_ia = []
+        self.spr_eta = []
+        self.spr_tth = []
         for i in range(self.no_grains):
             self.residual.append([])
             self.volume.append([])
             self.mean_ia.append([])
+            self.spr_eta.append([])
+            self.spr_tth.append([])
             for j in range(self.nrefl[i]):
                 self.residual[i].append(1)
                 self.volume[i].append(1)
                 self.mean_ia[i].append(1)
+                self.spr_eta[i].append(1)
+                self.spr_tth[i].append(1)
         # do the actual rejections
         reject.overflow(self)
         reject.edge(self)
@@ -872,14 +995,20 @@ class parse_input:
         self.residual = []
         self.volume = []
         self.mean_ia = []
+        self.spr_eta = []
+        self.spr_tth = []
         for i in range(self.no_grains):
             self.residual.append([])
             self.volume.append([])
             self.mean_ia.append([])
+            self.spr_eta.append([])
+            self.spr_tth.append([])
             for j in range(self.nrefl[i]):
                 self.residual[i].append(1)
                 self.volume[i].append(1)
                 self.mean_ia[i].append(1)
+                self.spr_eta[i].append(1)
+                self.spr_tth[i].append(1)
         # do the actual rejections
         reject.overflow(self)
         reject.edge(self)

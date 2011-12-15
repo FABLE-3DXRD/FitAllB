@@ -247,7 +247,7 @@ def FCN(inp):
 
     
 	
-# FCN function for all grains customizes to constrain grain positions together
+# FCN function for all grains customized to constrain grain positions together
 	
     string = string + 'def FCN_fitga(a,b,c,alpha,beta,gamma,wx,wy,tx,ty,tz,py,pz,cy,cz,L' 
     for i in range(inp.no_grains):

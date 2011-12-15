@@ -4,7 +4,7 @@ import sys
 
 setup(
   name='FitAllB',
-  version='0.0.1',
+  version='1.1.0',
   description='Fitting routines for global parameters (fitgloball), global parameters for each grain (fitglobalgrain) and grain cms, orientations and strain (fitallb)',
   license='GPL', maintainer='Jette Oddershede',
   maintainer_email='jette.oddershede@risoe.dk',
