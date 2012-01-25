@@ -385,6 +385,138 @@ def write_errors(lsqr,i):
         f.write(lines[j])
     f.close()   
 
+    
+    # Additional writing of file containing covariances
+    filename = '%s/%s_cov_eps_sig.gff' %(lsqr.inp.fit['direc'],lsqr.inp.fit['stem'])
+    try:
+        f = open(filename,'r')
+        lines = f.readlines()
+        f.close()
+    except:
+        f = open(filename,'w')
+        out = "# grainno e11e11 e11e22 e11e33 e11e23 e11e13 e11e12"
+        out = out + "e22e22 e22e33 e22e23 e22e13 e22e12"
+        out = out + "e33e33 e33e23 e33e13 e33e12"
+        out = out + "e23e23 e23e13 e23e12 e13e13 e13e12 e12e12"
+        out = out + "e11e11_s e11e22_s e11e33_s e11e23_s e11e13_s e11e12_s"
+        out = out + "e22e22_s e22e33_s e22e23_s e22e13_s e22e12_s"
+        out = out + "e33e33_s e33e23_s e33e13_s e33e12_s"
+        out = out + "e23e23_s e23e13_s e23e12_s e13e13_s e13e12_s e12e12_s"
+        out = out + "s11s11 s11s22 s11s33 s11s23 s11s13 s11s12"
+        out = out + "s22s22 s22s33 s22s23 s22s13 s22s12"
+        out = out + "s33s33 s33s23 s33s13 s33s12"
+        out = out + "s23s23 s23s13 s23s12 s13s13 s13s12 s12s12"
+        out = out + "s11s11_s s11s22_s s11s33_s s11s23_s s11s13_s s11s12_s"
+        out = out + "s22s22_s s22s33_s s22s23_s s22s13_s s22s12_s"
+        out = out + "s33s33_s s33s23_s s33s13_s s33s12_s"
+        out = out + "s23s23_s s23s13_s s23s12_s s13s13_s s13s12_s s12s12_s \n"
+        f.write(out)
+        f.close()   
+        f = open(filename,'r')
+        lines = f.readlines()
+        f.close()
+
+    index = 0
+    for j in range(1,len(lines)):
+        if i+1 == eval(split(lines[j])[0]):
+            index = j
+            break
+    if index == 0:
+        index = len(lines)
+        lines.append('')
+    
+    format = "%d "*1 + "%e "*84 + "\n"
+        
+    lines[index] = format %(i+1,
+                            cov_eps[0][0],
+                            cov_eps[0][1],
+                            cov_eps[0][2],
+                            cov_eps[0][3],
+                            cov_eps[0][4],
+                            cov_eps[0][5],
+                            cov_eps[1][1],
+                            cov_eps[1][2],
+                            cov_eps[1][3],
+                            cov_eps[1][4],
+                            cov_eps[1][5],
+                            cov_eps[2][2],
+                            cov_eps[2][3],
+                            cov_eps[2][4],
+                            cov_eps[2][5],
+                            cov_eps[3][3],
+                            cov_eps[3][4],
+                            cov_eps[3][5],
+                            cov_eps[4][4],
+                            cov_eps[4][5],
+                            cov_eps[5][5],
+                            cov_eps_s[0][0],
+                            cov_eps_s[0][1],
+                            cov_eps_s[0][2],
+                            cov_eps_s[0][3],
+                            cov_eps_s[0][4],
+                            cov_eps_s[0][5],
+                            cov_eps_s[1][1],
+                            cov_eps_s[1][2],
+                            cov_eps_s[1][3],
+                            cov_eps_s[1][4],
+                            cov_eps_s[1][5],
+                            cov_eps_s[2][2],
+                            cov_eps_s[2][3],
+                            cov_eps_s[2][4],
+                            cov_eps_s[2][5],
+                            cov_eps_s[3][3],
+                            cov_eps_s[3][4],
+                            cov_eps_s[3][5],
+                            cov_eps_s[4][4],
+                            cov_eps_s[4][5],
+                            cov_eps_s[5][5],
+                            cov_sig[0][0],
+                            cov_sig[0][1],
+                            cov_sig[0][2],
+                            cov_sig[0][3],
+                            cov_sig[0][4],
+                            cov_sig[0][5],
+                            cov_sig[1][1],
+                            cov_sig[1][2],
+                            cov_sig[1][3],
+                            cov_sig[1][4],
+                            cov_sig[1][5],
+                            cov_sig[2][2],
+                            cov_sig[2][3],
+                            cov_sig[2][4],
+                            cov_sig[2][5],
+                            cov_sig[3][3],
+                            cov_sig[3][4],
+                            cov_sig[3][5],
+                            cov_sig[4][4],
+                            cov_sig[4][5],
+                            cov_sig[5][5],
+                            cov_sig_s[0][0],
+                            cov_sig_s[0][1],
+                            cov_sig_s[0][2],
+                            cov_sig_s[0][3],
+                            cov_sig_s[0][4],
+                            cov_sig_s[0][5],
+                            cov_sig_s[1][1],
+                            cov_sig_s[1][2],
+                            cov_sig_s[1][3],
+                            cov_sig_s[1][4],
+                            cov_sig_s[1][5],
+                            cov_sig_s[2][2],
+                            cov_sig_s[2][3],
+                            cov_sig_s[2][4],
+                            cov_sig_s[2][5],
+                            cov_sig_s[3][3],
+                            cov_sig_s[3][4],
+                            cov_sig_s[3][5],
+                            cov_sig_s[4][4],
+                            cov_sig_s[4][5],
+                            cov_sig_s[5][5],
+                 )
+    f = open(filename,'w')
+    for j in range(len(lines)):
+        f.write(lines[j])
+    f.close()   
 		
 def write_log(lsqr):
     """
