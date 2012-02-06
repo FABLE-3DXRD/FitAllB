@@ -287,7 +287,7 @@ def grain_values(lsqr):
                                      lsqr.m.values['epsaa%s' %i],lsqr.m.values['epsab%s' %i],lsqr.m.values['epsac%s' %i], 
                                      lsqr.m.values['epsbb%s' %i],lsqr.m.values['epsbc%s' %i],lsqr.m.values['epscc%s' %i]) 
                         g[i] = g[i] + peak
-                        #print peak
+                        print i, j, k, peak
 #        for i in range(lsqr.inp.no_grains):
 #            if i+1 not in lsqr.inp.fit['skip']:
 #                # make new lsqr of minuit        
@@ -360,7 +360,7 @@ def reject_outliers(lsqr):
                                         lsqr.m.values['epsaa%s' %i],lsqr.m.values['epsab%s' %i],lsqr.m.values['epsac%s' %i], 
                                         lsqr.m.values['epsbb%s' %i],lsqr.m.values['epsbc%s' %i],lsqr.m.values['epscc%s' %i]) 
                             if value > lsqr.inp.fit['rej_resmean']*g[i]/no_ref[i]:
-                                new = 1
+                                new = 0 # only one cycle of rejection, not until no more as for one detector fitting!!!
                                 print 'Rej peak id %i of det %i grain %i (hkl: %i %i %i, limit: %0.1f): %0.1f' %(lsqr.inp.id[k][i][j],k,i+1,lsqr.inp.h[k][i][j],lsqr.inp.k[k][i][j],lsqr.inp.l[k][i][j],lsqr.inp.fit['rej_resmean'],value*no_ref[i]/g[i])
                                 reject_multidet.reject(lsqr.inp,i,j,k,value*no_ref[i]/g[i])
 
@@ -438,7 +438,7 @@ def scale_errors(lsqr,i=None):
                 observations = lsqr.inp.nrefl[k][i]
               
         # expectation        
-        expectation = 3*observations - parameters
+        expectation = max(3*observations - parameters,1)
         
         #correction
         if i==None:

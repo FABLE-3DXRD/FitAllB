@@ -47,7 +47,7 @@ def vars_scale(inp):
 
                 
 
-def	vars(inp):
+def vars(inp):
     """
     Calculated experimental errors of gexp for all peaks
     Jette Oddershede, July 2008
@@ -80,6 +80,7 @@ def	vars(inp):
         vars = []
         for i in range(inp.no_grains):
             vars.append([])
+#            print 'test', inp.nrefl[k][i]
             for j in range(inp.nrefl[k][i]):
                 if volavg[i] != 0:
                     vars[i].append([4e-8*volmedian/volavg[i]*inp.fit['vars_scale%s' %k],4e-8*volmedian/volavg[i]*inp.fit['vars_scale%s' %k],1e-8*volmedian/volavg[i]*inp.fit['vars_scale%s' %k]]) # no error propagation

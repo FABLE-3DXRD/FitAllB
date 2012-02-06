@@ -40,8 +40,16 @@ def run(options):
     for key in keys:
         far.param[key+'0'] = far.param[key]
     # second detector
-    try:
+    if far.fit['no_det'] > 1:
         far1 = deepcopy(far)
+        del(far1.labels)
+        del(far1.tth)
+        del(far1.eta)
+        del(far1.nrefl)
+        del(far1.id)
+        del(far1.h)
+        del(far1.k)
+        del(far1.l)
         far1.read_par(far.files['par_file_1']) # read detector.par file
         far1.read_flt(far.files['flt_file_1']) # read peaks_t##.flt file
         #put info from far1 in far
@@ -51,11 +59,19 @@ def run(options):
         keys = ['distance','o11','o12','o21','o22','tilt_x','tilt_y','tilt_z','y_center','z_center','y_size','z_size']
         for key in keys:
             far.param[key+'1'] = far1.param[key]
-    except:
-        del far1.param
+        print 'parameters of second detector read successfully'
+        
     # third detector, NB more can be added in this way!!
-    try:
+    if far.fit['no_det'] > 2:
         far2 = deepcopy(far)
+        del(far2.labels)
+        del(far2.tth)
+        del(far2.eta)
+        del(far2.nrefl)
+        del(far2.id)
+        del(far2.h)
+        del(far2.k)
+        del(far2.l)
         far2.read_par(far.files['par_file_2']) # read detector.par file
         far2.read_flt(far.files['flt_file_2']) # read peaks_t##.flt file
         #put info from far1 in far
@@ -65,32 +81,29 @@ def run(options):
         keys = ['distance','o11','o12','o21','o22','tilt_x','tilt_y','tilt_z','y_center','z_center','y_size','z_size']
         for key in keys:
             far.param[key+'2'] = far2.param[key]
-    except:
-        del far2.param
+        print 'parameters of third detector read successfully'
     
     # set values and errors for refinement start
     far.set_start()                     
     check_input_multidet.set_globals(far)
-    try:
+    if far.fit['no_det'] > 1:
         far1.set_start()   
         check_input_multidet.set_globals(far1)
-    except:
-        pass
-    try:
+    if far.fit['no_det'] > 2:
         far2.set_start()   
         check_input_multidet.set_globals(far2)
-    except:
-        pass
+
  
 #    for key in far.param.keys():
 #        print key,far.param[key]
     
     # forward projection to assign reflections
-    from FitAllB import near_field
+    if far.files['res_file'] != None and far.labels == None:
+        from FitAllB import near_field
+        near_field.find_refl(far)
+        print '\nFirst detector'
+        near_field.match(far)
     from FitAllB import error
-    near_field.find_refl(far)
-    print '\nFirst detector'
-    near_field.match(far)
     error.vars(far)
     from FitAllB import build_fcn
     build_fcn.FCN(far)
@@ -106,10 +119,12 @@ def run(options):
 #    far.vars = [far.vars]
     far.param['total_refl'] = [far.param['total_refl']]
 
-    try:
-        near_field.find_refl(far1)
-        print '\nSecond detector'
-        near_field.match(far1)
+    if far.fit['no_det'] > 1:
+        if far1.files['res_file'] != None and far1.labels == None:
+            from FitAllB import near_field
+            near_field.find_refl(far1)
+            print '\nSecond detector'
+            near_field.match(far1)
         error.vars(far1)
         from FitAllB import build_fcn
         build_fcn.FCN(far1)
@@ -124,12 +139,12 @@ def run(options):
         far.detz.append(far1.detz) 
 #        far.vars.append(far1.vars) 
         far.param['total_refl'].append(far1.param['total_refl'])
-    except:
-        pass
-    try:
-        near_field.find_refl(far2)
-        print '\nThird detector'
-        near_field.match(far2)
+    if far.fit['no_det'] > 2:
+        if far2.files['res_file'] != None and far2.labels == None:
+            from FitAllB import near_field
+            near_field.find_refl(far2)
+            print '\nThird detector'
+            near_field.match(far2)
         error.vars(far2)
         from FitAllB import build_fcn
         build_fcn.FCN(far2)
@@ -144,9 +159,7 @@ def run(options):
         far.detz.append(far2.detz)        
 #        far.vars.append(far2.vars) 
         far.param['total_refl'].append(far2.param['total_refl'])
-    except:
-        pass
-        
+         
 #    print far.nrefl
 
     import error_multidet

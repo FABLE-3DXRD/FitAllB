@@ -719,6 +719,8 @@ class parse_input:
                 res = ic.columnfile(self.files['res_file'])
                 self.grainno = res.getcolumn('grainno')
                 self.grainno = self.grainno.astype(n.int)
+                if 0 in self.grainno:
+                    self.grainno = self.grainno + 1
                 self.grainno = self.grainno.tolist()
                 self.x = res.getcolumn('x')
                 self.y = res.getcolumn('y')

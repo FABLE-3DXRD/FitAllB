@@ -382,12 +382,15 @@ def residual(inp,limit,only=None):
             if i+1 in inp.fit['skip']:
                 pass
             else:		
+                no_ref = 0
+                for k in range(inp.fit['no_det']):
+                    no_ref = no_ref + inp.nrefl[k][i]
                 mean = int(n.sum(data[i])/len(data[i]))
                 medi = median(data[i])
 #                print i, len(data[i]), medi, mean,'\n',data[i]
                 while mean > limit*medi:
                     data[i].pop()
-                    mean = int(n.sum(data[i])/inp.nrefl[i])
+                    mean = int(n.sum(data[i])/no_ref)
                     medi = median(data[i])
                 maxres[i] = max(data[i])
 #                print i, len(data[i]),medi,mean,'\n',data[i],'\n'
@@ -458,7 +461,10 @@ def insignificant(inp):
         Remove grains with less than inp.fit['min_refl'] peaks as being insignificant
         """
         for i in range(inp.no_grains):
-            if inp.nrefl[i] < inp.fit['min_refl'] and i+1 not in inp.fit['skip']:
+            no_ref = 0
+            for k in range(inp.fit['no_det']):
+                no_ref = no_ref + inp.nrefl[k][i]
+            if no_ref < inp.fit['min_refl'] and i+1 not in inp.fit['skip']:
                 inp.fit['skip'].append(i+1)
         inp.fit['skip'].sort()
         
