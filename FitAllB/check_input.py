@@ -733,7 +733,10 @@ class parse_input:
                 f.close()
                 print 'Resume refinement'
                 res = ic.columnfile(self.files['res_file'])
-                self.grainno = res.getcolumn('grainno')
+                try:
+                    self.grainno = res.getcolumn('grainno')
+                except:
+                    self.grainno = res.getcolumn('grain_id')
                 self.grainno = self.grainno.astype(n.int)
                 if 0 in self.grainno:
                     self.grainno = self.grainno + 1
