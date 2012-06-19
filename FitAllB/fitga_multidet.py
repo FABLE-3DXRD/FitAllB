@@ -170,6 +170,12 @@ class fit_minuit():
                 if 'triclinic' in self.inp.fit['crystal_system'] :
                     self.m.fixed['alpha'] = False
                     self.m.fixed['gamma'] = False
+        if self.inp.fit['constrx'] != 0:
+                self.m.fixed['x0'] = False
+        if self.inp.fit['constry'] != 0:
+                self.m.fixed['y0'] = False
+        if self.inp.fit['constrz'] != 0:
+                self.m.fixed['z0'] = False
                     
     
 		

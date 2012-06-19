@@ -76,6 +76,9 @@ class parse_input:
             'constrx': 0,
             'constry': 0,
             'constrz': 0,
+            'fixx': 0,
+            'fixy': 0,
+            'fixz': 0,
             'near_w': 0,
             'near_tilt': 0,
             'near_pixel': 0,
@@ -348,6 +351,11 @@ class parse_input:
         rr = n.zeros(flt.nrows)
         self.labels = None
         if self.files['res_file'] != None:
+            self.nrefl = []
+            self.id = []
+            self.h = []
+            self.k = []
+            self.l = []
             try:
                 self.labels = flt.getcolumn('labels')
                 if 0 in self.labels:    
@@ -357,11 +365,6 @@ class parse_input:
                 l = flt.getcolumn('l')
                 self.tth = flt.getcolumn('tth_per_grain')
                 self.eta = flt.getcolumn('eta_per_grain')
-                self.nrefl = []
-                self.id = []
-                self.h = []
-                self.k = []
-                self.l = []
                 for no in self.grainno:
                     idgr = []
                     hgr = []
@@ -873,7 +876,7 @@ class parse_input:
             for i in range(self.no_grains):
                 self.rod.append([0.0,0.0,0.0])
             self.param['theta_min'] = 0.0
-            self.param['theta_max'] = 7.5
+            self.param['theta_max'] = 15
         for i in range(self.no_grains):
             self.values['x%s' %i] = 0.0
             self.values['y%s' %i] = 0.0

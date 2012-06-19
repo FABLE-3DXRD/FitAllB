@@ -207,7 +207,11 @@ class fit_minuit():
             self.mg.fixed[entries] = True
 
         for entries in self.grains[i]:
-            if (entries[0]=='x' or entries[0]=='y' or entries[0]=='z') and self.inp.fit['xyz'] != 0:
+            if entries[0]=='x' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixx'] == 0:
+                self.mg.fixed[entries] = False
+            elif entries[0]=='y' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixy'] == 0:
+                self.mg.fixed[entries] = False
+            elif entries[0]=='z' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixz'] == 0:
                 self.mg.fixed[entries] = False
             elif 'eps' in entries and self.inp.fit['eps'] != 0:
                 self.mg.fixed[entries] = False
@@ -224,11 +228,11 @@ class fit_minuit():
             self.mg.fixed[entries] = True
 
         for entries in self.grains[i]:
-            if entries[0]=='x' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrx'] == 0:
+            if entries[0]=='x' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrx'] == 0 and self.inp.fit['fixx'] == 0:
                 self.mg.fixed[entries] = False
-            elif entries[0]=='y' and self.inp.fit['xyz'] != 0 and self.inp.fit['constry'] == 0:
+            elif entries[0]=='y' and self.inp.fit['xyz'] != 0 and self.inp.fit['constry'] == 0 and self.inp.fit['fixy'] == 0:
                 self.mg.fixed[entries] = False
-            elif entries[0]=='z' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrz'] == 0:
+            elif entries[0]=='z' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrz'] == 0 and self.inp.fit['fixz'] == 0:
                 self.mg.fixed[entries] = False
             elif 'rod' in entries and self.inp.fit['rod'] != 0:
                 self.mg.fixed[entries] = False

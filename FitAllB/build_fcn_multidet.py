@@ -321,15 +321,24 @@ def FCN(inp):
     # xyz 
     string = string + "\t x = ["
     for i in range(inp.no_grains):
-        string = string + 'x%i,' %i
+        if inp.fit['constrx'] == 0:
+            string = string + 'x%i,' %i
+        else:
+            string = string + 'x%i,' %0
     string = string + ']\n'
     string = string + "\t y = ["
     for i in range(inp.no_grains):
-        string = string + 'y%i,' %i
+        if inp.fit['constry'] == 0:
+            string = string + 'y%i,' %i
+        else:
+            string = string + 'y%i,' %0
     string = string + ']\n'
     string = string + "\t z = ["
     for i in range(inp.no_grains):
-        string = string + 'z%i,' %i
+        if inp.fit['constrz'] == 0:
+            string = string + 'z%i,' %i
+        else:
+            string = string + 'z%i,' %0
     string = string + ']\n'
 
     # Rodrigues vectors

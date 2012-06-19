@@ -43,7 +43,7 @@ def run(options):
     #    print key,far.param[key]
     
     #  Farfield outlier rejection
-    if far.files['res_file'] != None:
+    if far.files['res_file'] != None and far.labels == None:
         from FitAllB import near_field
         near_field.find_refl(far)
         near_field.match(far)
