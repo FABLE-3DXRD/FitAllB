@@ -50,6 +50,9 @@ def run(options):
         del(far1.h)
         del(far1.k)
         del(far1.l)
+        keys = ['dety_size','detz_size']
+        for key in keys:
+            far1.fit[key] = far.fit[key+'1']
         far1.read_par(far.files['par_file_1']) # read detector.par file
         far1.read_flt(far.files['flt_file_1']) # read peaks_t##.flt file
         #put info from far1 in far
@@ -72,6 +75,9 @@ def run(options):
         del(far2.h)
         del(far2.k)
         del(far2.l)
+        keys = ['dety_size','detz_size']
+        for key in keys:
+            far2.fit[key] = far.fit[key+'2']
         far2.read_par(far.files['par_file_2']) # read detector.par file
         far2.read_flt(far.files['flt_file_2']) # read peaks_t##.flt file
         #put info from far1 in far
