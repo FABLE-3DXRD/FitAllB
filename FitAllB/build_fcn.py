@@ -1,3 +1,5 @@
+#print "buildFCN debug"
+
 def FCN(inp):	
     """
     Function to build fcn.py, the module containing the functions to be 
@@ -220,6 +222,43 @@ def FCN(inp):
 #    string = string + '\t ia = n.arccos(n.sum(ge*gc)/(n.sqrt(n.sum(ge*ge))*n.sqrt(n.sum(gc*gc)))) \n\n'
 #    string = string + '\t result = result*ia \n\n'
     string = string + '\t return result \n\n'
+
+
+
+    # refine residual*IA in stead of residual
+    string = string + 'def peakarray(a,b,c,alpha,beta,gamma,ha,ka,la,wa,detya,detza,varsa,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc,i):\n' 
+    string = string + "\t if crystal_system == 'triclinic':\n" 
+    string = string + "\t\t unit_cell = [a,b,c,alpha,beta,gamma]\n" 
+    string = string + "\t elif crystal_system == 'monoclinic':\n" 
+    string = string + "\t\t unit_cell = [a,b,c,90,beta,90]\n" 
+    string = string + "\t elif crystal_system == 'orthorhombic':\n" 
+    string = string + "\t\t unit_cell = [a,b,c,90,90,90]\n" 
+    string = string + "\t elif 'tetragonal' in crystal_system:\n" 
+    string = string + "\t\t unit_cell = [a,a,c,90,90,90]\n" 
+    string = string + "\t elif 'trigonal' in crystal_system or crystal_system == 'hexagonal':\n" 
+    string = string + "\t\t unit_cell = [a,a,c,90,90,120]\n" 
+    string = string + "\t elif crystal_system == 'cubic' or crystal_system == 'isotropic':\n" 
+    string = string + "\t\t unit_cell = [a,a,a,90,90,90]\n" 
+    string = string + "\t B = tools.epsilon_to_b(n.array([epsaa,epsab,epsac,epsbb,epsbc,epscc]),unit_cell)\n" 
+    string = string + '\t U = tools.rod_to_u([rodx,rody,rodz])\n'
+    string = string + '\t UB = (wavelength/(2*n.pi))*n.dot(U,B) \n'
+    string = string + '\t gca = n.dot( UB, [ha,ka,la] )\n'
+#    string = string + '\t for k in range(5):\n'
+#    string = string + '\t\t print gcalc(a,b,c,alpha,beta,gamma,ha[k],ka[k],la[k],rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc),gca[:,k]\n'
+    string = string + '\t result = 0\n'
+#    string = string + '\t 1/0\n'
+    string = string + '\t for j in range(nrefl[i]):\n'
+    if inp.fit['pixel'] == 1:    
+        string = string + '\t\t ge = gexp(wa[j],detya[j],detza[j],wx,wy,tx,ty,tz,py,py,cy,cz,L,x,y,z)\n'
+    else:
+        string = string + '\t\t ge = gexp(wa[j],detya[j],detza[j],wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z)\n'
+    string = string + '\t\t diff = ge[:,0]-gca[:,j]\n'
+    string = string + '\t\t result += n.sum(diff*diff/n.array([varsa[j][0],varsa[j][1],varsa[j][2]]))\n'
+#    string = string + '\t\t print "diff",diff,diff.shape,ge.shape,gca[:,j].shape,varsa[j],result\n'
+#    string = string + '\t 1/0\n'
+    string = string + '\t return result \n\n'
+
+
 
     # peak_yz renamed for test
     string = string + 'def peak_yz(h,k,l,w,dety,detz,vars,wx,wy,tx,ty,tz,py,pz,cy,cz,L,x,y,z,rodx,rody,rodz,epsaa,epsab,epsac,epsbb,epsbc,epscc):\n' 
@@ -475,9 +514,13 @@ def FCN(inp):
     # initialise sum
     string = string + '\t sum = 0 \n \n'
     
-    string = string + '\t for j in range(nrefl[i]):\n'
-    string = string + '\t\t sum = sum + peak(a,b,c,alpha,beta,gamma,h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
-    string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],rod[i][0]+rodx[i],rod[i][1]+rody[i],rod[i][2]+rodz[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
+#    string = string + '\t for j in range(nrefl[i]):\n'
+#    string = string + '\t\t sum = sum + peak(a,b,c,alpha,beta,gamma,h[i][j],k[i][j],l[i][j],w[id[i][j]],dety[id[i][j]],detz[id[i][j]],vars[i][j], ' 
+#    string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],rod[i][0]+rodx[i],rod[i][1]+rody[i],rod[i][2]+rodz[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i]) \n'
+
+    string = string + '\t sum = peakarray(a,b,c,alpha,beta,gamma,h[i],k[i],l[i],n.take(w,id[i]),n.take(dety,id[i]),n.take(detz,id[i]),vars[i], ' 
+    string = string + 'wx,wy,tx,ty,tz,py,pz,cy,cz,L,x[i],y[i],z[i],rod[i][0]+rodx[i],rod[i][1]+rody[i],rod[i][2]+rodz[i],epsaa[i],epsab[i],epsac[i],epsbb[i],epsbc[i],epscc[i],i) \n'
+
     string = string + '\n'
     string = string + '\t return sum \n\n\n'
 
