@@ -5,7 +5,10 @@ import reject
 import fit
 import fcn
 import time
-import minuit
+try:
+    from iminuit import Minuit
+except ImportError:
+    from minuit import Minuit
 import sys
 import logging
 from copy import deepcopy
@@ -52,10 +55,10 @@ class fit_minuit():
             print 'newreject_grain', self.inp.fit['newreject_grain']
             # calculate starting values
             t1 = time.clock()
-            self.m = minuit.Minuit(fcn.FCN)
+            self.m = Minuit(fcn.FCN)
             self.m.values = self.inp.values
             self.m.errors = self.inp.errors
-            self.mg = minuit.Minuit(fcn.FCNgrain)
+            self.mg = Minuit(fcn.FCNgrain)
             self.mg.values = self.m.values
             self.mg.errors = self.m.errors
             g = fit.grain_values(self)

@@ -3,7 +3,10 @@ from xfab import tools
 from polyxsim import reflections
 from copy import deepcopy
 import time
-import minuit
+try:
+    from iminuit import Minuit
+except ImportError:
+    from minuit import Minuit
 import sys
 import logging
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')

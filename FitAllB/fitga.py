@@ -5,7 +5,10 @@ import reject
 import fit
 import fcn
 import time
-import minuit
+try:
+    from iminuit import Minuit
+except ImportError:
+    from minuit import Minuit
 import sys
 import logging
 from copy import deepcopy
@@ -61,7 +64,7 @@ class fit_minuit():
 
         #refinement update
         reload(fcn)
-        self.m = minuit.Minuit(fcn.FCN_fitga)
+        self.m = Minuit(fcn.FCN_fitga)
         self.m.values = self.inp.values
         self.m.errors = self.inp.errors
         for entries in self.m.fixed:
@@ -75,7 +78,7 @@ class fit_minuit():
 
 		# carry out refinement
         if self.ref == True:
-            self.mg = minuit.Minuit(fcn.FCNgrain)
+            self.mg = Minuit(fcn.FCNgrain)
             self.mg.values = self.m.values
             self.mg.errors = self.m.errors
             self.mg.fixed = self.m.fixed

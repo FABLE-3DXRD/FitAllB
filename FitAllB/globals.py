@@ -4,7 +4,10 @@ import write_output
 import reject
 import fcn
 import time
-import minuit
+try:
+    from iminuit import Minuit
+except ImportError:
+    from minuit import Minuit
 import sys
 import logging
 from copy import deepcopy
@@ -55,7 +58,7 @@ class fit_minuit():
             self.fval = sum(g)
             print '\n%s starting value %e' %(self.inp.fit['goon'],self.fval)
             t1 = time.clock()
-            self.mg = minuit.Minuit(fcn.FCNgrain)
+            self.mg = Minuit(fcn.FCNgrain)
             self.mg.values = self.inp.values
             self.mg.errors = self.inp.errors
             self.mg.printMode = self.inp.fit['printmode']

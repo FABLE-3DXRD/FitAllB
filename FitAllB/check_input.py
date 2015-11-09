@@ -13,7 +13,10 @@ from xfab import symmetry
 from xfab import detector
 import numpy as n
 import logging
-import minuit
+try:
+    from iminuit import Minuit
+except ImportError:
+    from minuit import Minuit
 from copy import deepcopy
 
 

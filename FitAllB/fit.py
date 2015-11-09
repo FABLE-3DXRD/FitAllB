@@ -4,7 +4,10 @@ import write_output
 import reject
 import fcn
 import time
-import minuit
+try:
+    from iminuit import Minuit
+except ImportError:
+    from minuit import Minuit
 import sys
 import logging
 from copy import deepcopy
@@ -37,7 +40,7 @@ class fit_minuit():
 
         #refinement update
         reload(fcn)
-        self.m = minuit.Minuit(fcn.FCN)
+        self.m = Minuit(fcn.FCN)
         self.m.values = self.inp.values
         self.m.errors = self.inp.errors
         for entries in self.m.fixed:
@@ -59,7 +62,7 @@ class fit_minuit():
     
 		# carry out refinement
         if self.ref == True:
-            self.mg = minuit.Minuit(fcn.FCNgrain)
+            self.mg = Minuit(fcn.FCNgrain)
             self.mg.values = self.m.values
             self.mg.errors = self.m.errors
             self.mg.fixed = self.m.fixed
@@ -71,7 +74,7 @@ class fit_minuit():
             self.fval = sum(g)
             print '\n%s starting value %e' %(self.inp.fit['goon'],self.fval)
             t1 = time.clock()
-            self.mg = minuit.Minuit(fcn.FCNgrain)
+            self.mg = Minuit(fcn.FCNgrain)
             self.mg.values = self.m.values
             self.mg.errors = self.inp.errors
             for i in range(self.inp.no_grains):
@@ -283,7 +286,7 @@ def grain_values(lsqr):
 #        for i in range(lsqr.inp.no_grains):
 #            if i+1 not in lsqr.inp.fit['skip']:
 #                # make new lsqr of minuit        
-#                lsqr.mg = minuit.Minuit(fcn.FCNgrain)
+#                lsqr.mg = Minuit(fcn.FCNgrain)
 #                lsqr.mg.values = temp1
 #                lsqr.mg.values['i'] = i
 #                lsqr.mg.scan(("L",1,lsqr.mg.values['L']-1,lsqr.mg.values['L']+1)) # scan to set lsqr.m.fval, function starting value
