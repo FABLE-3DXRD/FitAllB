@@ -58,13 +58,16 @@ class fit_minuit():
             self.fval = sum(g)
             print '\n%s starting value %e' %(self.inp.fit['goon'],self.fval)
             t1 = time.clock()
-            self.mg = Minuit(fcn.FCNgrain)
-            self.mg.values = self.inp.values
-            self.mg.errors = self.inp.errors
-            self.mg.printMode = self.inp.fit['printmode']
-            self.mg.strategy = self.inp.fit['strategy']
-            for entries in self.mg.fixed:
-                self.mg.fixed[entries] = True
+            try:
+                self.mg = Minuit(fcn.FCNgrain,errordef=1)
+            	self.mg.values = self.inp.values
+            	self.mg.errors = self.inp.errors
+            	self.mg.printMode = self.inp.fit['printmode']
+            	self.mg.strategy = self.inp.fit['strategy']
+            	for entries in self.mg.fixed:
+                	self.mg.fixed[entries] = True
+            except:
+                self.mg = Minuit(fcn.FCNgrain,errordef=1,**self.inp.fitarg)
             global_parameters = []
             weight = []
             for i in range(self.inp.no_grains):
@@ -74,6 +77,10 @@ class fit_minuit():
                         if i == 0:
                             print 'Fit %s tolerance %e' %(self.inp.fit['goon'],self.mg.tol)
                         self.mg.values['i'] = i
+                        try:
+                            self.mg.fitarg['i'] = i
+                        except:
+                            pass
                         self.fitglobalgrain(i)
                         print '\rRefining grain %i' %(i+1),
                         sys.stdout.flush()

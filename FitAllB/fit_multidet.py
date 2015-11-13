@@ -50,11 +50,14 @@ class fit_minuit():
 
         #refinement update
         reload(fcn)
-        self.m = Minuit(fcn.FCN)
-        self.m.values = self.inp.values
-        self.m.errors = self.inp.errors
-        for entries in self.m.fixed:
-            self.m.fixed[entries] = True
+        self.m = Minuit(fcn.FCN,errordef=1,pedantic=False,print_level=-1,**self.inp.fitarg)
+        try:
+            self.m.values = self.inp.values
+            self.m.errors = self.inp.errors
+            for entries in self.m.fixed:
+                self.m.fixed[entries] = True
+        except:
+            pass
 
 		# determine whether to refine
         self.ref = False

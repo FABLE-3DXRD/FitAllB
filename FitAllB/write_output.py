@@ -10,7 +10,7 @@ from copy import deepcopy
 from string import split
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
-		
+        
 def write_cov(lsqr,i):
     """
     Calculate and save the covariance matrix for grain i
@@ -28,23 +28,40 @@ def write_cov(lsqr,i):
         f.write('\n \t\n**********%s********** \n\t' %lsqr.inp.fit['goon'])
     lines = 0
     for entry1 in lsqr.grains[i]:
-        if lsqr.mg.fixed[entry1] == False:
-            if lines == 0:
-                string = '\n         '
+        try:
+            if lsqr.mg.fixed[entry1] == False:
+                if lines == 0:
+                    string = '\n         '
+                    for entry2 in lsqr.grains[i]:
+                        if lsqr.mg.fixed[entry2] == False:
+                            string = string + '%13s  ' %entry2
+                    string = string + '\n'
+                    f.write(string)
+                    lines = 1                   
+                string = '%13s  ' %entry1
                 for entry2 in lsqr.grains[i]:
                     if lsqr.mg.fixed[entry2] == False:
-                        string = string + '%13s  ' %entry2
+                        string = string + '%8e  ' %lsqr.mg.covariance[('%s' %entry1, '%s' %entry2)] 
                 string = string + '\n'
                 f.write(string)
-                lines = 1					
-            string = '%13s  ' %entry1
-            for entry2 in lsqr.grains[i]:
-                if lsqr.mg.fixed[entry2] == False:
-                    string = string + '%8e  ' %lsqr.mg.covariance[('%s' %entry1, '%s' %entry2)] 
-            string = string + '\n'
-            f.write(string)
+        except:
+            if lsqr.mg.fitarg["fix_%s" %entry1] == False:
+                if lines == 0:
+                    string = '\n         '
+                    for entry2 in lsqr.grains[i]:
+                        if lsqr.mg.fitarg["fix_%s" %entry2] == False:
+                            string = string + '%13s  ' %entry2
+                    string = string + '\n'
+                    f.write(string)
+                    lines = 1                   
+                string = '%13s  ' %entry1
+                for entry2 in lsqr.grains[i]:
+                    if lsqr.mg.fitarg["fix_%s" %entry2] == False:
+                        string = string + '%8e  ' %lsqr.mg.covariance[('%s' %entry1, '%s' %entry2)] 
+                string = string + '\n'
+                f.write(string)
         
-    f.close()		
+    f.close()       
 
 
 def write_cor(lsqr,i):
@@ -64,23 +81,40 @@ def write_cor(lsqr,i):
         f.write('\n \t\n**********%s********** \n\t' %lsqr.inp.fit['goon'])
     lines = 0
     for entry1 in lsqr.grains[i]:
-        if lsqr.mg.fixed[entry1] == False:
-            if lines == 0:
-                string = '\n         '
+        try:
+            if lsqr.mg.fixed[entry1] == False:
+                if lines == 0:
+                    string = '\n         '
+                    for entry2 in lsqr.grains[i]:
+                        if lsqr.mg.fixed[entry2] == False:
+                            string = string + '%8s  ' %entry2
+                    string = string + '\n'
+                    f.write(string)
+                    lines = 1                   
+                string = '%8s  ' %entry1
                 for entry2 in lsqr.grains[i]:
                     if lsqr.mg.fixed[entry2] == False:
-                        string = string + '%8s  ' %entry2
+                        string = string + '%8f  ' %(lsqr.mg.covariance[('%s' %entry1, '%s' %entry2)]/(n.sqrt(lsqr.mg.covariance[('%s' %entry1, '%s' %entry1)])*n.sqrt(lsqr.mg.covariance[('%s' %entry2, '%s' %entry2)]))) 
                 string = string + '\n'
                 f.write(string)
-                lines = 1					
-            string = '%8s  ' %entry1
-            for entry2 in lsqr.grains[i]:
-                if lsqr.mg.fixed[entry2] == False:
-                    string = string + '%8f  ' %(lsqr.mg.covariance[('%s' %entry1, '%s' %entry2)]/(n.sqrt(lsqr.mg.covariance[('%s' %entry1, '%s' %entry1)])*n.sqrt(lsqr.mg.covariance[('%s' %entry2, '%s' %entry2)]))) 
-            string = string + '\n'
-            f.write(string)
+        except:
+            if lsqr.mg.fitarg["fix_%s" %entry1] == False:
+                if lines == 0:
+                    string = '\n         '
+                    for entry2 in lsqr.grains[i]:
+                        if lsqr.mg.fitarg["fix_%s" %entry2] == False:
+                            string = string + '%8s  ' %entry2
+                    string = string + '\n'
+                    f.write(string)
+                    lines = 1                   
+                string = '%8s  ' %entry1
+                for entry2 in lsqr.grains[i]:
+                    if lsqr.mg.fitarg["fix_%s" %entry2] == False:
+                        string = string + '%8f  ' %(lsqr.mg.covariance[('%s' %entry1, '%s' %entry2)]/(n.sqrt(lsqr.mg.covariance[('%s' %entry1, '%s' %entry1)])*n.sqrt(lsqr.mg.covariance[('%s' %entry2, '%s' %entry2)]))) 
+                string = string + '\n'
+                f.write(string)
         
-    f.close()		
+    f.close()       
 
 
 def write_global(lsqr):
@@ -102,42 +136,76 @@ def write_global(lsqr):
     f.write('\n\n**********correlation matrix**********\n')
     lines = 0
     for entry1 in lsqr.globals+["x0","y0","z0"]:
-        if lsqr.m.fixed[entry1] == False:
-            if lines == 0:
-                string = '\n         '
+        try:
+            if lsqr.m.fixed[entry1] == False:
+                if lines == 0:
+                    string = '\n         '
+                    for entry2 in lsqr.globals+["x0","y0","z0"]:
+                        if lsqr.m.fixed[entry2] == False:
+                            string = string + '%8s  ' %entry2
+                    string = string + '\n'
+                    f.write(string)
+                    lines = 1                   
+                string = '%8s  ' %entry1
                 for entry2 in lsqr.globals+["x0","y0","z0"]:
                     if lsqr.m.fixed[entry2] == False:
-                        string = string + '%8s  ' %entry2
+                        string = string + '%8f  ' %(lsqr.m.covariance[('%s' %entry1, '%s' %entry2)]/(n.sqrt(lsqr.m.covariance[('%s' %entry1, '%s' %entry1)])*n.sqrt(lsqr.m.covariance[('%s' %entry2, '%s' %entry2)]))) 
                 string = string + '\n'
                 f.write(string)
-                lines = 1					
-            string = '%8s  ' %entry1
-            for entry2 in lsqr.globals+["x0","y0","z0"]:
-                if lsqr.m.fixed[entry2] == False:
-                    string = string + '%8f  ' %(lsqr.m.covariance[('%s' %entry1, '%s' %entry2)]/(n.sqrt(lsqr.m.covariance[('%s' %entry1, '%s' %entry1)])*n.sqrt(lsqr.m.covariance[('%s' %entry2, '%s' %entry2)]))) 
-            string = string + '\n'
-            f.write(string)
+        except:
+            if lsqr.m.fitarg["fix_%s" %entry1] == False:
+                if lines == 0:
+                    string = '\n         '
+                    for entry2 in lsqr.globals+["x0","y0","z0"]:
+                        if lsqr.m.fitarg["fix_%s" %entry2] == False:
+                            string = string + '%8s  ' %entry2
+                    string = string + '\n'
+                    f.write(string)
+                    lines = 1                   
+                string = '%8s  ' %entry1
+                for entry2 in lsqr.globals+["x0","y0","z0"]:
+                    if lsqr.m.fitarg["fix_%s" %entry2] == False:
+                        string = string + '%8f  ' %(lsqr.m.covariance[('%s' %entry1, '%s' %entry2)]/(n.sqrt(lsqr.m.covariance[('%s' %entry1, '%s' %entry1)])*n.sqrt(lsqr.m.covariance[('%s' %entry2, '%s' %entry2)]))) 
+                string = string + '\n'
+                f.write(string)
         
     f.write('\n\n**********covariance matrix********** \n')
     lines = 0
     for entry1 in lsqr.globals+["x0","y0","z0"]:
-        if lsqr.m.fixed[entry1] == False:
-            if lines == 0:
-                string = '\n         '
+        try:
+            if lsqr.m.fixed[entry1] == False:
+                if lines == 0:
+                    string = '\n         '
+                    for entry2 in lsqr.globals+["x0","y0","z0"]:
+                        if lsqr.m.fixed[entry2] == False:
+                            string = string + '%8s  ' %entry2
+                    string = string + '\n'
+                    f.write(string)
+                    lines = 1                   
+                string = '%8s  ' %entry1
                 for entry2 in lsqr.globals+["x0","y0","z0"]:
                     if lsqr.m.fixed[entry2] == False:
-                        string = string + '%8s  ' %entry2
+                        string = string + '%8e  ' %(lsqr.m.covariance[('%s' %entry1, '%s' %entry2)]) 
                 string = string + '\n'
                 f.write(string)
-                lines = 1					
-            string = '%8s  ' %entry1
-            for entry2 in lsqr.globals+["x0","y0","z0"]:
-                if lsqr.m.fixed[entry2] == False:
-                    string = string + '%8e  ' %(lsqr.m.covariance[('%s' %entry1, '%s' %entry2)]) 
-            string = string + '\n'
-            f.write(string)
+        except:
+            if lsqr.m.fitarg["fix_%s" %entry1] == False:
+                if lines == 0:
+                    string = '\n         '
+                    for entry2 in lsqr.globals+["x0","y0","z0"]:
+                        if lsqr.m.fitarg["fix_%s" %entry2] == False:
+                            string = string + '%8s  ' %entry2
+                    string = string + '\n'
+                    f.write(string)
+                    lines = 1                   
+                string = '%8s  ' %entry1
+                for entry2 in lsqr.globals+["x0","y0","z0"]:
+                    if lsqr.m.fitarg["fix_%s" %entry2] == False:
+                        string = string + '%8e  ' %(lsqr.m.covariance[('%s' %entry1, '%s' %entry2)]) 
+                string = string + '\n'
+                f.write(string)
 
-    f.close()		
+    f.close()       
 
 
 def write_values(lsqr):
@@ -175,9 +243,9 @@ def write_values(lsqr):
             sig = conversion.strain2stress(eps,lsqr.inp.C)
             sig_s = conversion.grain2sample(sig,U)            
             out = format %(i+1,
-    			           n.sum(lsqr.inp.mean_ia[i])/len(lsqr.inp.mean_ia[i]),#0,
-#	    				   sum(lsqr.inp.volume[i])/lsqr.inp.nrefl[i],
-	    				   reject.median(lsqr.inp.volume[i]),
+                           n.sum(lsqr.inp.mean_ia[i])/len(lsqr.inp.mean_ia[i]),#0,
+#                          sum(lsqr.inp.volume[i])/lsqr.inp.nrefl[i],
+                           reject.median(lsqr.inp.volume[i]),
                            lsqr.m.values['x%s' %i]/1000,
                            lsqr.m.values['y%s' %i]/1000,
                            lsqr.m.values['z%s' %i]/1000,
@@ -217,8 +285,8 @@ def write_values(lsqr):
                            sig_s[1][2],
                            sig_s[0][2],
                            sig_s[0][1],
-	    				   reject.median(lsqr.inp.spr_tth[i]),
-	    				   reject.median(lsqr.inp.spr_eta[i])
+                           reject.median(lsqr.inp.spr_tth[i]),
+                           reject.median(lsqr.inp.spr_eta[i])
                           )
             f.write(out)
     f.close()   
@@ -255,28 +323,45 @@ def write_errors(lsqr,i):
     if eps_ref == False:
         cov_eps = n.zeros((6,6))
     else:
-        free = lsqr.mg.fixed.values().count(False)
+        try:
+            free = lsqr.mg.fixed.values().count(False)
+        except:
+            free = lsqr.mg.fitarg.values().count(False)
         assert free >= 6, 'wrong dimensions of covariance matrix'
         covariance = n.zeros((free,free))
         j1 = 0
         for entry1 in lsqr.grains[i]:
-            if lsqr.mg.fixed[entry1] == False:
-                j2 = 0
-                for entry2 in lsqr.grains[i]:
-                    if lsqr.mg.fixed[entry2] == False:
-                        covariance[j1][j2] = lsqr.mg.covariance[('%s' %entry1, '%s' %entry2)]
-                        j2 = j2 + 1
-                j1 = j1 + 1
+            try:
+                if lsqr.mg.fixed[entry1] == False:
+                    j2 = 0
+                    for entry2 in lsqr.grains[i]:
+                        if lsqr.mg.fixed[entry2] == False:
+                            covariance[j1][j2] = lsqr.mg.covariance[('%s' %entry1, '%s' %entry2)]
+                            j2 = j2 + 1
+                    j1 = j1 + 1
+            except:
+                if lsqr.mg.fitarg["fix_%s" %entry1] == False:
+                    j2 = 0
+                    for entry2 in lsqr.grains[i]:
+                        if lsqr.mg.fitarg["fix_%s" %entry2] == False:
+                            covariance[j1][j2] = lsqr.mg.covariance[('%s' %entry1, '%s' %entry2)]
+                            j2 = j2 + 1
+                    j1 = j1 + 1
                 
+        
         if free == 6:
             cov_eps = covariance
         else:
-            derivatives = n.linalg.inv(covariance)
-            derivatives_rod = derivatives[len(derivatives)-9:len(derivatives)-6,len(derivatives)-9:len(derivatives)-6]
-            cov_rod = n.linalg.inv(derivatives_rod)
+            #derivatives = n.linalg.inv(covariance)
+            #derivatives_rod = derivatives[len(derivatives)-9:len(derivatives)-6,len(derivatives)-9:len(derivatives)-6]
+            #cov_rod = n.linalg.inv(derivatives_rod)
+            #vars_rod = n.linalg.eig(cov_rod)[0]
+            #derivatives = derivatives[len(derivatives)-6:,len(derivatives)-6:]
+            #cov_eps = n.linalg.inv(derivatives)
+            
+            cov_rod = covariance[len(covariance)-9:len(covariance)-6,len(covariance)-9:len(covariance)-6]
             vars_rod = n.linalg.eig(cov_rod)[0]
-            derivatives = derivatives[len(derivatives)-6:,len(derivatives)-6:]
-            cov_eps = n.linalg.inv(derivatives)
+            cov_eps = covariance[len(covariance)-6:,len(covariance)-6:]
 
     # old way of doing it including covariances with orientations in strain errors
     try:
@@ -331,7 +416,7 @@ def write_errors(lsqr,i):
     format = "%d "*1 + "%f "*8 + "%0.12f "*9 + "%e "*24 + "%f "*2 + "\n"
     
     lines[index] = format %(i+1,
-			       reject.spread(lsqr.inp.mean_ia[i]),#0
+                   reject.spread(lsqr.inp.mean_ia[i]),#0
 #                   reject.spread(lsqr.inp.volume[i]),
                    reject.median_absolute_deviation(lsqr.inp.volume[i]),
                    lsqr.mg.errors['x%s' %i]/1000,
@@ -340,15 +425,15 @@ def write_errors(lsqr,i):
                    lsqr.mg.errors['rodx%s' %i],
                    lsqr.mg.errors['rody%s' %i],
                    lsqr.mg.errors['rodz%s' %i],
-  			       0,
-   			       0,
-   			       0,
-   			       0,
-   			       0,
-   			       0,
-   			       0,
-   			       0,
-   			       0,
+                   0,
+                   0,
+                   0,
+                   0,
+                   0,
+                   0,
+                   0,
+                   0,
+                   0,
                    n.sqrt(cov_eps[0][0]),
                    n.sqrt(cov_eps[1][1]),
                    n.sqrt(cov_eps[2][2]),
@@ -517,7 +602,7 @@ def write_errors(lsqr,i):
     for j in range(len(lines)):
         f.write(lines[j])
     f.close()   
-		
+        
 def write_log(lsqr):
     """
     Write fitting and rejection info in the log file
@@ -549,12 +634,18 @@ def write_log(lsqr):
     f.write('Grain data file: %s_%s.txt \n' %(lsqr.inp.fit['stem'],lsqr.inp.fit['goon']))
     # print values and errors of global parameters
     for entries in lsqr.globals:
+        try:    
             if lsqr.m.fixed[entries] == True:
                 f.write('%s %f\n' %(entries, lsqr.m.values[entries]))
             else:
                 f.write('%s %f +- %f\n' %(entries, lsqr.m.values[entries], lsqr.m.errors[entries]))
+        except: 
+            if lsqr.m.fitarg["fix_%s" %entries] == True:
+                f.write('%s %f\n' %(entries, lsqr.m.values[entries]))
+            else:
+                f.write('%s %f +- %f\n' %(entries, lsqr.m.values[entries], lsqr.m.errors[entries]))
                           
-	# print info on poor grains and rejected peaks	
+    # print info on poor grains and rejected peaks  
     f.write('\nPoor grains: %s' %lsqr.inp.fit['poor'])
     f.write('\nPoor grains values: %s' %lsqr.poor_value)
     f.write('\nPoor grains nrefl: %s\n' %lsqr.poor_nrefl)
@@ -611,7 +702,7 @@ def write_par(lsqr):
     (z_center, y_center) = detector.detyz_to_xy([lsqr.m.values['cy'],lsqr.m.values['cz']],
                                                 lsqr.inp.param['o11'],lsqr.inp.param['o12'],lsqr.inp.param['o21'],lsqr.inp.param['o22'],
                                                 lsqr.inp.fit['dety_size'],lsqr.inp.fit['detz_size'])
-			
+            
     dout = "chi %f\n" %lsqr.m.values['wx']
     dout = dout + "distance %f\n" %(lsqr.m.values['L']) 
     dout = dout + "fit_tolerance 0.5\n" 

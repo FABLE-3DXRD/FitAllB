@@ -90,6 +90,11 @@ def run(options):
         # nearfield refinement
         from FitAllB import fit
         fit.refine(near,options.killfile)
+        try:
+            far.fitarg = near.fitarg # needed to carry on parameters for iminuit
+        except:
+            pass
+
     
     
     #  Farfield outlier rejection

@@ -158,7 +158,7 @@ class parse_input:
         self.fit['kk'] = []
         self.fit['ll'] = []
         self.fit['rejectvalue'] = []
-			
+            
     def read(self):     
         try:
             f = open(self.filename,'r')
@@ -187,12 +187,12 @@ class parse_input:
                     elif len(val) > 1 or key == 'skip':
                         for i in val:
                             valtmp = valtmp + i +','
-							
+                            
                         val = valtmp + ']'
                     else:
                         val = val[0]
 
-					# save input file names in self.files and fitting info in self.fit
+                    # save input file names in self.files and fitting info in self.fit
                     if 'file' in key:
                         self.files[key] = val
                     else:
@@ -201,7 +201,7 @@ class parse_input:
                         except:
                             self.fit[key] = val
         
-        stem = split(self.filename,'.')[0]		
+        stem = split(self.filename,'.')[0]      
         self.fit['stem'] = stem
         self.fit['direc'] = deepcopy(stem)
         try:
@@ -210,7 +210,7 @@ class parse_input:
             pass
             
                 
-						
+                        
     def check(self):
         # Needed items
         self.missing = False
@@ -226,7 +226,7 @@ class parse_input:
                         print self.needed_items[item]
                         self.missing = True
 
-			
+            
             
     def initialize(self): 
         # Does output directory exist?
@@ -292,7 +292,7 @@ class parse_input:
         self.param['z_center'] = detz_center
         #read Jons wedge convention and convert to Sorens
         self.param['wedge'] = -1.*self.param['wedge']
-				
+                
                 
     def read_flt(self,flt_file): # read peaks_t##.flt and calculate experimental variances Sww,Syy,Szz
         # create parameters, must be lists in order to append
@@ -648,9 +648,9 @@ class parse_input:
                 self.tth[int(split(input[nn])[2])]=float(split(input[nn])[12])
                 self.eta[int(split(input[nn])[2])]=float(split(input[nn])[18])
 
-            self.id.append(idgr)				
-            self.h.append(h)				
-            self.k.append(k)				
+            self.id.append(idgr)                
+            self.h.append(h)                
+            self.k.append(k)                
             self.l.append(l)
             nn = nn + 2
         
@@ -763,12 +763,20 @@ class parse_input:
                 self.rodz = n.zeros((len(U11)))
                 for i in range(len(U11)):
                     [self.rodx[i],self.rody[i],self.rodz[i]] = tools.u_to_rod(U[i])
-                self.eps11 = res.getcolumn('eps11')
-                self.eps22 = res.getcolumn('eps22')
-                self.eps33 = res.getcolumn('eps33')
-                self.eps23 = res.getcolumn('eps23')
-                self.eps13 = res.getcolumn('eps13')
-                self.eps12 = res.getcolumn('eps12')
+                try:
+                    self.eps11 = res.getcolumn('eps11')
+                    self.eps22 = res.getcolumn('eps22')
+                    self.eps33 = res.getcolumn('eps33')
+                    self.eps23 = res.getcolumn('eps23')
+                    self.eps13 = res.getcolumn('eps13')
+                    self.eps12 = res.getcolumn('eps12')
+                except:
+                    self.eps11 = [0.0]*len(self.grainno)
+                    self.eps22 = [0.0]*len(self.grainno)
+                    self.eps33 = [0.0]*len(self.grainno)
+                    self.eps23 = [0.0]*len(self.grainno)
+                    self.eps13 = [0.0]*len(self.grainno)
+                    self.eps12 = [0.0]*len(self.grainno)
                 try:
                     self.ia = res.getcolumn('mean_IA')
                     self.grainvolume = res.getcolumn('grainvolume')
@@ -850,7 +858,7 @@ class parse_input:
 
 
     def set_start(self): # build fcn, initiate minuit and set starting values and errors
-
+        self.fitarg = {}
         self.values = {}
         # grain values
         if self.files['res_file'] != None:
@@ -873,6 +881,18 @@ class parse_input:
             self.values['rodx%s' %i] = 0.0
             self.values['rody%s' %i] = 0.0
             self.values['rodz%s' %i] = 0.0
+            self.fitarg['x%s' %i] = 0.0
+            self.fitarg['y%s' %i] = 0.0
+            self.fitarg['z%s' %i] = 0.0
+            self.fitarg['epsaa%s' %i] = 0.0 
+            self.fitarg['epsab%s' %i] = 0.0  
+            self.fitarg['epsac%s' %i] = 0.0
+            self.fitarg['epsbb%s' %i] = 0.0  
+            self.fitarg['epsbc%s' %i] = 0.0 
+            self.fitarg['epscc%s' %i] = 0.0
+            self.fitarg['rodx%s' %i] = 0.0
+            self.fitarg['rody%s' %i] = 0.0
+            self.fitarg['rodz%s' %i] = 0.0
         # grain values for resuming refinement
         if self.files['res_file'] != None:
             for i in range(self.no_grains):
@@ -886,6 +906,15 @@ class parse_input:
                     self.values['epsbb%s' %i] = self.eps22[self.grainno.index(i+1)]
                     self.values['epsbc%s' %i] = self.eps23[self.grainno.index(i+1)]
                     self.values['epscc%s' %i] = self.eps33[self.grainno.index(i+1)]
+                    self.fitarg['x%s' %i] = 1000.*self.x[self.grainno.index(i+1)]
+                    self.fitarg['y%s' %i] = 1000.*self.y[self.grainno.index(i+1)]
+                    self.fitarg['z%s' %i] = 1000.*self.z[self.grainno.index(i+1)]
+                    self.fitarg['epsaa%s' %i] = self.eps11[self.grainno.index(i+1)] 
+                    self.fitarg['epsab%s' %i] = self.eps12[self.grainno.index(i+1)] 
+                    self.fitarg['epsac%s' %i] = self.eps13[self.grainno.index(i+1)]
+                    self.fitarg['epsbb%s' %i] = self.eps22[self.grainno.index(i+1)]
+                    self.fitarg['epsbc%s' %i] = self.eps23[self.grainno.index(i+1)]
+                    self.fitarg['epscc%s' %i] = self.eps33[self.grainno.index(i+1)]
                     self.rod[i][0] = self.rodx[self.grainno.index(i+1)]
                     self.rod[i][1] = self.rody[self.grainno.index(i+1)]
                     self.rod[i][2] = self.rodz[self.grainno.index(i+1)]
@@ -897,6 +926,9 @@ class parse_input:
                 self.values['x%s' %i] = 1000.*self.x[i]
                 self.values['y%s' %i] = 1000.*self.y[i]
                 self.values['z%s' %i] = 1000.*self.z[i]
+                self.fitarg['x%s' %i] = 1000.*self.x[i]
+                self.fitarg['y%s' %i] = 1000.*self.y[i]
+                self.fitarg['z%s' %i] = 1000.*self.z[i]
         
         for i in range(len(self.fit['skip'])-1,-1,-1):
             if self.fit['skip'][i] > self.no_grains:
@@ -950,6 +982,15 @@ class parse_input:
             self.errors['epsbb%s' %i] = 0.001
             self.errors['epsbc%s' %i] = 0.001
             self.errors['epscc%s' %i] = 0.001
+            self.fitarg['error_x%s' %i] = self.param['y_size']/5.
+            self.fitarg['error_y%s' %i] = self.param['y_size']/5.
+            self.fitarg['error_z%s' %i] = self.param['z_size']/20.
+            self.fitarg['error_epsaa%s' %i] = 0.001 
+            self.fitarg['error_epsab%s' %i] = 0.001
+            self.fitarg['error_epsac%s' %i] = 0.001
+            self.fitarg['error_epsbb%s' %i] = 0.001
+            self.fitarg['error_epsbc%s' %i] = 0.001
+            self.fitarg['error_epscc%s' %i] = 0.001
             lenrod = n.linalg.norm(self.rod[i])
             ia = 0.1*n.pi/180.
             errorscale = ia*(1+lenrod*lenrod)/(lenrod*(1-0.25*ia*ia*lenrod*lenrod))
@@ -958,6 +999,9 @@ class parse_input:
             self.errors['rodx%s' %i] = errorscale*abs(self.rod[i][0])
             self.errors['rody%s' %i] = errorscale*abs(self.rod[i][1])
             self.errors['rodz%s' %i] = errorscale*abs(self.rod[i][2])
+            self.fitarg['error_rodx%s' %i] = errorscale*abs(self.rod[i][0])
+            self.fitarg['error_rody%s' %i] = errorscale*abs(self.rod[i][1])
+            self.fitarg['error_rodz%s' %i] = errorscale*abs(self.rod[i][2])
     
 
         self.fit['newreject_grain'] = []
@@ -1034,7 +1078,7 @@ class parse_input:
         reject.merge(self)
         #reject.friedel(self)
 
-		
+        
     def write_rej(self): # write the rejected peaks to rejection file
     
         import reject
@@ -1047,7 +1091,7 @@ class parse_input:
                 pass
             else:
                 observations = observations + self.nrefl[i]
-        print 'Total number of reflections in these', observations,'\n'	
+        print 'Total number of reflections in these', observations,'\n' 
        
         write_output.write_rej(self,message=('%s\n\ncheck_input' %self.fit['title']))
         
@@ -1061,6 +1105,17 @@ def set_globals(inp):
         inp.values['gamma'] = deepcopy(inp.param['cell_gamma'])
         inp.values['wx'] = deepcopy(inp.param['chi'])
         inp.values['wy'] = deepcopy(inp.param['wedge'])
+        try:
+            inp.fitarg['a'] = deepcopy(inp.param['cell__a'])
+            inp.fitarg['b'] = deepcopy(inp.param['cell__b'])
+            inp.fitarg['c'] = deepcopy(inp.param['cell__c'])
+            inp.fitarg['alpha'] = deepcopy(inp.param['cell_alpha'])
+            inp.fitarg['beta'] = deepcopy(inp.param['cell_beta'])
+            inp.fitarg['gamma'] = deepcopy(inp.param['cell_gamma'])
+            inp.fitarg['wx'] = deepcopy(inp.param['chi'])
+            inp.fitarg['wy'] = deepcopy(inp.param['wedge'])
+        except:
+            pass
         # global values, detectpr specific, NB list can be extended to more than 3 detectors
         inp.values['tx0'] = deepcopy(inp.param['tilt_x'])
         inp.values['ty0'] = deepcopy(inp.param['tilt_y'])
@@ -1070,6 +1125,17 @@ def set_globals(inp):
         inp.values['cy0'] = deepcopy(inp.param['y_center'])
         inp.values['cz0'] = deepcopy(inp.param['z_center'])
         inp.values['L0']  = deepcopy(inp.param['distance'])
+        try:
+            inp.fitarg['tx0'] = deepcopy(inp.param['tilt_x'])
+            inp.fitarg['ty0'] = deepcopy(inp.param['tilt_y'])
+            inp.fitarg['tz0'] = deepcopy(inp.param['tilt_z'])
+            inp.fitarg['py0'] = deepcopy(inp.param['y_size'])
+            inp.fitarg['pz0'] = deepcopy(inp.param['z_size'])
+            inp.fitarg['cy0'] = deepcopy(inp.param['y_center'])
+            inp.fitarg['cz0'] = deepcopy(inp.param['z_center'])
+            inp.fitarg['L0']  = deepcopy(inp.param['distance'])
+        except:
+            pass        
         try:
             inp.values['tx1'] = deepcopy(inp.param['tilt_x1'])
             inp.values['ty1'] = deepcopy(inp.param['tilt_y1'])
@@ -1082,6 +1148,17 @@ def set_globals(inp):
         except:
             pass
         try:
+            inp.fitarg['tx1'] = deepcopy(inp.param['tilt_x1'])
+            inp.fitarg['ty1'] = deepcopy(inp.param['tilt_y1'])
+            inp.fitarg['tz1'] = deepcopy(inp.param['tilt_z1'])
+            inp.fitarg['py1'] = deepcopy(inp.param['y_size1'])
+            inp.fitarg['pz1'] = deepcopy(inp.param['z_size1'])
+            inp.fitarg['cy1'] = deepcopy(inp.param['y_center1'])
+            inp.fitarg['cz1'] = deepcopy(inp.param['z_center1'])
+            inp.fitarg['L1']  = deepcopy(inp.param['distance1'])
+        except:
+            pass        
+        try:
             inp.values['tx2'] = deepcopy(inp.param['tilt_x2'])
             inp.values['ty2'] = deepcopy(inp.param['tilt_y2'])
             inp.values['tz2'] = deepcopy(inp.param['tilt_z2'])
@@ -1092,6 +1169,17 @@ def set_globals(inp):
             inp.values['L2']  = deepcopy(inp.param['distance2'])
         except:
             pass
+        try:
+            inp.fitarg['tx2'] = deepcopy(inp.param['tilt_x2'])
+            inp.fitarg['ty2'] = deepcopy(inp.param['tilt_y2'])
+            inp.fitarg['tz2'] = deepcopy(inp.param['tilt_z2'])
+            inp.fitarg['py2'] = deepcopy(inp.param['y_size2'])
+            inp.fitarg['pz2'] = deepcopy(inp.param['z_size2'])
+            inp.fitarg['cy2'] = deepcopy(inp.param['y_center2'])
+            inp.fitarg['cz2'] = deepcopy(inp.param['z_center2'])
+            inp.fitarg['L2']  = deepcopy(inp.param['distance2'])
+        except:
+            pass        
         # global errors, sample specific
         inp.errors['a'] = deepcopy(inp.param['a_error'])
         inp.errors['b'] = deepcopy(inp.param['b_error'])
@@ -1103,6 +1191,17 @@ def set_globals(inp):
         inp.errors['wy'] = deepcopy(inp.param['wedge_error'])
         inp.errors['i']  = deepcopy(inp.param['i_error'])
         inp.errors['j']  = deepcopy(inp.param['j_error'])
+        try:
+            inp.fitarg['error_a'] = deepcopy(inp.param['a_error'])
+            inp.fitarg['error_b'] = deepcopy(inp.param['b_error'])
+            inp.fitarg['error_c'] = deepcopy(inp.param['c_error'])
+            inp.fitarg['error_alpha'] = deepcopy(inp.param['alpha_error'])
+            inp.fitarg['error_beta'] = deepcopy(inp.param['beta_error'])
+            inp.fitarg['error_gamma'] = deepcopy(inp.param['gamma_error'])
+            inp.fitarg['error_wx'] = deepcopy(inp.param['chi_error'])
+            inp.fitarg['error_wy'] = deepcopy(inp.param['wedge_error'])
+        except:
+            pass        
         # global errors, detector specific, NB list can be extended to more than 3 detectors
         inp.errors['tx0'] = deepcopy(inp.param['tilt_x_error'])
         inp.errors['ty0'] = deepcopy(inp.param['tilt_y_error'])
@@ -1112,6 +1211,17 @@ def set_globals(inp):
         inp.errors['cy0'] = deepcopy(inp.param['y_center_error'])
         inp.errors['cz0'] = deepcopy(inp.param['z_center_error'])
         inp.errors['L0']  = deepcopy(inp.param['distance_error'])
+        try:
+            inp.fitarg['error_tx0'] = deepcopy(inp.param['tilt_x_error'])
+            inp.fitarg['error_ty0'] = deepcopy(inp.param['tilt_y_error'])
+            inp.fitarg['error_tz0'] = deepcopy(inp.param['tilt_z_error'])
+            inp.fitarg['error_py0'] = deepcopy(inp.param['y_size_error'])
+            inp.fitarg['error_pz0'] = deepcopy(inp.param['z_size_error'])
+            inp.fitarg['error_cy0'] = deepcopy(inp.param['y_center_error'])
+            inp.fitarg['error_cz0'] = deepcopy(inp.param['z_center_error'])
+            inp.fitarg['error_L0']  = deepcopy(inp.param['distance_error'])
+        except:
+            pass
         inp.errors['tx1'] = deepcopy(inp.param['tilt_x1_error'])
         inp.errors['ty1'] = deepcopy(inp.param['tilt_y1_error'])
         inp.errors['tz1'] = deepcopy(inp.param['tilt_z1_error'])
@@ -1120,6 +1230,17 @@ def set_globals(inp):
         inp.errors['cy1'] = deepcopy(inp.param['y_center1_error'])
         inp.errors['cz1'] = deepcopy(inp.param['z_center1_error'])
         inp.errors['L1']  = deepcopy(inp.param['distance1_error'])
+        try:
+            inp.fitarg['error_tx1'] = deepcopy(inp.param['tilt_x1_error'])
+            inp.fitarg['error_ty1'] = deepcopy(inp.param['tilt_y1_error'])
+            inp.fitarg['error_tz1'] = deepcopy(inp.param['tilt_z1_error'])
+            inp.fitarg['error_py1'] = deepcopy(inp.param['y_size1_error'])
+            inp.fitarg['error_pz1'] = deepcopy(inp.param['z_size1_error'])
+            inp.fitarg['error_cy1'] = deepcopy(inp.param['y_center1_error'])
+            inp.fitarg['error_cz1'] = deepcopy(inp.param['z_center1_error'])
+            inp.fitarg['error_L1']  = deepcopy(inp.param['distance1_error'])
+        except:
+            pass
         inp.errors['tx2'] = deepcopy(inp.param['tilt_x2_error'])
         inp.errors['ty2'] = deepcopy(inp.param['tilt_y2_error'])
         inp.errors['tz2'] = deepcopy(inp.param['tilt_z2_error'])
@@ -1128,6 +1249,17 @@ def set_globals(inp):
         inp.errors['cy2'] = deepcopy(inp.param['y_center2_error'])
         inp.errors['cz2'] = deepcopy(inp.param['z_center2_error'])
         inp.errors['L2']  = deepcopy(inp.param['distance2_error'])
+        try:
+            inp.fitarg['error_tx2'] = deepcopy(inp.param['tilt_x2_error'])
+            inp.fitarg['error_ty2'] = deepcopy(inp.param['tilt_y2_error'])
+            inp.fitarg['error_tz2'] = deepcopy(inp.param['tilt_z2_error'])
+            inp.fitarg['error_py2'] = deepcopy(inp.param['y_size2_error'])
+            inp.fitarg['error_pz2'] = deepcopy(inp.param['z_size2_error'])
+            inp.fitarg['error_cy2'] = deepcopy(inp.param['y_center2_error'])
+            inp.fitarg['error_cz2'] = deepcopy(inp.param['z_center2_error'])
+            inp.fitarg['error_L2']  = deepcopy(inp.param['distance2_error'])
+        except:
+            pass
     
     
 def copy_globals(inp):

@@ -17,21 +17,21 @@ logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 class fit_minuit():
     def __init__(self,inp):
         self.inp = inp
-			
-    def refine(self):	
-	"""
-	Carry out one refinement cycle according to the order given by self.inp.fit['reforder']
-	Reject reflections according to self.inp.fit['rej_resmean']
-	Print and save refinement and rejection info and parameters
-	
-	Jette Oddershede, Risoe DTU, May 15 2008
-	"""
-		
+            
+    def refine(self):   
+#   """
+#   Carry out one refinement cycle according to the order given by self.inp.fit['reforder']
+#   Reject reflections according to self.inp.fit['rej_resmean']
+#   Print and save refinement and rejection info and parameters
+#   
+#   Jette Oddershede, Risoe DTU, May 15 2008
+#   """
+        
         # initialise
         self.poor_value = []
         self.poor_nrefl = []
 
- 		# create lists of parameters, global and for each grain
+        # create lists of parameters, global and for each grain
         self.globals = ["a","b","c","alpha","beta","gamma","wx","wy","tx","ty","tz","py","pz","cy","cz","L"]
         self.grains = []
         for i in range(self.inp.no_grains):
@@ -40,33 +40,38 @@ class fit_minuit():
 
         #refinement update
         reload(fcn)
-        self.m = Minuit(fcn.FCN)
-        self.m.values = self.inp.values
-        self.m.errors = self.inp.errors
-        for entries in self.m.fixed:
-            self.m.fixed[entries] = True
-
-		# determine whether to refine
+        self.m = Minuit(fcn.FCN,errordef=1,pedantic=False,print_level=-1,**self.inp.fitarg)
+        try:
+            self.m.values = self.inp.values
+            self.m.errors = self.inp.errors
+            for entries in self.m.fixed:
+                self.m.fixed[entries] = True
+        except:
+            pass
+            
+        # determine whether to refine
         self.ref = False
         if 'grain' in self.inp.fit['goon'] or 'final' in self.inp.fit['goon'] or 'rotpos' in self.inp.fit['goon']:
             self.ref = True
         elif 'start' in self.inp.fit['goon']:
             self.ref = False
         elif 'rod' in self.inp.fit['goon'] and self.inp.fit['rod'] != 0:
-            self.ref = True		
+            self.ref = True     
         elif 'eps' in self.inp.fit['goon'] and self.inp.fit['eps'] != 0:
-            self.ref = True		
+            self.ref = True     
         elif 'xyz' in self.inp.fit['goon'] and self.inp.fit['xyz'] != 0:
-            self.ref = True		
-		
+            self.ref = True     
+        
     
-		# carry out refinement
+        # carry out refinement
         if self.ref == True:
-            self.mg = Minuit(fcn.FCNgrain)
-            self.mg.values = self.m.values
-            self.mg.errors = self.m.errors
-            self.mg.fixed = self.m.fixed
-
+            try:
+                self.mg = Minuit(fcn.FCNgrain,errordef=1,pedantic=False,print_level=-1,**self.m.fitarg)
+            except:
+                self.mg = Minuit(fcn.FCNgrain,errordef=1)
+                self.mg.values = self.m.values
+                self.mg.errors = self.m.errors
+                self.mg.fixed = self.m.fixed
             print '\n\n*****Now fitting %s*****' %self.inp.fit['goon']
             print 'newreject_grain', self.inp.fit['newreject_grain']
             # calculate starting values
@@ -74,9 +79,12 @@ class fit_minuit():
             self.fval = sum(g)
             print '\n%s starting value %e' %(self.inp.fit['goon'],self.fval)
             t1 = time.clock()
-            self.mg = Minuit(fcn.FCNgrain)
-            self.mg.values = self.m.values
-            self.mg.errors = self.inp.errors
+            try:
+                self.mg = Minuit(fcn.FCNgrain,errordef=1,pedantic=False,print_level=-1,**self.m.fitarg)
+            except:
+                self.mg = Minuit(fcn.FCNgrain,errordef=1)
+                self.mg.values = self.m.values
+                self.mg.errors = self.inp.errors
             for i in range(self.inp.no_grains):
                     if i+1 in self.inp.fit['skip']:
                         pass
@@ -84,7 +92,7 @@ class fit_minuit():
                         pass
                     elif 'rotpos' in self.inp.fit['goon'] and i+1 not in self.inp.fit['newreject_grain'] and abs(self.mg.errors['x%i' %i] - self.inp.param['y_size']/5.) > 1e-3:
                         pass
-                    else:	
+                    else:   
                         if 'grain' in self.inp.fit['goon']:
                             self.fitgrain(i)
                         elif 'final' in self.inp.fit['goon']:
@@ -100,26 +108,50 @@ class fit_minuit():
                         if i == 0:
                             print 'Fit %s tolerance %e' %(self.inp.fit['goon'],self.mg.tol)
                         self.mg.values['i'] = i
+                        try:
+                            self.mg.fitarg['i'] = i
+                            self.mg.fitarg["fix_i"] = True
+                            self.mg = Minuit(fcn.FCNgrain,errordef=1,pedantic=False,print_level=-1,**self.mg.fitarg)
+                        except:
+                            pass
+                        #print self.mg.list_of_vary_param()
+                        #print self.mg.list_of_fixed_param()
                         print '\rRefining grain %i' %(i+1),
                         sys.stdout.flush()
                         self.mg.migrad()
-                        scale_errors(self,i)
+                        try:
+                            scale_errors(self,i)
+                        except:
+                            pass ### NB This should be fixed to give out correct error bars when using iminuit!!!!!
                         #print self.mg.edm, self.mg.ncalls
-                        self.m.errors = self.mg.errors
+                        try:
+                            self.m.errors = self.mg.errors
+                            self.m.values = self.mg.values
+                        except:
+                            for entries in self.mg.fitarg.keys():
+                                if "_i" in entries or entries == "i":
+                                    self.mg.fitarg.__delitem__(entries)
+                            self.m = Minuit(fcn.FCN,errordef=1,pedantic=False,print_level=-1,**self.mg.fitarg)
                         write_output.write_cor(self,i)
                         write_output.write_cov(self,i)
                         write_output.write_errors(self,i)
-                        self.m.values = self.mg.values
                         g[i] = self.mg.fval
-				
+                
             self.time = time.clock()-t1
             print '\nFit %s time %i s' %(self.inp.fit['goon'],self.time)
             self.fval = sum(g)
             print 'Fit %s value %e \n' %(self.inp.fit['goon'],self.fval)
-			    
-			
-            # reject outliers and save cycle info	
-            self.m.errors = self.inp.errors
+                
+            
+            # reject outliers and save cycle info   
+            try:
+                self.m.errors = self.inp.errors 
+            except:
+                for keys in self.inp.fitarg.keys():
+                	if "error_" not in keys:
+                		self.inp.fitarg[keys] = self.m.fitarg[keys]
+            self.inp.values = self.m.values #iminuit does not inherit values from m per default as pyminuit
+                
             reject_outliers(self)
             write_output.write_values(self)
             write_output.write_rej(self.inp,message=self.inp.fit['goon'])
@@ -131,123 +163,194 @@ class fit_minuit():
         elif 'rotpos' in self.inp.fit['goon'] and (self.inp.newreject > 0):
             self.inp.fit['goon'] = 'start'+ self.inp.fit['goon'][6:]
         
-		# move onto next refinement given by the reforder list	
+        # move onto next refinement given by the reforder list  
         self.inp.fit['goon'] = self.inp.fit['reforder'][self.inp.fit['reforder'].index(self.inp.fit['goon'])+1]
-	
+    
         return
         
         
 
-                		
+                        
     def fitstart(self):
-	"""
-	Set tolerance and fixed parameters for preliminary fit of the global parameters
-	"""
+#   """
+#   Set tolerance and fixed parameters for preliminary fit of the global parameters
+#   """
         self.m.tol = self.inp.fit['tol_start']
-        for entries in self.m.fixed:
-            if entries[0]=='w' and self.inp.fit['w'] != 0:
-                self.m.fixed[entries] = False
-            elif entries[0]=='t' and self.inp.fit['tilt'] != 0:
-                self.m.fixed[entries] = False
-            elif 'p' in entries and len(entries) == 2 and self.inp.fit['pixel'] != 0:
-                self.m.fixed[entries] = False
-            elif entries[0]=='cy' and self.inp.fit['center'] != 0:
-                self.m.fixed[entries] = False
-            elif 'L' in entries and self.inp.fit['L'] != 0:
-                self.m.fixed[entries] = False
+        try:
+            for entries in self.m.fixed:
+                if entries[0]=='w' and self.inp.fit['w'] != 0:
+                    self.m.fixed[entries] = False
+                elif entries[0]=='t' and self.inp.fit['tilt'] != 0:
+                    self.m.fixed[entries] = False
+                elif 'p' in entries and len(entries) == 2 and self.inp.fit['pixel'] != 0:
+                    self.m.fixed[entries] = False
+                elif entries[0]=='cy' and self.inp.fit['center'] != 0:
+                    self.m.fixed[entries] = False
+                elif 'L' in entries and self.inp.fit['L'] != 0:
+                    self.m.fixed[entries] = False
+        except:
+            for entries in self.m.fitarg:
+                if "fix" in entries:
+                    if entries[4]=='w' and self.inp.fit['w'] != 0:
+                        self.m.fitarg[entries] = False
+                    elif entries[4]=='t' and self.inp.fit['tilt'] != 0:
+                        self.m.fitarg[entries] = False
+                    elif 'p' in entries and len(entries) == 6 and self.inp.fit['pixel'] != 0:
+                        self.m.fitarg[entries] = False
+                    elif entries[4]=='c' and self.inp.fit['center'] != 0:
+                        self.m.fitarg[entries] = False
+                    elif 'L' in entries and self.inp.fit['L'] != 0:
+                        self.m.fitarg[entries] = False
 
-		
+        
     def fitrodgrain(self,i):
-	"""
-	Set tolerance and fixed parameters for fit of orientations for grain i
-	"""
+#   """
+#   Set tolerance and fixed parameters for fit of orientations for grain i
+#   """
         self.mg.tol = self.inp.fit['tol_rod']
-        for entries in self.mg.fixed:
-            self.mg.fixed[entries] = True
+        try:
+            for entries in self.mg.fixed:
+                self.mg.fixed[entries] = True
+        except:
+            for entries in self.mg.fitarg:
+                if "fix" in entries:
+                    self.mg.fitarg[entries] = True
 
         for angles in self.grains[i]:
             if 'rod' in angles and self.inp.fit['rod'] != 0:
-                self.mg.fixed[angles] = False
-                self.mg.errors[angles] = self.mg.errors[angles] * 10.
+                try:
+                    self.mg.fixed[angles] = False
+                    self.mg.errors[angles] = self.mg.errors[angles] * 10.
+                except:
+                    self.mg.fitarg["fix_%s" %angles] = False
+                    self.mg.fitarg["error_%s" %angles] = self.mg.fitarg["error_%s" %angles] * 10.
 
 
     def fitxyzgrain(self,i):
-	"""
-	Set tolerance and fixed parameters for fit of positions for grain i
-	"""
+#   """
+#   Set tolerance and fixed parameters for fit of positions for grain i
+#   """
         self.mg.tol = self.inp.fit['tol_xyz']
-        for entries in self.mg.fixed:
-            self.mg.fixed[entries] = True
+        try:
+            for entries in self.mg.fixed:
+                self.mg.fixed[entries] = True
+        except:
+            for entries in self.mg.fitarg:
+                if "fix" in entries:
+                    self.mg.fitarg[entries] = True
 
         for pos in self.grains[i]:
             if (pos[0] == 'x' or pos[0] == 'y' or pos[0] == 'z') and self.inp.fit['xyz'] != 0:
-                self.mg.fixed[pos] = False
+                try:
+                    self.mg.fixed[pos] = False
+                except:
+                    self.mg.fitarg["fix_%s" %pos] = False
 
 
     def fitepsgrain(self,i):
-	"""
-	Set tolerance and fixed parameters for fit of strains for grain i
-	"""
+#   """
+#   Set tolerance and fixed parameters for fit of strains for grain i
+#   """
         self.mg.tol = self.inp.fit['tol_eps']
-        for entries in self.mg.fixed:
-            self.mg.fixed[entries] = True
+        try:
+            for entries in self.mg.fixed:
+                self.mg.fixed[entries] = True
+        except:
+            for entries in self.mg.fitarg:
+                if "fix" in entries:
+                    self.mg.fitarg[entries] = True
 
         for strain in self.grains[i]:
             if 'eps' in strain and self.inp.fit['eps'] != 0:
-                self.mg.fixed[strain] = False
+                try:
+                    self.mg.fixed[strain] = False
+                except:
+                    self.mg.fitarg["fix_%s" %strain] = False
 
-				
+                
     def fitgrain(self,i):
-	"""
-	Set tolerance and fixed parameters for fit of orientations, positions and strains for grain i
-	"""
+#   """
+#   Set tolerance and fixed parameters for fit of orientations, positions and strains for grain i
+#   """
         
         if self.inp.fit['goon'] == 'grain':
             self.mg.tol = self.inp.fit['tol_grain']
         else:
             self.mg.tol = self.inp.fit['tol_grain']*0.1
-        for entries in self.mg.fixed:
-            self.mg.fixed[entries] = True
-
+        try:
+            for entries in self.mg.fixed:
+                self.mg.fixed[entries] = True
+        except:
+            for entries in self.mg.fitarg:
+                if "fix" in entries:
+                    self.mg.fitarg[entries] = True
         for entries in self.grains[i]:
-            if entries[0]=='x' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixx'] == 0:
-                self.mg.fixed[entries] = False
-            elif entries[0]=='y' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixy'] == 0:
-                self.mg.fixed[entries] = False
-            elif entries[0]=='z' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixz'] == 0:
-                self.mg.fixed[entries] = False
-            elif 'eps' in entries and self.inp.fit['eps'] != 0:
-                self.mg.fixed[entries] = False
-            elif 'rod' in entries and self.inp.fit['rod'] != 0:
-                self.mg.fixed[entries] = False
+            try:
+                if entries[0]=='x' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixx'] == 0:
+                    self.mg.fixed[entries] = False
+                elif entries[0]=='y' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixy'] == 0:
+                    self.mg.fixed[entries] = False
+                elif entries[0]=='z' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixz'] == 0:
+                    self.mg.fixed[entries] = False
+                elif 'eps' in entries and self.inp.fit['eps'] != 0:
+                    self.mg.fixed[entries] = False
+                elif 'rod' in entries and self.inp.fit['rod'] != 0:
+                    self.mg.fixed[entries] = False
+            except:
+                if entries[0]=='x' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixx'] == 0:
+                    self.mg.fitarg["fix_%s" %entries] = False
+                elif entries[0]=='y' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixy'] == 0:
+                    self.mg.fitarg["fix_%s" %entries] = False
+                elif entries[0]=='z' and self.inp.fit['xyz'] != 0 and self.inp.fit['fixz'] == 0:
+                    self.mg.fitarg["fix_%s" %entries] = False
+                elif 'eps' in entries and self.inp.fit['eps'] != 0:
+                    self.mg.fitarg["fix_%s" %entries] = False
+                elif 'rod' in entries and self.inp.fit['rod'] != 0:
+                    self.mg.fitarg["fix_%s" %entries] = False
                 
                 
     def fitrotposgrain(self,i):
-        """
-        Set tolerance and fixed parameters for fit of orientations and positions for grain i    
-        """
+#       """
+#       Set tolerance and fixed parameters for fit of orientations and positions for grain i    
+#       """
         self.mg.tol = self.inp.fit['tol_rotpos']
-        for entries in self.mg.fixed:
-            self.mg.fixed[entries] = True
+        try:
+            for entries in self.mg.fixed:
+                self.mg.fixed[entries] = True
+        except:
+            for entries in self.mg.fitarg:
+                if "fix" in entries:
+                    self.mg.fitarg[entries] = True
 
         for entries in self.grains[i]:
-            if entries[0]=='x' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrx'] == 0 and self.inp.fit['fixx'] == 0:
-                self.mg.fixed[entries] = False
-            elif entries[0]=='y' and self.inp.fit['xyz'] != 0 and self.inp.fit['constry'] == 0 and self.inp.fit['fixy'] == 0:
-                self.mg.fixed[entries] = False
-            elif entries[0]=='z' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrz'] == 0 and self.inp.fit['fixz'] == 0:
-                self.mg.fixed[entries] = False
-            elif 'rod' in entries and self.inp.fit['rod'] != 0:
-                self.mg.fixed[entries] = False
+            try:
+                if entries[0]=='x' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrx'] == 0 and self.inp.fit['fixx'] == 0:
+                    self.mg.fixed[entries] = False
+                elif entries[0]=='y' and self.inp.fit['xyz'] != 0 and self.inp.fit['constry'] == 0 and self.inp.fit['fixy'] == 0:
+                    self.mg.fixed[entries] = False
+                elif entries[0]=='z' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrz'] == 0 and self.inp.fit['fixz'] == 0:
+                    self.mg.fixed[entries] = False
+                elif 'rod' in entries and self.inp.fit['rod'] != 0:
+                    self.mg.fixed[entries] = False
+            except:
+                if entries[0]=='x' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrx'] == 0 and self.inp.fit['fixx'] == 0:
+                    self.mg.fitarg["fix_%s" %entries] = False
+                elif entries[0]=='y' and self.inp.fit['xyz'] != 0 and self.inp.fit['constry'] == 0 and self.inp.fit['fixy'] == 0:
+                    self.mg.fitarg["fix_%s" %entries] = False
+                elif entries[0]=='z' and self.inp.fit['xyz'] != 0 and self.inp.fit['constrz'] == 0 and self.inp.fit['fixz'] == 0:
+                    self.mg.fitarg["fix_%s" %entries] = False
+                elif 'rod' in entries and self.inp.fit['rod'] != 0:
+                    self.mg.fitarg["fix_%s" %entries] = False
+        
 
             
 def grain_values(lsqr):
-        """
-        Calculate the contributions from each grain
-        For extreme contributions print a warning (*****)
-
-		Jette Oddershede, Risoe DTU, May 15 2008
-        """
+#       """
+#       Calculate the contributions from each grain
+#       For extreme contributions print a warning (*****)
+#
+#       Jette Oddershede, Risoe DTU, May 15 2008
+#       """
         
         # rebuild function and load
         import build_fcn
@@ -255,8 +358,8 @@ def grain_values(lsqr):
         import fcn
         reload(fcn)
         # save values before making a new lsqr of minuit
-#        temp1 = deepcopy(lsqr.m.values)		
-#        temp2 = deepcopy(lsqr.m.errors)		
+#        temp1 = deepcopy(lsqr.m.values)        
+#        temp2 = deepcopy(lsqr.m.errors)        
 #        temp3 = deepcopy(lsqr.m.fixed)
 #        temp4 = deepcopy(lsqr.mg.tol)
         g = n.zeros((lsqr.inp.no_grains))
@@ -266,7 +369,7 @@ def grain_values(lsqr):
         for i in range(lsqr.inp.no_grains):
             if i+1 in lsqr.inp.fit['skip']:
                 pass
-            else:		
+            else:       
                 for j in range(lsqr.inp.nrefl[i]):
                     g[i] = g[i] + fcn.peak(lsqr.m.values['a'],lsqr.m.values['b'],lsqr.m.values['c'],lsqr.m.values['alpha'],lsqr.m.values['beta'],lsqr.m.values['gamma'],
                                      lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
@@ -300,22 +403,22 @@ def grain_values(lsqr):
         for i in range(lsqr.inp.no_grains):
             if i+1 not in lsqr.inp.fit['skip']:                
                 print 'Grain %i %i: %e %f' %(i+1,lsqr.inp.nrefl[i],g[i],g[i]/lsqr.inp.nrefl[i])
-		# give back old values	
-#        lsqr.m.errors = temp2		
-#        lsqr.m.fixed = temp3		
+        # give back old values  
+#        lsqr.m.errors = temp2      
+#        lsqr.m.fixed = temp3       
 #        lsqr.mg.tol = temp4
             
         return g
-			
-			
+            
+            
 def reject_outliers(lsqr):
-        """
-        Reject outliers peaks with a distance to the calculated peak position of
-        more than lsqr.inp.fit['rej_resmean'] times the mean distance for the given grain	
-		
-		Jette Oddershede, Risoe DTU, May 15 2008
-        """
-		
+#       """
+#       Reject outliers peaks with a distance to the calculated peak position of
+#       more than lsqr.inp.fit['rej_resmean'] times the mean distance for the given grain   
+#       
+#       Jette Oddershede, Risoe DTU, May 15 2008
+#       """
+        
         g = grain_values(lsqr)
         lsqr.inp.newreject = 0
         lsqr.inp.fit['newreject_grain'] = []
@@ -327,7 +430,7 @@ def reject_outliers(lsqr):
                 #value.append([])
                 if i+1 in lsqr.inp.fit['skip']:
                     pass
-                else:		
+                else:       
                     for j in range(lsqr.inp.nrefl[i]-1,-1,-1): # loop backwards to make pop work
                         value = fcn.peak(lsqr.m.values['a'],lsqr.m.values['b'],lsqr.m.values['c'],lsqr.m.values['alpha'],lsqr.m.values['beta'],lsqr.m.values['gamma'],
                                         lsqr.inp.h[i][j],lsqr.inp.k[i][j],lsqr.inp.l[i][j],
@@ -382,29 +485,41 @@ def reject_outliers(lsqr):
         
         
 def scale_errors(lsqr,i=None):
-        """
-        Philosophy: Use const and near_const to tune final fval to approximately
-                    3*sum(nrefl)-parameters, because:
-                    1) Same const for a series facilitates evaluation of fit quality
-                    2) fval is seen to decrease as the refinement proceeds
-                    3) The tolerances depend on the scaling
-        Scale the errors so that fval=3*sum(nrefl)-parameters
-        This scale factor cannot be determined experimentally since it is detector
-        specific and depends on for lsqr the gain.        
-        """
+#       """
+#       Philosophy: Use const and near_const to tune final fval to approximately
+#                   3*sum(nrefl)-parameters, because:
+#                   1) Same const for a series facilitates evaluation of fit quality
+#                   2) fval is seen to decrease as the refinement proceeds
+#                   3) The tolerances depend on the scaling
+#       Scale the errors so that fval=3*sum(nrefl)-parameters
+#       This scale factor cannot be determined experimentally since it is detector
+#       specific and depends on for lsqr the gain.        
+#       """
         
         # remember only to apply correction to parameters refined in this particular cycle!!!!!!
 
         # parameters
         parameters = 0
         if i==None:
-            for entries in lsqr.m.fixed:
-                if lsqr.m.fixed[entries] == False:
-                    parameters = parameters + 1
+            try:
+                for entries in lsqr.m.fixed:
+                    if lsqr.m.fixed[entries] == False:
+                        parameters = parameters + 1
+            except:
+                for entries in lsqr.m.fitarg:
+                    if "fix" in entries:
+                        if lsqr.m.fitarg[entries] == False:
+                            parameters = parameters + 1
         else:
-            for entries in lsqr.mg.fixed:
-                if lsqr.mg.fixed[entries] == False:
-                    parameters = parameters + 1
+            try:
+                for entries in lsqr.mg.fixed:
+                    if lsqr.mg.fixed[entries] == False:
+                        parameters = parameters + 1
+            except:
+                for entries in lsqr.mg.fitarg:
+                    if "fix" in entries:
+                        if lsqr.mg.fitarg[entries] == False:
+                            parameters = parameters + 1
 
         #observations
         if i==None:
@@ -455,4 +570,4 @@ def refine(inp,killfile=None):
         check_input.copy_globals(inp)
    
 
-					
+                    

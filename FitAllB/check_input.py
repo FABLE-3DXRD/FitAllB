@@ -871,6 +871,7 @@ class parse_input:
 
 
     def set_start(self): # build fcn, initiate minuit and set starting values and errors
+        self.fitarg = {}
         self.values = {}
         # grain values
         if self.files['res_file'] != None:
@@ -887,12 +888,24 @@ class parse_input:
             self.values['epsaa%s' %i] = 0.0 
             self.values['epsab%s' %i] = 0.0  
             self.values['epsac%s' %i] = 0.0
-            self.values['epsbb%s' %i] = 0.0 
+            self.values['epsbb%s' %i] = 0.0  
             self.values['epsbc%s' %i] = 0.0 
             self.values['epscc%s' %i] = 0.0
             self.values['rodx%s' %i] = 0.0
             self.values['rody%s' %i] = 0.0
             self.values['rodz%s' %i] = 0.0
+            self.fitarg['x%s' %i] = 0.0
+            self.fitarg['y%s' %i] = 0.0
+            self.fitarg['z%s' %i] = 0.0
+            self.fitarg['epsaa%s' %i] = 0.0 
+            self.fitarg['epsab%s' %i] = 0.0  
+            self.fitarg['epsac%s' %i] = 0.0
+            self.fitarg['epsbb%s' %i] = 0.0  
+            self.fitarg['epsbc%s' %i] = 0.0 
+            self.fitarg['epscc%s' %i] = 0.0
+            self.fitarg['rodx%s' %i] = 0.0
+            self.fitarg['rody%s' %i] = 0.0
+            self.fitarg['rodz%s' %i] = 0.0
         # grain values for resuming refinement
         if self.files['res_file'] != None:
             for i in range(self.no_grains):
@@ -906,6 +919,15 @@ class parse_input:
                     self.values['epsbb%s' %i] = self.eps22[self.grainno.index(i+1)]
                     self.values['epsbc%s' %i] = self.eps23[self.grainno.index(i+1)]
                     self.values['epscc%s' %i] = self.eps33[self.grainno.index(i+1)]
+                    self.fitarg['x%s' %i] = 1000.*self.x[self.grainno.index(i+1)]
+                    self.fitarg['y%s' %i] = 1000.*self.y[self.grainno.index(i+1)]
+                    self.fitarg['z%s' %i] = 1000.*self.z[self.grainno.index(i+1)]
+                    self.fitarg['epsaa%s' %i] = self.eps11[self.grainno.index(i+1)] 
+                    self.fitarg['epsab%s' %i] = self.eps12[self.grainno.index(i+1)] 
+                    self.fitarg['epsac%s' %i] = self.eps13[self.grainno.index(i+1)]
+                    self.fitarg['epsbb%s' %i] = self.eps22[self.grainno.index(i+1)]
+                    self.fitarg['epsbc%s' %i] = self.eps23[self.grainno.index(i+1)]
+                    self.fitarg['epscc%s' %i] = self.eps33[self.grainno.index(i+1)]
                     self.rod[i][0] = self.rodx[self.grainno.index(i+1)]
                     self.rod[i][1] = self.rody[self.grainno.index(i+1)]
                     self.rod[i][2] = self.rodz[self.grainno.index(i+1)]
@@ -918,6 +940,9 @@ class parse_input:
                 self.values['x%s' %i] = 1000.*self.x[i]
                 self.values['y%s' %i] = 1000.*self.y[i]
                 self.values['z%s' %i] = 1000.*self.z[i]
+                self.fitarg['x%s' %i] = 1000.*self.x[i]
+                self.fitarg['y%s' %i] = 1000.*self.y[i]
+                self.fitarg['z%s' %i] = 1000.*self.z[i]
         
         for i in range(len(self.fit['skip'])-1,-1,-1):
             if self.fit['skip'][i] > self.no_grains:
@@ -954,6 +979,15 @@ class parse_input:
             self.errors['epsbb%s' %i] = 0.001
             self.errors['epsbc%s' %i] = 0.001
             self.errors['epscc%s' %i] = 0.001
+            self.fitarg['error_x%s' %i] = self.param['y_size']/5.
+            self.fitarg['error_y%s' %i] = self.param['y_size']/5.
+            self.fitarg['error_z%s' %i] = self.param['z_size']/20.
+            self.fitarg['error_epsaa%s' %i] = 0.001 
+            self.fitarg['error_epsab%s' %i] = 0.001
+            self.fitarg['error_epsac%s' %i] = 0.001
+            self.fitarg['error_epsbb%s' %i] = 0.001
+            self.fitarg['error_epsbc%s' %i] = 0.001
+            self.fitarg['error_epscc%s' %i] = 0.001
             lenrod = n.linalg.norm(self.rod[i])
             ia = 0.1*n.pi/180.
             errorscale = ia*(1+lenrod*lenrod)/(lenrod*(1-0.25*ia*ia*lenrod*lenrod))
@@ -962,6 +996,9 @@ class parse_input:
             self.errors['rodx%s' %i] = errorscale*abs(self.rod[i][0])
             self.errors['rody%s' %i] = errorscale*abs(self.rod[i][1])
             self.errors['rodz%s' %i] = errorscale*abs(self.rod[i][2])
+            self.fitarg['error_rodx%s' %i] = errorscale*abs(self.rod[i][0])
+            self.fitarg['error_rody%s' %i] = errorscale*abs(self.rod[i][1])
+            self.fitarg['error_rodz%s' %i] = errorscale*abs(self.rod[i][2])
     
 
         self.fit['newreject_grain'] = []
@@ -1038,6 +1075,25 @@ def set_globals(inp):
         inp.values['cy'] = deepcopy(inp.param['y_center'])
         inp.values['cz'] = deepcopy(inp.param['z_center'])
         inp.values['L']  = deepcopy(inp.param['distance'])
+        try:
+            inp.fitarg['a'] = deepcopy(inp.param['cell__a'])
+            inp.fitarg['b'] = deepcopy(inp.param['cell__b'])
+            inp.fitarg['c'] = deepcopy(inp.param['cell__c'])
+            inp.fitarg['alpha'] = deepcopy(inp.param['cell_alpha'])
+            inp.fitarg['beta'] = deepcopy(inp.param['cell_beta'])
+            inp.fitarg['gamma'] = deepcopy(inp.param['cell_gamma'])
+            inp.fitarg['wx'] = deepcopy(inp.param['chi'])
+            inp.fitarg['wy'] = deepcopy(inp.param['wedge'])
+            inp.fitarg['tx'] = deepcopy(inp.param['tilt_x'])
+            inp.fitarg['ty'] = deepcopy(inp.param['tilt_y'])
+            inp.fitarg['tz'] = deepcopy(inp.param['tilt_z'])
+            inp.fitarg['py'] = deepcopy(inp.param['y_size'])
+            inp.fitarg['pz'] = deepcopy(inp.param['z_size'])
+            inp.fitarg['cy'] = deepcopy(inp.param['y_center'])
+            inp.fitarg['cz'] = deepcopy(inp.param['z_center'])
+            inp.fitarg['L']  = deepcopy(inp.param['distance'])
+        except:
+            pass
         # global errors
         inp.errors['a'] = deepcopy(inp.param['a_error'])
         inp.errors['b'] = deepcopy(inp.param['b_error'])
@@ -1057,6 +1113,25 @@ def set_globals(inp):
         inp.errors['L']  = deepcopy(inp.param['distance_error'])
         inp.errors['i']  = deepcopy(inp.param['i_error'])
         inp.errors['j']  = deepcopy(inp.param['j_error'])
+        try:
+            inp.fitarg['error_a'] = deepcopy(inp.param['a_error'])
+            inp.fitarg['error_b'] = deepcopy(inp.param['b_error'])
+            inp.fitarg['error_c'] = deepcopy(inp.param['c_error'])
+            inp.fitarg['error_alpha'] = deepcopy(inp.param['alpha_error'])
+            inp.fitarg['error_beta'] = deepcopy(inp.param['beta_error'])
+            inp.fitarg['error_gamma'] = deepcopy(inp.param['gamma_error'])
+            inp.fitarg['error_wx'] = deepcopy(inp.param['chi_error'])
+            inp.fitarg['error_wy'] = deepcopy(inp.param['wedge_error'])
+            inp.fitarg['error_tx'] = deepcopy(inp.param['tilt_x_error'])
+            inp.fitarg['error_ty'] = deepcopy(inp.param['tilt_y_error'])
+            inp.fitarg['error_tz'] = deepcopy(inp.param['tilt_z_error'])
+            inp.fitarg['error_py'] = deepcopy(inp.param['y_size_error'])
+            inp.fitarg['error_pz'] = deepcopy(inp.param['z_size_error'])
+            inp.fitarg['error_cy'] = deepcopy(inp.param['y_center_error'])
+            inp.fitarg['error_cz'] = deepcopy(inp.param['z_center_error'])
+            inp.fitarg['error_L']  = deepcopy(inp.param['distance_error'])
+        except:
+            pass
     
     
 def copy_globals(inp):
@@ -1094,9 +1169,12 @@ def copy_globals(inp):
         inp.param['z_size_error'] = deepcopy(inp.errors['pz']) 
         inp.param['y_center_error'] = deepcopy(inp.errors['cy']) 
         inp.param['z_center_error'] = deepcopy(inp.errors['cz']) 
-        inp.param['distance_error'] = deepcopy(inp.errors['L'])  
-        inp.param['i_error'] = deepcopy(inp.errors['i'])  
-        inp.param['j_error'] = deepcopy(inp.errors['j'])  
+        inp.param['distance_error'] = deepcopy(inp.errors['L']) 
+        try: 
+            inp.param['i_error'] = deepcopy(inp.errors['i'])  
+            inp.param['j_error'] = deepcopy(inp.errors['j'])  
+        except:
+            pass
                    
         
         
