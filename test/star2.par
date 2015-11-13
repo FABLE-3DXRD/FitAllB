@@ -27,3 +27,5 @@ y_center 898.848539555
 y_size 1.5
 z_center 1074.42647163
 z_size 1.5
+sgname_phase_0  "Fd-3m"
+cell_choice_phase_0 "standard"
