@@ -97,6 +97,7 @@ class fit_minuit():
             print 'newreject_grain', self.inp.fit['newreject_grain']
             # calculate starting values
             g = fit.grain_values(self)
+            self.g_old = deepcopy(g)
             self.fval = sum(g)
             print '\n%s starting value %e' %(self.inp.fit['goon'],self.fval)
             t1 = time.clock()
@@ -108,7 +109,15 @@ class fit_minuit():
                 for entries in self.m.fitarg:
                     if "error_" in entries:
                         self.m.fitarg[entries] = self.inp.fitarg[entries]
-                self.m = Minuit(fcn.FCN_fitga,errordef=1,pedantic=False,print_level=-1,**self.m.fitarg)
+                observations = 0
+                for j in range(self.inp.no_grains):
+                    if j+1 in self.inp.fit['skip']:
+                        pass
+                    else:
+                        observations = observations + self.inp.nrefl[j]
+                errordef1 = self.fval/(3*observations-self.m.fitarg.values().count(False))
+                self.m = Minuit(fcn.FCN_fitga,errordef=errordef1,pedantic=False,print_level=-1,**self.m.fitarg)
+                self.m.tol = self.m.tol/errordef1
             self.m.migrad()
             try:
                 fit.scale_errors(self)

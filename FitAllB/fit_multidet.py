@@ -18,21 +18,21 @@ logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 class fit_minuit():
     def __init__(self,inp):
         self.inp = inp
-			
-    def refine(self):	
-	"""
-	Carry out one refinement cycle according to the order given by self.inp.fit['reforder']
-	Reject reflections according to self.inp.fit['rej_resmean']
-	Print and save refinement and rejection info and parameters
-	
-	Jette Oddershede, Risoe DTU, May 15 2008
-	"""
-		
+            
+    def refine(self):   
+#    """
+#    Carry out one refinement cycle according to the order given by self.inp.fit['reforder']
+#    Reject reflections according to self.inp.fit['rej_resmean']
+#    Print and save refinement and rejection info and parameters
+#    
+#    Jette Oddershede, Risoe DTU, May 15 2008
+#    """
+        
         # initialise
         self.poor_value = []
         self.poor_nrefl = []
 
- 		# create lists of parameters, global and for each grain
+        # create lists of parameters, global and for each grain
         self.globals = ["a","b","c","alpha","beta","gamma","wx","wy"]
         for i in range(self.inp.fit['no_det']):
             self.globals.append("tx%s" %i)
@@ -59,21 +59,21 @@ class fit_minuit():
         except:
             pass
 
-		# determine whether to refine
+        # determine whether to refine
         self.ref = False
         if 'grain' in self.inp.fit['goon'] or 'final' in self.inp.fit['goon'] or 'rotpos' in self.inp.fit['goon']:
             self.ref = True
         elif 'start' in self.inp.fit['goon']:
             self.ref = False
         elif 'rod' in self.inp.fit['goon'] and self.inp.fit['rod'] != 0:
-            self.ref = True		
+            self.ref = True     
         elif 'eps' in self.inp.fit['goon'] and self.inp.fit['eps'] != 0:
-            self.ref = True		
+            self.ref = True     
         elif 'xyz' in self.inp.fit['goon'] and self.inp.fit['xyz'] != 0:
-            self.ref = True		
-		
+            self.ref = True     
+        
     
-		# carry out refinement
+        # carry out refinement
         if self.ref == True:
             self.mg = Minuit(fcn.FCNgrain)
             self.mg.values = self.m.values
@@ -97,7 +97,7 @@ class fit_minuit():
                         pass
                     elif 'rotpos' in self.inp.fit['goon'] and i+1 not in self.inp.fit['newreject_grain'] and abs(self.mg.errors['x%i' %i] - self.inp.param['y_size']/5.) > 1e-3:
                         pass
-                    else:	
+                    else:   
                         if 'grain' in self.inp.fit['goon']:
                             self.fitgrain(i)
                         elif 'final' in self.inp.fit['goon']:
@@ -124,14 +124,14 @@ class fit_minuit():
                         write_output_multidet.write_errors(self,i)
                         self.m.values = self.mg.values
                         g[i] = self.mg.fval
-				
+                
             self.time = time.clock()-t1
             print '\nFit %s time %i s' %(self.inp.fit['goon'],self.time)
             self.fval = sum(g)
             print 'Fit %s value %e \n' %(self.inp.fit['goon'],self.fval)
-			    
-			
-            # reject outliers and save cycle info	
+                
+            
+            # reject outliers and save cycle info   
             self.m.fixed = self.mg.fixed
             self.m.errors = self.inp.errors
             reject_outliers(self)
@@ -145,18 +145,18 @@ class fit_minuit():
         elif 'rotpos' in self.inp.fit['goon'] and (self.inp.newreject > 0):
             self.inp.fit['goon'] = 'start'+ self.inp.fit['goon'][6:]
         
-		# move onto next refinement given by the reforder list	
+        # move onto next refinement given by the reforder list  
         self.inp.fit['goon'] = self.inp.fit['reforder'][self.inp.fit['reforder'].index(self.inp.fit['goon'])+1]
-	
+    
         return
         
         
 
-                		
+                        
     def fitstart(self):
-	"""
-	Set tolerance and fixed parameters for preliminary fit of the global parameters
-	"""
+#    """
+#    Set tolerance and fixed parameters for preliminary fit of the global parameters
+#    """
         self.m.tol = self.inp.fit['tol_start']
         for entries in self.m.fixed:
             if entries[0]=='w' and self.inp.fit['w'] != 0:
@@ -170,11 +170,11 @@ class fit_minuit():
             elif 'L' in entries and self.inp.fit['L'] != 0:
                 self.m.fixed[entries] = False
 
-		
+        
     def fitrodgrain(self,i):
-	"""
-	Set tolerance and fixed parameters for fit of orientations for grain i
-	"""
+#    """
+#    Set tolerance and fixed parameters for fit of orientations for grain i
+#    """
         self.mg.tol = self.inp.fit['tol_rod']
         for entries in self.mg.fixed:
             self.mg.fixed[entries] = True
@@ -186,9 +186,9 @@ class fit_minuit():
 
 
     def fitxyzgrain(self,i):
-	"""
-	Set tolerance and fixed parameters for fit of positions for grain i
-	"""
+#    """
+#    Set tolerance and fixed parameters for fit of positions for grain i
+#    """
         self.mg.tol = self.inp.fit['tol_xyz']
         for entries in self.mg.fixed:
             self.mg.fixed[entries] = True
@@ -199,9 +199,9 @@ class fit_minuit():
 
 
     def fitepsgrain(self,i):
-	"""
-	Set tolerance and fixed parameters for fit of strains for grain i
-	"""
+#    """
+#    Set tolerance and fixed parameters for fit of strains for grain i
+#    """
         self.mg.tol = self.inp.fit['tol_eps']
         for entries in self.mg.fixed:
             self.mg.fixed[entries] = True
@@ -210,11 +210,11 @@ class fit_minuit():
             if 'eps' in strain and self.inp.fit['eps'] != 0:
                 self.mg.fixed[strain] = False
 
-				
+                
     def fitgrain(self,i):
-	"""
-	Set tolerance and fixed parameters for fit of orientations, positions and strains for grain i
-	"""
+#    """
+#    Set tolerance and fixed parameters for fit of orientations, positions and strains for grain i
+#    """
         
         if self.inp.fit['goon'] == 'grain':
             self.mg.tol = self.inp.fit['tol_grain']
@@ -237,9 +237,9 @@ class fit_minuit():
                 
                 
     def fitrotposgrain(self,i):
-        """
-        Set tolerance and fixed parameters for fit of orientations and positions for grain i    
-        """
+#        """
+#        Set tolerance and fixed parameters for fit of orientations and positions for grain i    
+#        """
         self.mg.tol = self.inp.fit['tol_rotpos']
         for entries in self.mg.fixed:
             self.mg.fixed[entries] = True
@@ -258,12 +258,12 @@ class fit_minuit():
 
             
 def grain_values(lsqr):
-        """
-        Calculate the contributions from each grain
-        For extreme contributions print a warning (*****)
-
-		Jette Oddershede, Risoe DTU, May 15 2008
-        """
+#        """
+#        Calculate the contributions from each grain
+#        For extreme contributions print a warning (*****)
+#
+#        Jette Oddershede, Risoe DTU, May 15 2008
+#        """
         
         # rebuild function and load
         import build_fcn_multidet
@@ -271,8 +271,8 @@ def grain_values(lsqr):
         import fcn
         reload(fcn)
         # save values before making a new lsqr of minuit
-#        temp1 = deepcopy(lsqr.m.values)		
-#        temp2 = deepcopy(lsqr.m.errors)		
+#        temp1 = deepcopy(lsqr.m.values)        
+#        temp2 = deepcopy(lsqr.m.errors)        
 #        temp3 = deepcopy(lsqr.m.fixed)
 #        temp4 = deepcopy(lsqr.mg.tol)
         g = n.zeros((lsqr.inp.no_grains))
@@ -282,7 +282,7 @@ def grain_values(lsqr):
         for i in range(lsqr.inp.no_grains):
             if i+1 in lsqr.inp.fit['skip']:
                 pass
-            else:		
+            else:       
                 for k in range(lsqr.inp.fit['no_det']):                
                     for j in range(lsqr.inp.nrefl[k][i]):
                         peak = fcn.peak(lsqr.m.values['a'],lsqr.m.values['b'],lsqr.m.values['c'],lsqr.m.values['alpha'],lsqr.m.values['beta'],lsqr.m.values['gamma'],
@@ -324,22 +324,22 @@ def grain_values(lsqr):
             if i+1 not in lsqr.inp.fit['skip']:                
 #                print 'Grain %i %i: %e %f' %(i+1,lsqr.inp.nrefl[i],g[i],g[i]/lsqr.inp.nrefl[i])
                 print 'Grain %i %i: %e %f' %(i+1,no_ref[i],g[i],g[i]/no_ref[i])
-		# give back old values	
-#        lsqr.m.errors = temp2		
-#        lsqr.m.fixed = temp3		
+        # give back old values  
+#        lsqr.m.errors = temp2      
+#        lsqr.m.fixed = temp3       
 #        lsqr.mg.tol = temp4
             
         return g
-			
-			
+            
+            
 def reject_outliers(lsqr):
-        """
-        Reject outliers peaks with a distance to the calculated peak position of
-        more than lsqr.inp.fit['rej_resmean'] times the mean distance for the given grain	
-		
-		Jette Oddershede, Risoe DTU, May 15 2008
-        """
-		
+#        """
+#        Reject outliers peaks with a distance to the calculated peak position of
+#        more than lsqr.inp.fit['rej_resmean'] times the mean distance for the given grain   
+#        
+#        Jette Oddershede, Risoe DTU, May 15 2008
+#        """
+        
         g = grain_values(lsqr)
         lsqr.inp.newreject = 0
         lsqr.inp.fit['newreject_grain'] = []
@@ -355,7 +355,7 @@ def reject_outliers(lsqr):
                     no_ref[i] = no_ref[i] + lsqr.inp.nrefl[k][i]
                 if i+1 in lsqr.inp.fit['skip']:
                     pass
-                else:		
+                else:       
                     for k in range(lsqr.inp.fit['no_det']):                
                         for j in range(lsqr.inp.nrefl[k][i]-1,-1,-1): # loop backwards to make pop work
                             value = fcn.peak(lsqr.m.values['a'],lsqr.m.values['b'],lsqr.m.values['c'],lsqr.m.values['alpha'],lsqr.m.values['beta'],lsqr.m.values['gamma'],
@@ -414,16 +414,16 @@ def reject_outliers(lsqr):
         
         
 def scale_errors(lsqr,i=None):
-        """
-        Philosophy: Use const and near_const to tune final fval to approximately
-                    3*sum(nrefl)-parameters, because:
-                    1) Same const for a series facilitates evaluation of fit quality
-                    2) fval is seen to decrease as the refinement proceeds
-                    3) The tolerances depend on the scaling
-        Scale the errors so that fval=3*sum(nrefl)-parameters
-        This scale factor cannot be determined experimentally since it is detector
-        specific and depends on for lsqr the gain.        
-        """
+#        """
+#        Philosophy: Use const and near_const to tune final fval to approximately
+#                    3*sum(nrefl)-parameters, because:
+#                    1) Same const for a series facilitates evaluation of fit quality
+#                    2) fval is seen to decrease as the refinement proceeds
+#                    3) The tolerances depend on the scaling
+#        Scale the errors so that fval=3*sum(nrefl)-parameters
+#        This scale factor cannot be determined experimentally since it is detector
+#        specific and depends on for lsqr the gain.        
+#        """
         
         # remember only to apply correction to parameters refined in this particular cycle!!!!!!
 
@@ -480,7 +480,7 @@ def refine(inp,killfile=None):
         # build functions to minimise
         from FitAllB import build_fcn_multidet
         build_fcn_multidet.FCN(inp)
-        import fcn
+        #import fcn
         reload(fcn)
         # minuit fitting
         from FitAllB import fit_multidet
@@ -489,4 +489,4 @@ def refine(inp,killfile=None):
         check_input_multidet.copy_globals(inp)
    
 
-					
+                    

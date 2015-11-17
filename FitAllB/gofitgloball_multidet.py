@@ -196,6 +196,10 @@ def run(options):
                     far.residual[i].append(1)
                     far.volume[i].append(1)
                     far.mean_ia[i].append(1)
+        from FitAllB import build_fcn_multidet
+        build_fcn_multidet.FCN(far)
+        import fcn
+        reload(fcn)
         fit_multidet.refine(far)
         # refine globals
         far.fit['reforder'] = ['globals%s' %k,'end'] 

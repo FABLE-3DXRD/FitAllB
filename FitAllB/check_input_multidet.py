@@ -1222,44 +1222,46 @@ def set_globals(inp):
             inp.fitarg['error_L0']  = deepcopy(inp.param['distance_error'])
         except:
             pass
-        inp.errors['tx1'] = deepcopy(inp.param['tilt_x1_error'])
-        inp.errors['ty1'] = deepcopy(inp.param['tilt_y1_error'])
-        inp.errors['tz1'] = deepcopy(inp.param['tilt_z1_error'])
-        inp.errors['py1'] = deepcopy(inp.param['y_size1_error'])
-        inp.errors['pz1'] = deepcopy(inp.param['z_size1_error'])
-        inp.errors['cy1'] = deepcopy(inp.param['y_center1_error'])
-        inp.errors['cz1'] = deepcopy(inp.param['z_center1_error'])
-        inp.errors['L1']  = deepcopy(inp.param['distance1_error'])
-        try:
-            inp.fitarg['error_tx1'] = deepcopy(inp.param['tilt_x1_error'])
-            inp.fitarg['error_ty1'] = deepcopy(inp.param['tilt_y1_error'])
-            inp.fitarg['error_tz1'] = deepcopy(inp.param['tilt_z1_error'])
-            inp.fitarg['error_py1'] = deepcopy(inp.param['y_size1_error'])
-            inp.fitarg['error_pz1'] = deepcopy(inp.param['z_size1_error'])
-            inp.fitarg['error_cy1'] = deepcopy(inp.param['y_center1_error'])
-            inp.fitarg['error_cz1'] = deepcopy(inp.param['z_center1_error'])
-            inp.fitarg['error_L1']  = deepcopy(inp.param['distance1_error'])
-        except:
-            pass
-        inp.errors['tx2'] = deepcopy(inp.param['tilt_x2_error'])
-        inp.errors['ty2'] = deepcopy(inp.param['tilt_y2_error'])
-        inp.errors['tz2'] = deepcopy(inp.param['tilt_z2_error'])
-        inp.errors['py2'] = deepcopy(inp.param['y_size2_error'])
-        inp.errors['pz2'] = deepcopy(inp.param['z_size2_error'])
-        inp.errors['cy2'] = deepcopy(inp.param['y_center2_error'])
-        inp.errors['cz2'] = deepcopy(inp.param['z_center2_error'])
-        inp.errors['L2']  = deepcopy(inp.param['distance2_error'])
-        try:
-            inp.fitarg['error_tx2'] = deepcopy(inp.param['tilt_x2_error'])
-            inp.fitarg['error_ty2'] = deepcopy(inp.param['tilt_y2_error'])
-            inp.fitarg['error_tz2'] = deepcopy(inp.param['tilt_z2_error'])
-            inp.fitarg['error_py2'] = deepcopy(inp.param['y_size2_error'])
-            inp.fitarg['error_pz2'] = deepcopy(inp.param['z_size2_error'])
-            inp.fitarg['error_cy2'] = deepcopy(inp.param['y_center2_error'])
-            inp.fitarg['error_cz2'] = deepcopy(inp.param['z_center2_error'])
-            inp.fitarg['error_L2']  = deepcopy(inp.param['distance2_error'])
-        except:
-            pass
+        if inp.fit['no_det'] > 1:
+            inp.errors['tx1'] = deepcopy(inp.param['tilt_x1_error'])
+            inp.errors['ty1'] = deepcopy(inp.param['tilt_y1_error'])
+            inp.errors['tz1'] = deepcopy(inp.param['tilt_z1_error'])
+            inp.errors['py1'] = deepcopy(inp.param['y_size1_error'])
+            inp.errors['pz1'] = deepcopy(inp.param['z_size1_error'])
+            inp.errors['cy1'] = deepcopy(inp.param['y_center1_error'])
+            inp.errors['cz1'] = deepcopy(inp.param['z_center1_error'])
+            inp.errors['L1']  = deepcopy(inp.param['distance1_error'])
+            try:
+                inp.fitarg['error_tx1'] = deepcopy(inp.param['tilt_x1_error'])
+                inp.fitarg['error_ty1'] = deepcopy(inp.param['tilt_y1_error'])
+                inp.fitarg['error_tz1'] = deepcopy(inp.param['tilt_z1_error'])
+                inp.fitarg['error_py1'] = deepcopy(inp.param['y_size1_error'])
+                inp.fitarg['error_pz1'] = deepcopy(inp.param['z_size1_error'])
+                inp.fitarg['error_cy1'] = deepcopy(inp.param['y_center1_error'])
+                inp.fitarg['error_cz1'] = deepcopy(inp.param['z_center1_error'])
+                inp.fitarg['error_L1']  = deepcopy(inp.param['distance1_error'])
+            except:
+                pass
+        if inp.fit['no_det'] > 2:
+            inp.errors['tx2'] = deepcopy(inp.param['tilt_x2_error'])
+            inp.errors['ty2'] = deepcopy(inp.param['tilt_y2_error'])
+            inp.errors['tz2'] = deepcopy(inp.param['tilt_z2_error'])
+            inp.errors['py2'] = deepcopy(inp.param['y_size2_error'])
+            inp.errors['pz2'] = deepcopy(inp.param['z_size2_error'])
+            inp.errors['cy2'] = deepcopy(inp.param['y_center2_error'])
+            inp.errors['cz2'] = deepcopy(inp.param['z_center2_error'])
+            inp.errors['L2']  = deepcopy(inp.param['distance2_error'])
+            try:
+                inp.fitarg['error_tx2'] = deepcopy(inp.param['tilt_x2_error'])
+                inp.fitarg['error_ty2'] = deepcopy(inp.param['tilt_y2_error'])
+                inp.fitarg['error_tz2'] = deepcopy(inp.param['tilt_z2_error'])
+                inp.fitarg['error_py2'] = deepcopy(inp.param['y_size2_error'])
+                inp.fitarg['error_pz2'] = deepcopy(inp.param['z_size2_error'])
+                inp.fitarg['error_cy2'] = deepcopy(inp.param['y_center2_error'])
+                inp.fitarg['error_cz2'] = deepcopy(inp.param['z_center2_error'])
+                inp.fitarg['error_L2']  = deepcopy(inp.param['distance2_error'])
+            except:
+                pass
     
     
 def copy_globals(inp):
@@ -1282,28 +1284,30 @@ def copy_globals(inp):
         inp.param['y_center'] = deepcopy(inp.values['cy0']) 
         inp.param['z_center'] = deepcopy(inp.values['cz0']) 
         inp.param['distance'] = deepcopy(inp.values['L0'])
-        try:
-            inp.param['tilt_x1'] = deepcopy(inp.values['tx1']) 
-            inp.param['tilt_y1'] = deepcopy(inp.values['ty1']) 
-            inp.param['tilt_z1'] = deepcopy(inp.values['tz1']) 
-            inp.param['y_size1'] = deepcopy(inp.values['py1']) 
-            inp.param['z_size1'] = deepcopy(inp.values['pz1']) 
-            inp.param['y_center1'] = deepcopy(inp.values['cy1']) 
-            inp.param['z_center1'] = deepcopy(inp.values['cz1']) 
-            inp.param['distance1'] = deepcopy(inp.values['L1']) 
-        except:
-            pass
-        try:
-            inp.param['tilt_x2'] = deepcopy(inp.values['tx2']) 
-            inp.param['tilt_y2'] = deepcopy(inp.values['ty2']) 
-            inp.param['tilt_z2'] = deepcopy(inp.values['tz2']) 
-            inp.param['y_size2'] = deepcopy(inp.values['py2']) 
-            inp.param['z_size2'] = deepcopy(inp.values['pz2']) 
-            inp.param['y_center2'] = deepcopy(inp.values['cy2']) 
-            inp.param['z_center2'] = deepcopy(inp.values['cz2']) 
-            inp.param['distance2'] = deepcopy(inp.values['L2'])
-        except:
-            pass
+        if inp.fit['no_det'] > 1:
+            try:
+                inp.param['tilt_x1'] = deepcopy(inp.values['tx1']) 
+                inp.param['tilt_y1'] = deepcopy(inp.values['ty1']) 
+                inp.param['tilt_z1'] = deepcopy(inp.values['tz1']) 
+                inp.param['y_size1'] = deepcopy(inp.values['py1']) 
+                inp.param['z_size1'] = deepcopy(inp.values['pz1']) 
+                inp.param['y_center1'] = deepcopy(inp.values['cy1']) 
+                inp.param['z_center1'] = deepcopy(inp.values['cz1']) 
+                inp.param['distance1'] = deepcopy(inp.values['L1']) 
+            except:
+                pass
+        if inp.fit['no_det'] > 2:
+            try:
+                inp.param['tilt_x2'] = deepcopy(inp.values['tx2']) 
+                inp.param['tilt_y2'] = deepcopy(inp.values['ty2']) 
+                inp.param['tilt_z2'] = deepcopy(inp.values['tz2']) 
+                inp.param['y_size2'] = deepcopy(inp.values['py2']) 
+                inp.param['z_size2'] = deepcopy(inp.values['pz2']) 
+                inp.param['y_center2'] = deepcopy(inp.values['cy2']) 
+                inp.param['z_center2'] = deepcopy(inp.values['cz2']) 
+                inp.param['distance2'] = deepcopy(inp.values['L2'])
+            except:
+                pass
         # global errors, sample specific
         inp.param['a_error'] = deepcopy(inp.errors['a']) 
         inp.param['b_error'] = deepcopy(inp.errors['b']) 
@@ -1324,22 +1328,24 @@ def copy_globals(inp):
         inp.param['y_center_error'] = deepcopy(inp.errors['cy0']) 
         inp.param['z_center_error'] = deepcopy(inp.errors['cz0']) 
         inp.param['distance_error'] = deepcopy(inp.errors['L0'])  
-        inp.param['tilt_x1_error'] = deepcopy(inp.errors['tx1']) 
-        inp.param['tilt_y1_error'] = deepcopy(inp.errors['ty1']) 
-        inp.param['tilt_z1_error'] = deepcopy(inp.errors['tz1']) 
-        inp.param['y_size1_error'] = deepcopy(inp.errors['py1']) 
-        inp.param['z_size1_error'] = deepcopy(inp.errors['pz1']) 
-        inp.param['y_center1_error'] = deepcopy(inp.errors['cy1']) 
-        inp.param['z_center1_error'] = deepcopy(inp.errors['cz1']) 
-        inp.param['distance1_error'] = deepcopy(inp.errors['L1'])  
-        inp.param['tilt_x2_error'] = deepcopy(inp.errors['tx2']) 
-        inp.param['tilt_y2_error'] = deepcopy(inp.errors['ty2']) 
-        inp.param['tilt_z2_error'] = deepcopy(inp.errors['tz2']) 
-        inp.param['y_size2_error'] = deepcopy(inp.errors['py2']) 
-        inp.param['z_size2_error'] = deepcopy(inp.errors['pz2']) 
-        inp.param['y_center2_error'] = deepcopy(inp.errors['cy2']) 
-        inp.param['z_center2_error'] = deepcopy(inp.errors['cz2']) 
-        inp.param['distance2_error'] = deepcopy(inp.errors['L2'])  
+        if inp.fit['no_det'] > 1:
+            inp.param['tilt_x1_error'] = deepcopy(inp.errors['tx1']) 
+            inp.param['tilt_y1_error'] = deepcopy(inp.errors['ty1']) 
+            inp.param['tilt_z1_error'] = deepcopy(inp.errors['tz1']) 
+            inp.param['y_size1_error'] = deepcopy(inp.errors['py1']) 
+            inp.param['z_size1_error'] = deepcopy(inp.errors['pz1']) 
+            inp.param['y_center1_error'] = deepcopy(inp.errors['cy1']) 
+            inp.param['z_center1_error'] = deepcopy(inp.errors['cz1']) 
+            inp.param['distance1_error'] = deepcopy(inp.errors['L1'])  
+        if inp.fit['no_det'] > 2:
+            inp.param['tilt_x2_error'] = deepcopy(inp.errors['tx2']) 
+            inp.param['tilt_y2_error'] = deepcopy(inp.errors['ty2']) 
+            inp.param['tilt_z2_error'] = deepcopy(inp.errors['tz2']) 
+            inp.param['y_size2_error'] = deepcopy(inp.errors['py2']) 
+            inp.param['z_size2_error'] = deepcopy(inp.errors['pz2']) 
+            inp.param['y_center2_error'] = deepcopy(inp.errors['cy2']) 
+            inp.param['z_center2_error'] = deepcopy(inp.errors['cz2']) 
+            inp.param['distance2_error'] = deepcopy(inp.errors['L2'])  
                    
         
         

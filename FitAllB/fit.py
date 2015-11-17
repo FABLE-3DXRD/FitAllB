@@ -76,6 +76,7 @@ class fit_minuit():
             print 'newreject_grain', self.inp.fit['newreject_grain']
             # calculate starting values
             g = grain_values(self)
+            self.g_old = deepcopy(g)
             self.fval = sum(g)
             print '\n%s starting value %e' %(self.inp.fit['goon'],self.fval)
             t1 = time.clock()
@@ -111,7 +112,9 @@ class fit_minuit():
                         try:
                             self.mg.fitarg['i'] = i
                             self.mg.fitarg["fix_i"] = True
-                            self.mg = Minuit(fcn.FCNgrain,errordef=1,pedantic=False,print_level=-1,**self.mg.fitarg)
+                            errordef1 = self.g_old[i]/(3*self.inp.nrefl[i]-self.mg.fitarg.values().count(False))   # Best alternative to scale_errors which is not possible by changing up with hesse in iminiut
+                            self.mg = Minuit(fcn.FCNgrain,errordef=errordef1,pedantic=False,print_level=-1,**self.mg.fitarg)
+                            self.mg.tol = self.mg.tol/errordef1
                         except:
                             pass
                         #print self.mg.list_of_vary_param()
@@ -148,8 +151,8 @@ class fit_minuit():
                 self.m.errors = self.inp.errors 
             except:
                 for keys in self.inp.fitarg.keys():
-                	if "error_" not in keys:
-                		self.inp.fitarg[keys] = self.m.fitarg[keys]
+                    if "error_" not in keys:
+                        self.inp.fitarg[keys] = self.m.fitarg[keys]
             self.inp.values = self.m.values #iminuit does not inherit values from m per default as pyminuit
                 
             reject_outliers(self)
@@ -158,9 +161,9 @@ class fit_minuit():
             write_output.write_log(self)
 
 
-        if 'final' in self.inp.fit['goon'] and (self.inp.newreject > 0):
+        if 'final' in self.inp.fit['goon'] and len(self.inp.fit["newreject_grain"])>0:
             self.inp.fit['goon'] = 'grain'+ self.inp.fit['goon'][5:]
-        elif 'rotpos' in self.inp.fit['goon'] and (self.inp.newreject > 0):
+        elif 'rotpos' in self.inp.fit['goon'] and len(self.inp.fit["newreject_grain"])>0:
             self.inp.fit['goon'] = 'start'+ self.inp.fit['goon'][6:]
         
         # move onto next refinement given by the reforder list  
@@ -422,6 +425,12 @@ def reject_outliers(lsqr):
         g = grain_values(lsqr)
         lsqr.inp.newreject = 0
         lsqr.inp.fit['newreject_grain'] = []
+        for i in range(lsqr.inp.no_grains):
+            if i+1 in lsqr.inp.fit['skip']:
+                pass
+            else:
+                if lsqr.g_old[i]/g[i] > 1.1: # ensure fitting twice, grain and first final to get sufficient error estimation in iminuit where scale_errors not possible
+                    lsqr.inp.fit['newreject_grain'].append(i+1)
         #value = []
         new = 1
         while new == 1:

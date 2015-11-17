@@ -73,6 +73,7 @@ class fit_minuit():
             except:
                 self.mg.fitarg = self.inp.fitarg
             g = fit.grain_values(self)
+            self.g_old = deepcopy(g)
             self.fval = sum(g)
             print '\n%s starting value %e' %(self.inp.fit['goon'],self.fval)
             try:
@@ -99,7 +100,9 @@ class fit_minuit():
                         print '\rRefining grain %i' %(i+1),
                         sys.stdout.flush()
                         try:
-                            self.mg = Minuit(fcn.FCNgrain,errordef=1,pedantic=False,print_level=-1,**self.mg.fitarg)
+                            errordef1 = self.g_old[i]/(3*self.inp.nrefl[i]-self.mg.fitarg.values().count(False))   # Best alternative to scale_errors which is not possible by changing up with hesse in iminiut
+                            self.mg = Minuit(fcn.FCNgrain,errordef=errordef1,pedantic=False,print_level=-1,**self.mg.fitarg)
+                            self.mg.tol = self.mg.tol/errordef1
                         except:
                             pass
                         self.mg.migrad()
