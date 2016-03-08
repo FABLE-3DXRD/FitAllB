@@ -161,7 +161,10 @@ class fit_minuit():
             write_output.write_log(self)
 
 
-        if 'final' in self.inp.fit['goon'] and len(self.inp.fit["newreject_grain"])>0:
+        if 'grain' in self.inp.fit['goon']:
+            for i in range(self.inp.no_grains):
+                self.inp.fit["newreject_grain"].append(i+1)
+        elif 'final' in self.inp.fit['goon'] and len(self.inp.fit["newreject_grain"])>0:
             self.inp.fit['goon'] = 'grain'+ self.inp.fit['goon'][5:]
         elif 'rotpos' in self.inp.fit['goon'] and len(self.inp.fit["newreject_grain"])>0:
             self.inp.fit['goon'] = 'start'+ self.inp.fit['goon'][6:]
