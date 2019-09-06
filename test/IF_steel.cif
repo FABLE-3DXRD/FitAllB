@@ -1,6 +1,6 @@
 data_64795-ICSD 
 ##############modified by Jette Oddershede 130808###################
-#©2007 by Fachinformationszentrum Karlsruhe, and the U.S. Secretary of 
+#(c)2007 by Fachinformationszentrum Karlsruhe, and the U.S. Secretary of
 #Commerce on behalf of the United States.  All rights reserved.
 _database_code_ICSD                64795
 _audit_creation_date               1997/11/10
