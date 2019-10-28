@@ -195,8 +195,11 @@ class parse_input:
                             self.fit[key] = eval(val)
                         except:
                             self.fit[key] = val
-        
-        stem = split(self.filename,'.')[0]      
+
+        if not os.path.splitext(self.filename)[1] == '':
+            stem = os.path.splitext(self.filename)[0]
+        else:
+            stem = os.path.splitext(self.filename)[0] + '_dir'
         self.fit['stem'] = stem
         self.fit['direc'] = deepcopy(stem)
         try:
