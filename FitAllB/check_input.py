@@ -233,9 +233,9 @@ class parse_input:
         if not os.path.isdir(self.fit['stem']):
             try:
                 os.mkdir(self.fit['stem'])
-            except OSError:
-                logging.error('Error creating output directory')
-                raise OSError('Error creating output directory')
+            except OSError as e:
+                logging.error(e)
+                raise OSError(e)
                 
         sys.path.insert(0,self.fit['stem'])
         #print sys.path[0]
