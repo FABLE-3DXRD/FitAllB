@@ -196,11 +196,11 @@ class parse_input:
                         except:
                             self.fit[key] = val
 
-        if os.path.splitext(self.filename)[1] == '.inp':
+        if not os.path.splitext(self.filename)[1] == '':
             stem = os.path.splitext(self.filename)[0]
         else:
-            logging.error('Input file must have extension .inp')
-            raise IOError, '\nInput file must have extension .inp\n'
+            logging.error('Input file must have an extension such as .inp')
+            raise IOError, '\nInput file must have an extension such as .inp\n'
         
         self.fit['stem'] = stem
         self.fit['direc'] = deepcopy(stem)
