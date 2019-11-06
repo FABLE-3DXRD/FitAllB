@@ -196,7 +196,7 @@ class parse_input:
                         except:
                             self.fit[key] = val
 
-        if os.path.splitext(self.filename)[1] == 'inp':
+        if os.path.splitext(self.filename)[1] == '.inp':
             stem = os.path.splitext(self.filename)[0]
         else:
             logging.error('Input file must have extension .inp')
