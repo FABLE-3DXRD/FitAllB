@@ -231,7 +231,12 @@ class parse_input:
     def initialize(self): 
         # Does output directory exist?
         if not os.path.exists(self.fit['stem']):
-            os.mkdir(self.fit['stem'])
+            try:
+                os.mkdir(self.fit['stem'])
+            except OSError:
+                logging.error('Error creating output directory')
+                raise OSError
+                
         sys.path.insert(0,self.fit['stem'])
         #print sys.path[0]
         #sys.exit()
