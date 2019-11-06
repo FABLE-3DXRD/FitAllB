@@ -230,7 +230,7 @@ class parse_input:
             
     def initialize(self): 
         # Does output directory exist?
-        if not os.path.exists(self.fit['stem']):
+        if not os.path.isdir(self.fit['stem']):
             try:
                 os.mkdir(self.fit['stem'])
             except OSError:
