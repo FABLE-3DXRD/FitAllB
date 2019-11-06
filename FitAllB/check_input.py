@@ -195,8 +195,13 @@ class parse_input:
                             self.fit[key] = eval(val)
                         except:
                             self.fit[key] = val
+
+        if not os.path.splitext(self.filename)[1] == '':
+            stem = os.path.splitext(self.filename)[0]
+        else:
+            logging.error('Input file must have an extension such as .inp')
+            raise IOError, '\nInput file must have an extension such as .inp\n'
         
-        stem = split(self.filename,'.')[0]      
         self.fit['stem'] = stem
         self.fit['direc'] = deepcopy(stem)
         try:
@@ -225,8 +230,13 @@ class parse_input:
             
     def initialize(self): 
         # Does output directory exist?
-        if not os.path.exists(self.fit['stem']):
-            os.mkdir(self.fit['stem'])
+        if not os.path.isdir(self.fit['stem']):
+            try:
+                os.mkdir(self.fit['stem'])
+            except OSError as e:
+                logging.error('Error creating directory: ' + e.strerror)
+                raise OSError(e)
+                
         sys.path.insert(0,self.fit['stem'])
         #print sys.path[0]
         #sys.exit()
