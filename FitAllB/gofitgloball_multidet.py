@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import sys
 from FitAllB import check_input_multidet 
 import logging
@@ -17,7 +19,7 @@ def get_options(parser):
 def run(options):
     if options.filename == None:
         #parser.print_help()
-        print "\nNo input file supplied [-i filename]\n"
+        print("\nNo input file supplied [-i filename]\n")
         sys.exit()
     
         
@@ -62,7 +64,7 @@ def run(options):
         keys = ['distance','o11','o12','o21','o22','tilt_x','tilt_y','tilt_z','y_center','z_center','y_size','z_size']
         for key in keys:
             far.param[key+'1'] = far1.param[key]
-        print 'parameters of second detector read successfully'
+        print('parameters of second detector read successfully')
         
     # third detector, NB more can be added in this way!!
     if far.fit['no_det'] > 2:
@@ -87,7 +89,7 @@ def run(options):
         keys = ['distance','o11','o12','o21','o22','tilt_x','tilt_y','tilt_z','y_center','z_center','y_size','z_size']
         for key in keys:
             far.param[key+'2'] = far2.param[key]
-        print 'parameters of third detector read successfully'
+        print('parameters of third detector read successfully')
     
     # set values and errors for refinement start
     far.set_start()                     
@@ -107,7 +109,7 @@ def run(options):
     if far.files['res_file'] != None and far.labels == None:
         from FitAllB import near_field
         near_field.find_refl(far)
-        print '\nFirst detector'
+        print('\nFirst detector')
         near_field.match(far)
     from FitAllB import error
     error.vars(far)
@@ -129,7 +131,7 @@ def run(options):
         if far1.files['res_file'] != None and far1.labels == None:
             from FitAllB import near_field
             near_field.find_refl(far1)
-            print '\nSecond detector'
+            print('\nSecond detector')
             near_field.match(far1)
         error.vars(far1)
         from FitAllB import build_fcn
@@ -149,7 +151,7 @@ def run(options):
         if far2.files['res_file'] != None and far2.labels == None:
             from FitAllB import near_field
             near_field.find_refl(far2)
-            print '\nThird detector'
+            print('\nThird detector')
             near_field.match(far2)
         error.vars(far2)
         from FitAllB import build_fcn
@@ -168,7 +170,7 @@ def run(options):
          
 #    print far.nrefl
 
-    import error_multidet
+    from . import error_multidet
     error_multidet.vars(far)
 #    print far.vars
    
@@ -242,6 +244,6 @@ def run(options):
     
         
     # program ends here after deleting fcn.py and fcn.pyc
-    print '\nNormal termination of FitGlobAll_MultiDet'
+    print('\nNormal termination of FitGlobAll_MultiDet')
     os.remove('%s/fcn.py' %far.fit['direc'])
     os.remove('%s/fcn.pyc' %far.fit['direc'])

@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 from FitAllB import check_input
 import logging
@@ -17,14 +18,14 @@ def get_options(parser):
 
 def run(options):
     if options.filename == None:
-        raise ValueError, "\nNo input file supplied [-i filename]\n"
+        raise ValueError("\nNo input file supplied [-i filename]\n")
 
     try:
         if options.killfile is not None and os.path.exists(options.killfile):
-            print "The purpose of the killfile option is to create that file"
-            print "only when you want fitallb to stop"
-            print "If the file already exists when you run fitallb it is"
-            print "never going to get started"
+            print("The purpose of the killfile option is to create that file")
+            print("only when you want fitallb to stop")
+            print("If the file already exists when you run fitallb it is")
+            print("never going to get started")
             raise ValueError("Your killfile "+options.killfile+" already exists")
     except:
         pass
@@ -122,6 +123,6 @@ def run(options):
     
         
     # program ends here after deleting fcn.py and fcn.pyc
-    print '\nNormal termination of FitAllB'
+    print('\nNormal termination of FitAllB')
     os.remove('%s/fcn.py' % far.fit['direc'])
     os.remove('%s/fcn.pyc' % far.fit['direc'])

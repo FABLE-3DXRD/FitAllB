@@ -1,7 +1,9 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import numpy as n
 from xfab import tools
-import check_input_multidet
-import reject
+from . import check_input_multidet
+from . import reject
 from copy import deepcopy
 
 def vars_scale(inp):
@@ -15,15 +17,15 @@ def vars_scale(inp):
     Jette Oddershede, December 2008
     """
 
-    print '\n',inp.fit['goon']
-    print 'present residuals'
+    print('\n',inp.fit['goon'])
+    print('present residuals')
     for i in range(inp.no_grains):
-        print i+1,n.sum(inp.residual[i]),len(inp.residual[i]),n.sum(inp.residual[i])/len(inp.residual[i])
+        print(i+1,n.sum(inp.residual[i]),len(inp.residual[i]),n.sum(inp.residual[i])/len(inp.residual[i]))
     # cakk if reject.residual is necessary to return to same reference point in as before first refinement
     reject.residual(inp,inp.fit['limit'][0],only=[])
-    print 'original reference residuals'
+    print('original reference residuals')
     for i in range(inp.no_grains):
-        print i+1,n.sum(inp.residual[i]),len(inp.residual[i]),n.sum(inp.residual[i])/len(inp.residual[i])
+        print(i+1,n.sum(inp.residual[i]),len(inp.residual[i]),n.sum(inp.residual[i])/len(inp.residual[i]))
 
     check_input.set_globals(inp)
     inp.vars = []

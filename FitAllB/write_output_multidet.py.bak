@@ -1,12 +1,11 @@
-from __future__ import absolute_import
 import numpy as n
 from xfab import tools
 from xfab import symmetry
 from xfab import detector
-from . import reject
+import reject
 import sys
 import logging
-from . import conversion
+import conversion
 from copy import deepcopy
 from string import split
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')

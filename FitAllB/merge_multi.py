@@ -1,8 +1,10 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+from __future__ import absolute_import
 import os
 from copy import deepcopy
-import merge
+from . import merge
 import time
 
 
@@ -20,7 +22,7 @@ for l in layer:
             stem = 'grwi_mapping_%0.3d_f%s'  %(l,ranges[r])
             output[r] = 'grwi_mapping_%0.3d_f%s.flt'  %(l,ranges[r])
             logfile = 'grwi_mapping_%0.3d_f%s.log'  %(l,ranges[r])
-            print output[r], thresholds
+            print(output[r], thresholds)
             merge.merge(stem,thresholds,output[r],logfile)
 	    if ranges[r] == 'c' or ranges[r] == 'd':
 		    command = 'python omega_rotate.py %s %s' %(output[r],output[r])
@@ -30,7 +32,7 @@ for l in layer:
         for r in range(2,len(ranges)):
             merge.two2one(merged,output[r],merged)
         merge.spot3d_id(merged)
-        print 'Created merged file', merged, 'spending ', int(time.clock()-t1), 's\n'
+        print('Created merged file', merged, 'spending ', int(time.clock()-t1), 's\n')
             
             
             

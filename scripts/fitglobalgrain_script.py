@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Modules to import 
+from __future__ import print_function
 import sys
 from FitAllB import check_input
 import logging
@@ -17,7 +18,7 @@ parser.add_option("-i", "--input", action="store",
 options , args = parser.parse_args()
 if options.filename == None:
     parser.print_help()
-    print "\nNo input file supplied [-i filename]\n"
+    print("\nNo input file supplied [-i filename]\n")
     sys.exit()
 
     
@@ -169,7 +170,7 @@ if far.files['near_flt_file'] != None:
 
     
 # program ends here after deleting fcn.py and fcn.pyc
-print '\nNormal termination of FitGlobalGrain'
+print('\nNormal termination of FitGlobalGrain')
 os.remove('%s/fcn.py' %far.fit['direc'])
 os.remove('%s/fcn.pyc' %far.fit['direc'])
 sys.exit()

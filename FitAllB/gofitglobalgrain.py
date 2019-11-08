@@ -1,3 +1,4 @@
+from __future__ import print_function
 import sys
 from FitAllB import check_input
 import logging
@@ -18,7 +19,7 @@ def get_options(parser):
 def run(options):
     if options.filename == None:
         #parser.print_help()
-        print "\nNo input file supplied [-i filename]\n"
+        print("\nNo input file supplied [-i filename]\n")
         sys.exit()
     
     #Read and check input
@@ -170,6 +171,6 @@ def run(options):
     
         
     # program ends here after deleting fcn.py and fcn.pyc
-    print '\nNormal termination of FitGlobalGrain'
+    print('\nNormal termination of FitGlobalGrain')
     os.remove('%s/fcn.py' %far.fit['direc'])
     os.remove('%s/fcn.pyc' %far.fit['direc'])

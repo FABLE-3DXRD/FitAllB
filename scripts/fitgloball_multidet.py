@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Modules to import 
+from __future__ import print_function
 from FitAllB import gofitgloball_multidet
 
 import logging
@@ -12,7 +13,7 @@ if __name__=="__main__":
         from optparse import OptionParser
         parser = OptionParser()
         options  = gofitgloball_multidet.get_options(parser)
-        print options
+        print(options)
         gofitgloball_multidet.run(options)
     except:
         if options != None:

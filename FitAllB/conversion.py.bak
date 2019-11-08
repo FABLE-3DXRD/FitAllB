@@ -2,7 +2,6 @@
 # stuff for representations of tensor components: tens.py
 
 
-from __future__ import print_function
 from copy import deepcopy
 from numpy import *
 
@@ -271,7 +270,7 @@ def formStiffnessMV(crystal_system,c11=None,c12=None,c13=None,c14=None,c15=None,
         unique = [c11,c12,c13,c14,c15,c16,c22,c23,c24,c25,c26,c33,c34,c35,c36,c44,c45,c46,c55,c56,c66]
         full = unique
     else:
-        print('crystal system', crystal_system, 'not supported')
+        print 'crystal system', crystal_system, 'not supported'
         return
  
     assert None not in unique, 'For crytal_system %s, the following must be given:\n %s' %(crystal_system,unique_list)
@@ -326,7 +325,7 @@ def formComplianceMV(crystal_system,s11=None,s12=None,s13=None,s14=None,s15=None
         unique = [s11,s12,s13,s14,s15,s16,s22,s23,s24,s25,s26,s33,s34,s35,s36,s44,s45,s46,s55,s56,s66]
         full = unique
     else:
-        print('crystal system', crystal_system, 'not supported')
+        print 'crystal system', crystal_system, 'not supported'
         return
  
     assert None not in unique, 'Missing constant for %s' %crystal_system

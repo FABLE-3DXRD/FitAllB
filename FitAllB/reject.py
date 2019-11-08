@@ -1,3 +1,5 @@
+from __future__ import print_function
+from __future__ import absolute_import
 import numpy as n
 from xfab import tools
 from polyxsim import reflections
@@ -27,7 +29,7 @@ def edge(inp):
                 reject(inp,i,j,'z edge')
                 delete = delete + 1
                     
-    print 'Rejected', delete, 'peaks close to the edges of the detector or the omega ranges'
+    print('Rejected', delete, 'peaks close to the edges of the detector or the omega ranges')
     insignificant(inp)
                 
     
@@ -172,7 +174,7 @@ def intensity(inp):
                             reject(inp,i,j,'intensity')
                             delete = delete + 1
                     
-            print 'Rejected', delete, 'peaks because of different intensity scales'
+            print('Rejected', delete, 'peaks because of different intensity scales')
             insignificant(inp)
             
                                 
@@ -182,7 +184,7 @@ def mean_ia(inp,limit,only=None):
         Jette Oddershede Januar 2009
         """
         
-        import build_fcn
+        from . import build_fcn
         build_fcn.FCN(inp)
         import fcn
         reload(fcn)
@@ -213,7 +215,7 @@ def mean_ia(inp,limit,only=None):
                         reject(inp,i,j,'ia')
 
         if only != []:
-            print 'Rejected', delete, 'reflection based on internal angles'
+            print('Rejected', delete, 'reflection based on internal angles')
         insignificant(inp)
 
 
@@ -223,7 +225,7 @@ def mean_ia_old(inp,limit,only=None):
         Jette Oddershede Januar 2009
         """
         
-        import build_fcn
+        from . import build_fcn
         build_fcn.FCN(inp)
         import fcn
         reload(fcn)
@@ -281,7 +283,7 @@ def mean_ia_old(inp,limit,only=None):
                         delete = delete + 1
                         reject(inp,i,j,'ia')
         if only != []:
-            print 'Rejected', delete, 'reflection based on internal angles'
+            print('Rejected', delete, 'reflection based on internal angles')
         insignificant(inp)
 
 
@@ -304,15 +306,15 @@ def merge(inp):
                                 if inp.id[gr1][peak1] == inp.id[gr2][peak2]:
                                     multi = multi + 1
                         if multi > multilimit:
-                            print 'Equal grains:', gr1+1, 'and', gr2+1, 'with number of equal refl:', multi, '(total', inp.nrefl[gr1], 'and', inp.nrefl[gr2],')'
+                            print('Equal grains:', gr1+1, 'and', gr2+1, 'with number of equal refl:', multi, '(total', inp.nrefl[gr1], 'and', inp.nrefl[gr2],')')
                             if inp.nrefl[gr1] < inp.nrefl[gr2]:# and resavg[gr1] > resavg[gr2] and volsig[gr1] > volsig[gr2]: #remove residual and volume criteria
                                 inp.fit['skip'].append(gr1+1)
-                                print 'Skip grain', gr1+1
+                                print('Skip grain', gr1+1)
                             elif inp.nrefl[gr1] > inp.nrefl[gr2]:# and resavg[gr1] < resavg[gr2] and volsig[gr1] < volsig[gr2]: #remove residual and volume criteria
                                 inp.fit['skip'].append(gr2+1)
-                                print 'Skip grain', gr2+1
+                                print('Skip grain', gr2+1)
                             else:                                
-                                print 'Merge grains', gr1+1, 'and', gr2+1
+                                print('Merge grains', gr1+1, 'and', gr2+1)
                                 inp.fit['skip'].append(gr2+1)
                                 set1 = set(inp.id[gr1][:])
                                 set2 = set(inp.id[gr2][:])
@@ -372,7 +374,7 @@ def multi(inp):
                                     bad.append([grain[k][m],peak[k][m]])
         unique_list(bad)                      
         #print bad
-        print 'Number of reflections assigned to more than one grain',multi       
+        print('Number of reflections assigned to more than one grain',multi)       
 
                                         
 
@@ -380,7 +382,7 @@ def multi(inp):
         if inp.fit['rej_multi'] != 0:
             for i in range(len(bad)-1,-1,-1):
                 reject(inp,bad[i][0],bad[i][1],'multi')
-            print 'Delete',len(bad), 'reflection because they are assigned to more than one grain' 
+            print('Delete',len(bad), 'reflection because they are assigned to more than one grain') 
             insignificant(inp)
                                     
         
@@ -393,7 +395,7 @@ def overflow(inp):
                 reject(inp,i,j,'overflow')
                 delete = delete + 1
                     
-    print 'Rejected', delete, 'peaks because of overflow'
+    print('Rejected', delete, 'peaks because of overflow')
     insignificant(inp)
 
     
@@ -406,10 +408,10 @@ def residual(inp,limit,only=None):
         
         # must update inp.vars because the order here is [i][j] in stead of [id[i][j]], the latter doesn't change when peaks are rejected, the former does.
         # calculate experimental errors using the present values 
-        import error
+        from . import error
         error.vars(inp)
         # build functions to minimise
-        import build_fcn
+        from . import build_fcn
         build_fcn.FCN(inp)
         #refinement update
         import fcn
@@ -465,7 +467,7 @@ def residual(inp,limit,only=None):
                         delete = delete + 1
                         reject(inp,i,j,'residual')
         if only != []:
-            print 'Rejected', delete, 'reflection based on residuals'
+            print('Rejected', delete, 'reflection based on residuals')
         insignificant(inp)
                     
 

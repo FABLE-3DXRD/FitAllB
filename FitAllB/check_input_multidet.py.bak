@@ -3,13 +3,11 @@
 #
 # Checking input  
 #
-from __future__ import print_function
-from __future__ import absolute_import
 import ImageD11.columnfile as ic
 from string import split
 import sys, os 
-from . import write_output 
-from . import conversion
+import write_output 
+import conversion
 from xfab import tools
 from xfab import symmetry
 from xfab import detector
@@ -26,7 +24,7 @@ logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
 def interrupt(killfile):
     if killfile is not None and os.path.exists(killfile):
-        print('keyboard interrupt')
+        print 'keyboard interrupt'
         raise KeyboardInterrupt
             
 class parse_input:
@@ -61,6 +59,7 @@ class parse_input:
             # Optional space group
             'sgno' : 1,
             #experimental setup
+            'no_det': 1,
             'dety_size': 2048,
             'detz_size': 2048,
             'near_dety_size': 1536,
@@ -108,6 +107,10 @@ class parse_input:
             'near_rej_multi': 1,
             'near_min_refl': 3,
             'overlap': 1.,
+            # scaling of variances
+            'vars_scale0': 1,          
+            'vars_scale1': 1,          
+            'vars_scale2': 1,          
             #tolerances
             'tol_global': 1e-2,
             'tol_rotpos': 1e-2,
@@ -197,17 +200,12 @@ class parse_input:
                             self.fit[key] = eval(val)
                         except:
                             self.fit[key] = val
-
-        if not os.path.splitext(self.filename)[1] == '':
-            stem = os.path.splitext(self.filename)[0]
-        else:
-            logging.error('Input file must have an extension such as .inp')
-            raise IOError('\nInput file must have an extension such as .inp\n')
         
+        stem = split(self.filename,'.')[0]      
         self.fit['stem'] = stem
         self.fit['direc'] = deepcopy(stem)
         try:
-            print(self.fit['title'])
+            print self.fit['title']
         except:
             pass
             
@@ -219,26 +217,21 @@ class parse_input:
         for item in self.needed_items:
             if item == 'log_file':
                 if item not in self.files and 'res_file' not in self.files:
-                    print('Either log_file or res_file should be supplied.')
-                    print('If both are given, res_file takes priority.')
+                    print 'Either log_file or res_file should be supplied.'
+                    print 'If both are given, res_file takes priority.'
                     self.missing = True
             else:
                 if item not in self.files:
                     if item not in self.fit:
-                        print(self.needed_items[item])
+                        print self.needed_items[item]
                         self.missing = True
 
             
             
     def initialize(self): 
         # Does output directory exist?
-        if not os.path.isdir(self.fit['stem']):
-            try:
-                os.mkdir(self.fit['stem'])
-            except OSError as e:
-                logging.error('Error creating directory: ' + e.strerror)
-                raise OSError(e)
-                
+        if not os.path.exists(self.fit['stem']):
+            os.mkdir(self.fit['stem'])
         sys.path.insert(0,self.fit['stem'])
         #print sys.path[0]
         #sys.exit()
@@ -248,28 +241,13 @@ class parse_input:
                 self.files[item] = self.optional_items[item] 
             elif 'file' not in item and item not in self.fit:
                 self.fit[item] = self.optional_items[item] 
-        
-        # absorption correction
-        if self.fit['abs_mu'] > 0:
-            assert self.fit['abs_xlim'] != None, 'To do absorption correction xmin and xmax must be given as abs_xlim'
-            assert len(self.fit['abs_xlim']) == 2, 'To do absorption correction xmin and xmax must be given as abs_xlim'
-            self.fit['abs_xlim'].sort()
-            assert max(self.fit['abs_xlim'])>min(self.fit['abs_xlim']), 'Sample must have a nonzero dimension along x'
-            assert self.fit['abs_ylim'] != None, 'To do absorption correction ymin and ymax must be given as abs_ylim'
-            assert len(self.fit['abs_ylim']) == 2, 'To do absorption correction ymin and ymax must be given as abs_ylim'
-            self.fit['abs_ylim'].sort()
-            assert max(self.fit['abs_ylim'])>min(self.fit['abs_ylim']), 'Sample must have a nonzero dimension along y'
-            print('\nAbsorption correction performed with mu = %0.3f mm-1' %self.fit['abs_mu'])
-            print('For sample dimensions: %0.3f < x < %0.3f mm, %0.3f < y < %0.3f mm\n' %(min(self.fit['abs_xlim']),max(self.fit['abs_xlim']),min(self.fit['abs_ylim']),max(self.fit['abs_ylim'])))
-        else:
-            print('\nNo absorption correction performed\n')
-
+                
         # calculate stiffness tensor
         if self.fit['stress'] == 0:
-            print('No strain to stress conversion')
+            print 'No strain to stress conversion'
             self.C = n.zeros((6,6))
         else:
-            print('Both strain and stress given in output')
+            print 'Both strain and stress given in output'
             self.C = conversion.formStiffnessMV(self.fit['crystal_system'],
                                                 c11=self.fit['c11'],c12=self.fit['c12'],c13=self.fit['c13'],c14=self.fit['c14'],c15=self.fit['c15'],c16=self.fit['c16'],
                                                                     c22=self.fit['c22'],c23=self.fit['c23'],c24=self.fit['c24'],c25=self.fit['c25'],c26=self.fit['c26'],
@@ -610,9 +588,7 @@ class parse_input:
                 self.param['theta_max'] = max(self.tth)/2.
             except:
                 pass
-                        
-
-        
+                                
  
     def read_log(self): # read grainspotter.log
         self.nrefl = []
@@ -678,15 +654,15 @@ class parse_input:
             self.l.append(l)
             nn = nn + 2
         
-        # calculate self.F2vol which is the intensity divided the Lorentz factor, 
-        #thus the squared structure factor times the volume
-        # absorption correction in reject.intensity where F2vol is converted to volume
+        # calculate self.F2vol which is the intensity divided the Lorentz factor, thus the squared structure factor times the volume
         self.F2vol = [0]*self.param['total_refl']
         for i in range(self.param['total_refl']):
             rho = n.pi/2.0 + self.eta[i]*n.pi/180. + self.fit['beampol_direct']*n.pi/180.0 
             P = 0.5 * (1. + n.cos(self.tth[i]*n.pi/180.)**2 + self.fit['beampol_factor']*n.cos(2*rho)*n.sin(self.tth[i]*n.pi/180.)**2)
             Linv = (n.sin(self.tth[i]*n.pi/180.)*abs(n.sin(self.eta[i]*n.pi/180.)))
+#            print self.tth[i],self.eta[i],rho,P,Linv
             self.F2vol[i] = self.int[i]*Linv/P
+            
         self.param['theta_min'] = min(self.tth)/2.
         self.param['theta_max'] = max(self.tth)/2.
         
@@ -738,7 +714,7 @@ class parse_input:
                 if mis < 5:
                     dist = n.sqrt((self.x[i]-self.x[j])**2+(self.y[i]-self.y[j])**2)
                     if  dist < 0.1:
-                        print(i+1,j+1,mis,self.x[i],self.y[i],self.z[i],self.x[j],self.y[j],self.z[j],dist)
+                        print i+1,j+1,mis,self.x[i],self.y[i],self.z[i],self.x[j],self.y[j],self.z[j],dist
             
             
         
@@ -749,7 +725,7 @@ class parse_input:
             try:
                 f=open(self.files['res_file'],'r')
                 f.close()
-                print('Resume refinement')
+                print 'Resume refinement'
                 res = ic.columnfile(self.files['res_file'])
                 try:
                     self.grainno = res.getcolumn('grainno')
@@ -801,7 +777,6 @@ class parse_input:
                     self.eps23 = [0.0]*len(self.grainno)
                     self.eps13 = [0.0]*len(self.grainno)
                     self.eps12 = [0.0]*len(self.grainno)
-                    
                 try:
                     self.ia = res.getcolumn('mean_IA')
                     self.grainvolume = res.getcolumn('grainvolume')
@@ -823,7 +798,7 @@ class parse_input:
                 logging.error('res_file: no file named %s' %self.files['res_file'])
                 raise IOError
         else:
-            print('Start refinement from scratch') 
+            print 'Start refinement from scratch' 
             return
 
 
@@ -832,9 +807,9 @@ class parse_input:
         try:
             f=open(rej_file,'r')
         except:
-            print('Start refinement without apriori information about peak rejection') 
+            print 'Start refinement without apriori information about peak rejection' 
             return
-        print('Use apriori information about peak rejections') 
+        print 'Use apriori information about peak rejections' 
         
         input = f.readlines()
         f.close()
@@ -900,7 +875,7 @@ class parse_input:
             self.values['epsaa%s' %i] = 0.0 
             self.values['epsab%s' %i] = 0.0  
             self.values['epsac%s' %i] = 0.0
-            self.values['epsbb%s' %i] = 0.0  
+            self.values['epsbb%s' %i] = 0.0 
             self.values['epsbc%s' %i] = 0.0 
             self.values['epscc%s' %i] = 0.0
             self.values['rodx%s' %i] = 0.0
@@ -946,7 +921,6 @@ class parse_input:
                 else:
                     self.fit['skip'].append(i+1)
         # else if start from scratch with new grainspotter log file use positions from this
-        # py, pz and L input as microns while x,y,z in mm. Internally do everything in microns.
         elif len(self.x) == self.no_grains:
             for i in range(self.no_grains):
                 self.values['x%s' %i] = 1000.*self.x[i]
@@ -961,7 +935,7 @@ class parse_input:
                 self.fit['skip'].pop(i)
 
         self.errors = {}
-        # global errors
+        # global errors, sample specific
         self.param['a_error'] = 0.001
         self.param['b_error'] = 0.001
         self.param['c_error'] = 0.001
@@ -970,6 +944,9 @@ class parse_input:
         self.param['gamma_error'] = 0.001
         self.param['chi_error'] = 0.001
         self.param['wedge_error'] = 0.001
+        self.param['i_error']  = 1
+        self.param['j_error']  = 1
+        #global errors, detector specific, NB list can be extended to more than 3 detectors
         self.param['tilt_x_error'] = 0.001
         self.param['tilt_y_error'] = 0.001
         self.param['tilt_z_error'] = 0.001
@@ -978,8 +955,22 @@ class parse_input:
         self.param['y_center_error'] = 0.1
         self.param['z_center_error'] = 0.1
         self.param['distance_error']  = 10.
-        self.param['i_error']  = 1
-        self.param['j_error']  = 1
+        self.param['tilt_x1_error'] = 0.001
+        self.param['tilt_y1_error'] = 0.001
+        self.param['tilt_z1_error'] = 0.001
+        self.param['y_size1_error'] = 0.1
+        self.param['z_size1_error'] = 0.1
+        self.param['y_center1_error'] = 0.1
+        self.param['z_center1_error'] = 0.1
+        self.param['distance1_error']  = 10.
+        self.param['tilt_x2_error'] = 0.001
+        self.param['tilt_y2_error'] = 0.001
+        self.param['tilt_z2_error'] = 0.001
+        self.param['y_size2_error'] = 0.1
+        self.param['z_size2_error'] = 0.1
+        self.param['y_center2_error'] = 0.1
+        self.param['z_center2_error'] = 0.1
+        self.param['distance2_error']  = 10.
         # grain errors
         for i in range(self.no_grains):
             self.errors['x%s' %i] = self.param['y_size']/5.
@@ -1018,9 +1009,9 @@ class parse_input:
             
     def reject(self): # carry out initial rejections
 
-        from . import reject
-        print('\n\nNumber of read grains', self.no_grains)
-        print('Number of assigned reflections: ', n.sum(self.nrefl))
+        import reject
+        print '\n\nNumber of read grains', self.no_grains
+        print 'Number of assigned reflections: ', n.sum(self.nrefl)
         # set starting values
         self.newreject = 0
         self.fit['newreject_grain'] = []
@@ -1045,7 +1036,42 @@ class parse_input:
         reject.overflow(self)
         reject.edge(self)
         reject.intensity(self)
-        reject.peak_spread(self)
+        reject.mean_ia(self,2*self.fit['rej_ia'])
+        reject.residual(self,self.fit['rej_resmedian'])
+        reject.multi(self)
+        reject.merge(self)
+        #reject.friedel(self)
+        
+
+    def reject_multidet(self): # carry out initial rejections
+
+        import reject_multidet
+        print '\n\nNumber of read grains', self.no_grains
+        print 'Number of assigned reflections: ', n.sum(self.nrefl)
+        # set starting values
+        self.newreject = 0
+        self.fit['newreject_grain'] = []
+        self.residual = []
+        self.volume = []
+        self.mean_ia = []
+        self.spr_eta = []
+        self.spr_tth = []
+        for i in range(self.no_grains):
+            self.residual.append([])
+            self.volume.append([])
+            self.mean_ia.append([])
+            self.spr_eta.append([])
+            self.spr_tth.append([])
+            for j in range(self.nrefl[i]):
+                self.residual[i].append(1)
+                self.volume[i].append(1)
+                self.mean_ia[i].append(1)
+                self.spr_eta[i].append(1)
+                self.spr_tth[i].append(1)
+        # do the actual rejections
+        reject.overflow(self)
+        reject.edge(self)
+        reject.intensity(self)
         reject.mean_ia(self,2*self.fit['rej_ia'])
         reject.residual(self,self.fit['rej_resmedian'])
         reject.multi(self)
@@ -1055,22 +1081,22 @@ class parse_input:
         
     def write_rej(self): # write the rejected peaks to rejection file
     
-        from . import reject
+        import reject
         reject.unique_list(self.fit['skip'])
-        print('Skip the following grains:', self.fit['skip'])
-        print('Actual number of grains in fit', self.no_grains - len(self.fit['skip']))
+        print 'Skip the following grains:', self.fit['skip']
+        print 'Actual number of grains in fit', self.no_grains - len(self.fit['skip'])
         observations = 0
         for i in range(self.no_grains):
             if i+1 in self.fit['skip']:
                 pass
             else:
                 observations = observations + self.nrefl[i]
-        print('Total number of reflections in these', observations,'\n') 
+        print 'Total number of reflections in these', observations,'\n' 
        
         write_output.write_rej(self,message=('%s\n\ncheck_input' %self.fit['title']))
         
 def set_globals(inp):
-        # global values
+        # global values, sample specific
         inp.values['a'] = deepcopy(inp.param['cell__a'])
         inp.values['b'] = deepcopy(inp.param['cell__b'])
         inp.values['c'] = deepcopy(inp.param['cell__c'])
@@ -1079,14 +1105,6 @@ def set_globals(inp):
         inp.values['gamma'] = deepcopy(inp.param['cell_gamma'])
         inp.values['wx'] = deepcopy(inp.param['chi'])
         inp.values['wy'] = deepcopy(inp.param['wedge'])
-        inp.values['tx'] = deepcopy(inp.param['tilt_x'])
-        inp.values['ty'] = deepcopy(inp.param['tilt_y'])
-        inp.values['tz'] = deepcopy(inp.param['tilt_z'])
-        inp.values['py'] = deepcopy(inp.param['y_size'])
-        inp.values['pz'] = deepcopy(inp.param['z_size'])
-        inp.values['cy'] = deepcopy(inp.param['y_center'])
-        inp.values['cz'] = deepcopy(inp.param['z_center'])
-        inp.values['L']  = deepcopy(inp.param['distance'])
         try:
             inp.fitarg['a'] = deepcopy(inp.param['cell__a'])
             inp.fitarg['b'] = deepcopy(inp.param['cell__b'])
@@ -1096,17 +1114,73 @@ def set_globals(inp):
             inp.fitarg['gamma'] = deepcopy(inp.param['cell_gamma'])
             inp.fitarg['wx'] = deepcopy(inp.param['chi'])
             inp.fitarg['wy'] = deepcopy(inp.param['wedge'])
-            inp.fitarg['tx'] = deepcopy(inp.param['tilt_x'])
-            inp.fitarg['ty'] = deepcopy(inp.param['tilt_y'])
-            inp.fitarg['tz'] = deepcopy(inp.param['tilt_z'])
-            inp.fitarg['py'] = deepcopy(inp.param['y_size'])
-            inp.fitarg['pz'] = deepcopy(inp.param['z_size'])
-            inp.fitarg['cy'] = deepcopy(inp.param['y_center'])
-            inp.fitarg['cz'] = deepcopy(inp.param['z_center'])
-            inp.fitarg['L']  = deepcopy(inp.param['distance'])
         except:
             pass
-        # global errors
+        # global values, detectpr specific, NB list can be extended to more than 3 detectors
+        inp.values['tx0'] = deepcopy(inp.param['tilt_x'])
+        inp.values['ty0'] = deepcopy(inp.param['tilt_y'])
+        inp.values['tz0'] = deepcopy(inp.param['tilt_z'])
+        inp.values['py0'] = deepcopy(inp.param['y_size'])
+        inp.values['pz0'] = deepcopy(inp.param['z_size'])
+        inp.values['cy0'] = deepcopy(inp.param['y_center'])
+        inp.values['cz0'] = deepcopy(inp.param['z_center'])
+        inp.values['L0']  = deepcopy(inp.param['distance'])
+        try:
+            inp.fitarg['tx0'] = deepcopy(inp.param['tilt_x'])
+            inp.fitarg['ty0'] = deepcopy(inp.param['tilt_y'])
+            inp.fitarg['tz0'] = deepcopy(inp.param['tilt_z'])
+            inp.fitarg['py0'] = deepcopy(inp.param['y_size'])
+            inp.fitarg['pz0'] = deepcopy(inp.param['z_size'])
+            inp.fitarg['cy0'] = deepcopy(inp.param['y_center'])
+            inp.fitarg['cz0'] = deepcopy(inp.param['z_center'])
+            inp.fitarg['L0']  = deepcopy(inp.param['distance'])
+        except:
+            pass        
+        try:
+            inp.values['tx1'] = deepcopy(inp.param['tilt_x1'])
+            inp.values['ty1'] = deepcopy(inp.param['tilt_y1'])
+            inp.values['tz1'] = deepcopy(inp.param['tilt_z1'])
+            inp.values['py1'] = deepcopy(inp.param['y_size1'])
+            inp.values['pz1'] = deepcopy(inp.param['z_size1'])
+            inp.values['cy1'] = deepcopy(inp.param['y_center1'])
+            inp.values['cz1'] = deepcopy(inp.param['z_center1'])
+            inp.values['L1']  = deepcopy(inp.param['distance1'])
+        except:
+            pass
+        try:
+            inp.fitarg['tx1'] = deepcopy(inp.param['tilt_x1'])
+            inp.fitarg['ty1'] = deepcopy(inp.param['tilt_y1'])
+            inp.fitarg['tz1'] = deepcopy(inp.param['tilt_z1'])
+            inp.fitarg['py1'] = deepcopy(inp.param['y_size1'])
+            inp.fitarg['pz1'] = deepcopy(inp.param['z_size1'])
+            inp.fitarg['cy1'] = deepcopy(inp.param['y_center1'])
+            inp.fitarg['cz1'] = deepcopy(inp.param['z_center1'])
+            inp.fitarg['L1']  = deepcopy(inp.param['distance1'])
+        except:
+            pass        
+        try:
+            inp.values['tx2'] = deepcopy(inp.param['tilt_x2'])
+            inp.values['ty2'] = deepcopy(inp.param['tilt_y2'])
+            inp.values['tz2'] = deepcopy(inp.param['tilt_z2'])
+            inp.values['py2'] = deepcopy(inp.param['y_size2'])
+            inp.values['pz2'] = deepcopy(inp.param['z_size2'])
+            inp.values['cy2'] = deepcopy(inp.param['y_center2'])
+            inp.values['cz2'] = deepcopy(inp.param['z_center2'])
+            inp.values['L2']  = deepcopy(inp.param['distance2'])
+        except:
+            pass
+        try:
+            inp.fitarg['tx2'] = deepcopy(inp.param['tilt_x2'])
+            inp.fitarg['ty2'] = deepcopy(inp.param['tilt_y2'])
+            inp.fitarg['tz2'] = deepcopy(inp.param['tilt_z2'])
+            inp.fitarg['py2'] = deepcopy(inp.param['y_size2'])
+            inp.fitarg['pz2'] = deepcopy(inp.param['z_size2'])
+            inp.fitarg['cy2'] = deepcopy(inp.param['y_center2'])
+            inp.fitarg['cz2'] = deepcopy(inp.param['z_center2'])
+            inp.fitarg['L2']  = deepcopy(inp.param['distance2'])
+        except:
+            pass        
+        # global errors, sample specific
         inp.errors['a'] = deepcopy(inp.param['a_error'])
         inp.errors['b'] = deepcopy(inp.param['b_error'])
         inp.errors['c'] = deepcopy(inp.param['c_error'])
@@ -1115,14 +1189,6 @@ def set_globals(inp):
         inp.errors['gamma'] = deepcopy(inp.param['gamma_error'])
         inp.errors['wx'] = deepcopy(inp.param['chi_error'])
         inp.errors['wy'] = deepcopy(inp.param['wedge_error'])
-        inp.errors['tx'] = deepcopy(inp.param['tilt_x_error'])
-        inp.errors['ty'] = deepcopy(inp.param['tilt_y_error'])
-        inp.errors['tz'] = deepcopy(inp.param['tilt_z_error'])
-        inp.errors['py'] = deepcopy(inp.param['y_size_error'])
-        inp.errors['pz'] = deepcopy(inp.param['z_size_error'])
-        inp.errors['cy'] = deepcopy(inp.param['y_center_error'])
-        inp.errors['cz'] = deepcopy(inp.param['z_center_error'])
-        inp.errors['L']  = deepcopy(inp.param['distance_error'])
         inp.errors['i']  = deepcopy(inp.param['i_error'])
         inp.errors['j']  = deepcopy(inp.param['j_error'])
         try:
@@ -1134,21 +1200,73 @@ def set_globals(inp):
             inp.fitarg['error_gamma'] = deepcopy(inp.param['gamma_error'])
             inp.fitarg['error_wx'] = deepcopy(inp.param['chi_error'])
             inp.fitarg['error_wy'] = deepcopy(inp.param['wedge_error'])
-            inp.fitarg['error_tx'] = deepcopy(inp.param['tilt_x_error'])
-            inp.fitarg['error_ty'] = deepcopy(inp.param['tilt_y_error'])
-            inp.fitarg['error_tz'] = deepcopy(inp.param['tilt_z_error'])
-            inp.fitarg['error_py'] = deepcopy(inp.param['y_size_error'])
-            inp.fitarg['error_pz'] = deepcopy(inp.param['z_size_error'])
-            inp.fitarg['error_cy'] = deepcopy(inp.param['y_center_error'])
-            inp.fitarg['error_cz'] = deepcopy(inp.param['z_center_error'])
-            inp.fitarg['error_L']  = deepcopy(inp.param['distance_error'])
+        except:
+            pass        
+        # global errors, detector specific, NB list can be extended to more than 3 detectors
+        inp.errors['tx0'] = deepcopy(inp.param['tilt_x_error'])
+        inp.errors['ty0'] = deepcopy(inp.param['tilt_y_error'])
+        inp.errors['tz0'] = deepcopy(inp.param['tilt_z_error'])
+        inp.errors['py0'] = deepcopy(inp.param['y_size_error'])
+        inp.errors['pz0'] = deepcopy(inp.param['z_size_error'])
+        inp.errors['cy0'] = deepcopy(inp.param['y_center_error'])
+        inp.errors['cz0'] = deepcopy(inp.param['z_center_error'])
+        inp.errors['L0']  = deepcopy(inp.param['distance_error'])
+        try:
+            inp.fitarg['error_tx0'] = deepcopy(inp.param['tilt_x_error'])
+            inp.fitarg['error_ty0'] = deepcopy(inp.param['tilt_y_error'])
+            inp.fitarg['error_tz0'] = deepcopy(inp.param['tilt_z_error'])
+            inp.fitarg['error_py0'] = deepcopy(inp.param['y_size_error'])
+            inp.fitarg['error_pz0'] = deepcopy(inp.param['z_size_error'])
+            inp.fitarg['error_cy0'] = deepcopy(inp.param['y_center_error'])
+            inp.fitarg['error_cz0'] = deepcopy(inp.param['z_center_error'])
+            inp.fitarg['error_L0']  = deepcopy(inp.param['distance_error'])
         except:
             pass
+        if inp.fit['no_det'] > 1:
+            inp.errors['tx1'] = deepcopy(inp.param['tilt_x1_error'])
+            inp.errors['ty1'] = deepcopy(inp.param['tilt_y1_error'])
+            inp.errors['tz1'] = deepcopy(inp.param['tilt_z1_error'])
+            inp.errors['py1'] = deepcopy(inp.param['y_size1_error'])
+            inp.errors['pz1'] = deepcopy(inp.param['z_size1_error'])
+            inp.errors['cy1'] = deepcopy(inp.param['y_center1_error'])
+            inp.errors['cz1'] = deepcopy(inp.param['z_center1_error'])
+            inp.errors['L1']  = deepcopy(inp.param['distance1_error'])
+            try:
+                inp.fitarg['error_tx1'] = deepcopy(inp.param['tilt_x1_error'])
+                inp.fitarg['error_ty1'] = deepcopy(inp.param['tilt_y1_error'])
+                inp.fitarg['error_tz1'] = deepcopy(inp.param['tilt_z1_error'])
+                inp.fitarg['error_py1'] = deepcopy(inp.param['y_size1_error'])
+                inp.fitarg['error_pz1'] = deepcopy(inp.param['z_size1_error'])
+                inp.fitarg['error_cy1'] = deepcopy(inp.param['y_center1_error'])
+                inp.fitarg['error_cz1'] = deepcopy(inp.param['z_center1_error'])
+                inp.fitarg['error_L1']  = deepcopy(inp.param['distance1_error'])
+            except:
+                pass
+        if inp.fit['no_det'] > 2:
+            inp.errors['tx2'] = deepcopy(inp.param['tilt_x2_error'])
+            inp.errors['ty2'] = deepcopy(inp.param['tilt_y2_error'])
+            inp.errors['tz2'] = deepcopy(inp.param['tilt_z2_error'])
+            inp.errors['py2'] = deepcopy(inp.param['y_size2_error'])
+            inp.errors['pz2'] = deepcopy(inp.param['z_size2_error'])
+            inp.errors['cy2'] = deepcopy(inp.param['y_center2_error'])
+            inp.errors['cz2'] = deepcopy(inp.param['z_center2_error'])
+            inp.errors['L2']  = deepcopy(inp.param['distance2_error'])
+            try:
+                inp.fitarg['error_tx2'] = deepcopy(inp.param['tilt_x2_error'])
+                inp.fitarg['error_ty2'] = deepcopy(inp.param['tilt_y2_error'])
+                inp.fitarg['error_tz2'] = deepcopy(inp.param['tilt_z2_error'])
+                inp.fitarg['error_py2'] = deepcopy(inp.param['y_size2_error'])
+                inp.fitarg['error_pz2'] = deepcopy(inp.param['z_size2_error'])
+                inp.fitarg['error_cy2'] = deepcopy(inp.param['y_center2_error'])
+                inp.fitarg['error_cz2'] = deepcopy(inp.param['z_center2_error'])
+                inp.fitarg['error_L2']  = deepcopy(inp.param['distance2_error'])
+            except:
+                pass
     
     
 def copy_globals(inp):
         # Necessary to save copies of global parameters in param when switching between near and farfiel detectors
-        # global values
+        # global values, sample specific
         inp.param['cell__a'] = deepcopy(inp.values['a']) 
         inp.param['cell__b'] = deepcopy(inp.values['b']) 
         inp.param['cell__c'] = deepcopy(inp.values['c']) 
@@ -1157,15 +1275,40 @@ def copy_globals(inp):
         inp.param['cell_gamma'] = deepcopy(inp.values['gamma']) 
         inp.param['chi'] = deepcopy(inp.values['wx']) 
         inp.param['wedge'] = deepcopy(inp.values['wy']) 
-        inp.param['tilt_x'] = deepcopy(inp.values['tx']) 
-        inp.param['tilt_y'] = deepcopy(inp.values['ty']) 
-        inp.param['tilt_z'] = deepcopy(inp.values['tz']) 
-        inp.param['y_size'] = deepcopy(inp.values['py']) 
-        inp.param['z_size'] = deepcopy(inp.values['pz']) 
-        inp.param['y_center'] = deepcopy(inp.values['cy']) 
-        inp.param['z_center'] = deepcopy(inp.values['cz']) 
-        inp.param['distance'] = deepcopy(inp.values['L'])  
-        # global errors
+        # global values, detector specific, NB list can be extended to more than 3 detectors
+        inp.param['tilt_x'] = deepcopy(inp.values['tx0']) 
+        inp.param['tilt_y'] = deepcopy(inp.values['ty0']) 
+        inp.param['tilt_z'] = deepcopy(inp.values['tz0']) 
+        inp.param['y_size'] = deepcopy(inp.values['py0']) 
+        inp.param['z_size'] = deepcopy(inp.values['pz0']) 
+        inp.param['y_center'] = deepcopy(inp.values['cy0']) 
+        inp.param['z_center'] = deepcopy(inp.values['cz0']) 
+        inp.param['distance'] = deepcopy(inp.values['L0'])
+        if inp.fit['no_det'] > 1:
+            try:
+                inp.param['tilt_x1'] = deepcopy(inp.values['tx1']) 
+                inp.param['tilt_y1'] = deepcopy(inp.values['ty1']) 
+                inp.param['tilt_z1'] = deepcopy(inp.values['tz1']) 
+                inp.param['y_size1'] = deepcopy(inp.values['py1']) 
+                inp.param['z_size1'] = deepcopy(inp.values['pz1']) 
+                inp.param['y_center1'] = deepcopy(inp.values['cy1']) 
+                inp.param['z_center1'] = deepcopy(inp.values['cz1']) 
+                inp.param['distance1'] = deepcopy(inp.values['L1']) 
+            except:
+                pass
+        if inp.fit['no_det'] > 2:
+            try:
+                inp.param['tilt_x2'] = deepcopy(inp.values['tx2']) 
+                inp.param['tilt_y2'] = deepcopy(inp.values['ty2']) 
+                inp.param['tilt_z2'] = deepcopy(inp.values['tz2']) 
+                inp.param['y_size2'] = deepcopy(inp.values['py2']) 
+                inp.param['z_size2'] = deepcopy(inp.values['pz2']) 
+                inp.param['y_center2'] = deepcopy(inp.values['cy2']) 
+                inp.param['z_center2'] = deepcopy(inp.values['cz2']) 
+                inp.param['distance2'] = deepcopy(inp.values['L2'])
+            except:
+                pass
+        # global errors, sample specific
         inp.param['a_error'] = deepcopy(inp.errors['a']) 
         inp.param['b_error'] = deepcopy(inp.errors['b']) 
         inp.param['c_error'] = deepcopy(inp.errors['c']) 
@@ -1174,19 +1317,35 @@ def copy_globals(inp):
         inp.param['gamma_error'] = deepcopy(inp.errors['gamma']) 
         inp.param['chi_error'] = deepcopy(inp.errors['wx']) 
         inp.param['wedge_error'] = deepcopy(inp.errors['wy']) 
-        inp.param['tilt_x_error'] = deepcopy(inp.errors['tx']) 
-        inp.param['tilt_y_error'] = deepcopy(inp.errors['ty']) 
-        inp.param['tilt_z_error'] = deepcopy(inp.errors['tz']) 
-        inp.param['y_size_error'] = deepcopy(inp.errors['py']) 
-        inp.param['z_size_error'] = deepcopy(inp.errors['pz']) 
-        inp.param['y_center_error'] = deepcopy(inp.errors['cy']) 
-        inp.param['z_center_error'] = deepcopy(inp.errors['cz']) 
-        inp.param['distance_error'] = deepcopy(inp.errors['L']) 
-        try: 
-            inp.param['i_error'] = deepcopy(inp.errors['i'])  
-            inp.param['j_error'] = deepcopy(inp.errors['j'])  
-        except:
-            pass
+        inp.param['i_error'] = deepcopy(inp.errors['i'])  
+        inp.param['j_error'] = deepcopy(inp.errors['j'])  
+        # global errors, detector specific, NB list can be extended to more than 3 detectors
+        inp.param['tilt_x_error'] = deepcopy(inp.errors['tx0']) 
+        inp.param['tilt_y_error'] = deepcopy(inp.errors['ty0']) 
+        inp.param['tilt_z_error'] = deepcopy(inp.errors['tz0']) 
+        inp.param['y_size_error'] = deepcopy(inp.errors['py0']) 
+        inp.param['z_size_error'] = deepcopy(inp.errors['pz0']) 
+        inp.param['y_center_error'] = deepcopy(inp.errors['cy0']) 
+        inp.param['z_center_error'] = deepcopy(inp.errors['cz0']) 
+        inp.param['distance_error'] = deepcopy(inp.errors['L0'])  
+        if inp.fit['no_det'] > 1:
+            inp.param['tilt_x1_error'] = deepcopy(inp.errors['tx1']) 
+            inp.param['tilt_y1_error'] = deepcopy(inp.errors['ty1']) 
+            inp.param['tilt_z1_error'] = deepcopy(inp.errors['tz1']) 
+            inp.param['y_size1_error'] = deepcopy(inp.errors['py1']) 
+            inp.param['z_size1_error'] = deepcopy(inp.errors['pz1']) 
+            inp.param['y_center1_error'] = deepcopy(inp.errors['cy1']) 
+            inp.param['z_center1_error'] = deepcopy(inp.errors['cz1']) 
+            inp.param['distance1_error'] = deepcopy(inp.errors['L1'])  
+        if inp.fit['no_det'] > 2:
+            inp.param['tilt_x2_error'] = deepcopy(inp.errors['tx2']) 
+            inp.param['tilt_y2_error'] = deepcopy(inp.errors['ty2']) 
+            inp.param['tilt_z2_error'] = deepcopy(inp.errors['tz2']) 
+            inp.param['y_size2_error'] = deepcopy(inp.errors['py2']) 
+            inp.param['z_size2_error'] = deepcopy(inp.errors['pz2']) 
+            inp.param['y_center2_error'] = deepcopy(inp.errors['cy2']) 
+            inp.param['z_center2_error'] = deepcopy(inp.errors['cz2']) 
+            inp.param['distance2_error'] = deepcopy(inp.errors['L2'])  
                    
         
         

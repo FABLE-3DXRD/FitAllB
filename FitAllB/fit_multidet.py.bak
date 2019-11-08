@@ -1,10 +1,8 @@
-from __future__ import print_function
-from __future__ import absolute_import
 import numpy as n
-from . import check_input_multidet
-from . import write_output_multidet
-from . import reject
-from . import reject_multidet
+import check_input_multidet
+import write_output_multidet
+import reject
+import reject_multidet
 import fcn
 import time
 try:
@@ -82,12 +80,12 @@ class fit_minuit():
             self.mg.errors = self.m.errors
             self.mg.fixed = self.m.fixed
 
-            print('\n\n*****Now fitting %s*****' %self.inp.fit['goon'])
-            print('newreject_grain', self.inp.fit['newreject_grain'])
+            print '\n\n*****Now fitting %s*****' %self.inp.fit['goon']
+            print 'newreject_grain', self.inp.fit['newreject_grain']
             # calculate starting values
             g = grain_values(self)
             self.fval = sum(g)
-            print('\n%s starting value %e' %(self.inp.fit['goon'],self.fval))
+            print '\n%s starting value %e' %(self.inp.fit['goon'],self.fval)
             t1 = time.clock()
             self.mg = Minuit(fcn.FCNgrain)
             self.mg.values = self.m.values
@@ -113,9 +111,9 @@ class fit_minuit():
                         elif 'rotpos' in self.inp.fit['goon']:
                             self.fitrotposgrain(i)
                         if i == 0:
-                            print('Fit %s tolerance %e' %(self.inp.fit['goon'],self.mg.tol))
+                            print 'Fit %s tolerance %e' %(self.inp.fit['goon'],self.mg.tol)
                         self.mg.values['i'] = i
-                        print('\rRefining grain %i' %(i+1), end=' ')
+                        print '\rRefining grain %i' %(i+1),
                         sys.stdout.flush()
                         self.mg.migrad()
                         scale_errors(self,i)
@@ -128,9 +126,9 @@ class fit_minuit():
                         g[i] = self.mg.fval
                 
             self.time = time.clock()-t1
-            print('\nFit %s time %i s' %(self.inp.fit['goon'],self.time))
+            print '\nFit %s time %i s' %(self.inp.fit['goon'],self.time)
             self.fval = sum(g)
-            print('Fit %s value %e \n' %(self.inp.fit['goon'],self.fval))
+            print 'Fit %s value %e \n' %(self.inp.fit['goon'],self.fval)
                 
             
             # reject outliers and save cycle info   
@@ -268,7 +266,7 @@ def grain_values(lsqr):
 #        """
         
         # rebuild function and load
-        from . import build_fcn_multidet
+        import build_fcn_multidet
         build_fcn_multidet.FCN(lsqr.inp)
         import fcn
         reload(fcn)
@@ -303,7 +301,7 @@ def grain_values(lsqr):
                                      lsqr.m.values['epsaa%s' %i],lsqr.m.values['epsab%s' %i],lsqr.m.values['epsac%s' %i], 
                                      lsqr.m.values['epsbb%s' %i],lsqr.m.values['epsbc%s' %i],lsqr.m.values['epscc%s' %i]) 
                         g[i] = g[i] + peak
-                        print(i, j, k, peak)
+                        print i, j, k, peak
 #        for i in range(lsqr.inp.no_grains):
 #            if i+1 not in lsqr.inp.fit['skip']:
 #                # make new lsqr of minuit        
@@ -325,7 +323,7 @@ def grain_values(lsqr):
         for i in range(lsqr.inp.no_grains):
             if i+1 not in lsqr.inp.fit['skip']:                
 #                print 'Grain %i %i: %e %f' %(i+1,lsqr.inp.nrefl[i],g[i],g[i]/lsqr.inp.nrefl[i])
-                print('Grain %i %i: %e %f' %(i+1,no_ref[i],g[i],g[i]/no_ref[i]))
+                print 'Grain %i %i: %e %f' %(i+1,no_ref[i],g[i],g[i]/no_ref[i])
         # give back old values  
 #        lsqr.m.errors = temp2      
 #        lsqr.m.fixed = temp3       
@@ -377,7 +375,7 @@ def reject_outliers(lsqr):
                                         lsqr.m.values['epsbb%s' %i],lsqr.m.values['epsbc%s' %i],lsqr.m.values['epscc%s' %i]) 
                             if value > lsqr.inp.fit['rej_resmean']*g[i]/no_ref[i]:
                                 new = 0 # only one cycle of rejection, not until no more as for one detector fitting!!!
-                                print('Rej peak id %i of det %i grain %i (hkl: %i %i %i, limit: %0.1f): %0.1f' %(lsqr.inp.id[k][i][j],k,i+1,lsqr.inp.h[k][i][j],lsqr.inp.k[k][i][j],lsqr.inp.l[k][i][j],lsqr.inp.fit['rej_resmean'],value*no_ref[i]/g[i]))
+                                print 'Rej peak id %i of det %i grain %i (hkl: %i %i %i, limit: %0.1f): %0.1f' %(lsqr.inp.id[k][i][j],k,i+1,lsqr.inp.h[k][i][j],lsqr.inp.k[k][i][j],lsqr.inp.l[k][i][j],lsqr.inp.fit['rej_resmean'],value*no_ref[i]/g[i])
                                 reject_multidet.reject(lsqr.inp,i,j,k,value*no_ref[i]/g[i])
 
                                 

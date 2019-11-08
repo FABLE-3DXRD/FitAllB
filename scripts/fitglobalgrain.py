@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 
 # Modules to import 
+from __future__ import print_function
 from FitAllB import gofitglobalgrain
 
 import logging
@@ -12,7 +13,7 @@ if __name__=="__main__":
         from optparse import OptionParser
         parser = OptionParser()
         options  = gofitglobalgrain.get_options(parser)
-        print options
+        print(options)
         gofitglobalgrain.run(options)
     except:
         if options != None:
