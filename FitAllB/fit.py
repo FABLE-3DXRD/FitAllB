@@ -6,7 +6,6 @@ from . import write_output
 from . import reject
 import fcn
 import time
-import pdb
 import importlib
 try:
     from iminuit import Minuit
@@ -14,7 +13,6 @@ except ImportError:
     from minuit import Minuit
 import sys
 import logging
-from importlib import reload
 from copy import deepcopy
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
@@ -80,8 +78,6 @@ class fit_minuit():
             print('\n\n*****Now fitting %s*****' %self.inp.fit['goon'])
             print('newreject_grain', self.inp.fit['newreject_grain'])
             # calculate starting values
-#            fucksake = n.zeros((lsqr.inp.no_grains))
-#            print(fucksake)
             g = grain_values(self)
             print(g)
             self.g_old = deepcopy(g)
@@ -376,7 +372,6 @@ def grain_values(lsqr):
 #        temp2 = deepcopy(lsqr.m.errors)        
 #        temp3 = deepcopy(lsqr.m.fixed)
 #        temp4 = deepcopy(lsqr.mg.tol)
-        pdb.set_trace()
         g = n.zeros((lsqr.inp.no_grains))
         lsqr.inp.fit['poor'] = []
         lsqr.poor_value = []
@@ -417,7 +412,7 @@ def grain_values(lsqr):
         reject.mad(data,poor,lsqr.inp.fit['rej_vol']**2)
         for i in range(lsqr.inp.no_grains):
             if i+1 not in lsqr.inp.fit['skip']:                
-                print('Did we get here? ' + 'Grain %i %i: %e %f' %(i+1,lsqr.inp.nrefl[i],g[i],g[i]/lsqr.inp.nrefl[i]))
+                print('Grain %i %i: %e %f' %(i+1,lsqr.inp.nrefl[i],g[i],g[i]/lsqr.inp.nrefl[i]))
         # give back old values  
 #        lsqr.m.errors = temp2      
 #        lsqr.m.fixed = temp3       
