@@ -3,10 +3,10 @@
 #
 # Checking input  
 #
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 import ImageD11.columnfile as ic
-from string import split
+# from string import split
 import sys, os 
 from . import write_output 
 from . import conversion
@@ -169,8 +169,8 @@ class parse_input:
         for lines in input:
             if lines.find('#') != 0:
                 if lines.find('#') > 0:
-                    lines = split(lines,'#')[0]
-                line = split(lines)
+                    lines = lines.split('#')[0]
+                line = lines.split()
                 if len(line) != 0:
                     key = line[0]
                     val = line[1:]
@@ -293,8 +293,8 @@ class parse_input:
         for lines in input:
             if lines.find('#') != 0:
                 if lines.find('#') > 0:
-                    lines = split(lines,'#')[0]
-                line = split(lines)
+                    lines = lines.split('#')[0]
+                line = lines.split()
                 if len(line) != 0:
                     key = line[0]
                     val = line[1]
@@ -639,22 +639,22 @@ class parse_input:
         input = f.readlines()
         f.close()
 
-        self.no_grains = int(split(input[0])[1])
-        self.grainno = range(1,self.no_grains+1)
+        self.no_grains = int(input[0].split()[1])
+        self.grainno = list(range(1,self.no_grains+1))
         nn = 23 # jumping to first grain
 
         for gr in range(self.no_grains):
             nn = nn + 1
-            self.nrefl.append(int(split(input[nn])[1]))
+            self.nrefl.append(int(input[nn].split()[1]))
             nn = nn + 1
             # read grain positions from new grainspotter output
-            if len(split(input[nn])) >= 4: 
-                ia.append(eval(split(input[nn])[0]))
-                self.x.append(eval(split(input[nn])[1]))
-                self.y.append(eval(split(input[nn])[2]))
-                self.z.append(eval(split(input[nn])[3]))
+            if len(input[nn].split()) >= 4: 
+                ia.append(eval(input[nn].split()[0]))
+                self.x.append(eval(input[nn].split()[1]))
+                self.y.append(eval(input[nn].split()[2]))
+                self.z.append(eval(input[nn].split()[3]))
             nn = nn + 9
-            self.rod.append([eval(split(input[nn])[0]),eval(split(input[nn])[1]),eval(split(input[nn])[2])])
+            self.rod.append([eval(input[nn].split()[0]),eval(input[nn].split()[1]),eval(input[nn].split()[2])])
             nn = nn + 5
 #            nn = nn + 2
 #            self.euler.append([eval(split(input[nn])[0]),eval(split(input[nn])[1]),eval(split(input[nn])[2])])
@@ -665,12 +665,12 @@ class parse_input:
             l = []
             for refl in range(self.nrefl[gr]):
                 nn = nn + 1
-                idgr.append(int(split(input[nn])[2]))
-                h.append(int(split(input[nn])[3]))
-                k.append(int(split(input[nn])[4]))
-                l.append(int(split(input[nn])[5]))
-                self.tth[int(split(input[nn])[2])]=float(split(input[nn])[12])
-                self.eta[int(split(input[nn])[2])]=float(split(input[nn])[18])
+                idgr.append(int(input[nn].split()[2]))
+                h.append(int(input[nn].split()[3]))
+                k.append(int(input[nn].split()[4]))
+                l.append(int(input[nn].split()[5]))
+                self.tth[int(input[nn].split()[2])]=float(input[nn].split()[12])
+                self.eta[int(input[nn].split()[2])]=float(input[nn].split()[18])
 
             self.id.append(idgr)                
             self.h.append(h)                
@@ -839,7 +839,7 @@ class parse_input:
         input = f.readlines()
         f.close()
 
-        # build rejection list in rigth format
+        # build rejection list in right format
         rejectid = []
         for i in range(self.no_grains):
             rejectid.append([])
@@ -848,23 +848,23 @@ class parse_input:
         for line in input:
             if 'Rejected peak id' in line:
                 try:
-                    rejectid[int(split(line)[7])-1].append(int(split(line)[4]))
-                    self.fit['rejectid'].append(int(split(line)[4]))
-                    self.fit['rejectgrain'].append(int(split(line)[7]))
-                    self.fit['hh'].append(int(split(line)[9]))
-                    self.fit['kk'].append(int(split(line)[10]))
-                    self.fit['ll'].append(int(split(line)[11]))
+                    rejectid[int(line.split()[7])-1].append(int(line.split()[4]))
+                    self.fit['rejectid'].append(int(line.split()[4]))
+                    self.fit['rejectgrain'].append(int(line.split()[7]))
+                    self.fit['hh'].append(int(line.split()[9]))
+                    self.fit['kk'].append(int(line.split()[10]))
+                    self.fit['ll'].append(int(line.split()[11]))
                     try:
-                        self.fit['rejectvalue'].append(eval(split(line)[13]))
+                        self.fit['rejectvalue'].append(eval(line.split()[13]))
                     except:
-                        self.fit['rejectvalue'].append(split(line)[13])
+                        self.fit['rejectvalue'].append(line.split()[13])
                     self.fit['outliers'] = self.fit['outliers'] + 1
                 except:
                     pass
             if 'Skip grains' in line:
                 string = ''
-                for i in range(2,len(split(line))):
-                    string = string+split(line)[i]
+                for i in range(2,len(line.split())):
+                    string = string+line.split()[i]
                 self.fit['skip'].extend(eval(string))
         for i in range(len(self.fit['skip'])-1,-1,-1):
             if self.fit['skip'][i] > self.no_grains:

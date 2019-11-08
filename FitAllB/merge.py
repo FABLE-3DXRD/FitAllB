@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import ImageD11.columnfile as ic
 import numpy as n
 from copy import deepcopy
@@ -173,14 +173,14 @@ def merge(stem,thresholds,output,logfile):
     f = open(output,'w')
     out = '#'
     for i in range(len(titles)):
-        if titles[i] in ic.FORMATS.keys():      
+        if titles[i] in list(ic.FORMATS.keys()):      
             out = out + ' %s' %titles[i]
     for j in range(len(final)):
         out = out + '\n'
 #        print '\r',j,len(data[0]),
         sys.stdout.flush()
         for i in range(len(titles)):
-            if titles[i] in ic.FORMATS.keys():      
+            if titles[i] in list(ic.FORMATS.keys()):      
                 out = out + ' ' + ic.FORMATS[titles[i]] %(final[j][titles.index(titles[i])])
     f.write(out)        
     f.close()

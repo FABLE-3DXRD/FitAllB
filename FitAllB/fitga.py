@@ -1,5 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 import numpy as n
 from . import check_input
 from . import write_output
@@ -7,6 +7,7 @@ from . import reject
 from . import fit
 import fcn
 import time
+import importlib
 try:
     from iminuit import Minuit
 except ImportError:
@@ -14,6 +15,7 @@ except ImportError:
 import sys
 import logging
 from copy import deepcopy
+from importlib import reload
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
 
@@ -66,7 +68,7 @@ class fit_minuit():
         
 
         #refinement update
-        reload(fcn)
+        importlib.reload(fcn)
         self.m = Minuit(fcn.FCN_fitga,errordef=1,pedantic=False,print_level=-1,**self.inp.fitarg)
         try:
             self.m.values = self.inp.values
@@ -117,7 +119,7 @@ class fit_minuit():
                         pass
                     else:
                         observations = observations + self.inp.nrefl[j]
-                errordef1 = self.fval/(3*observations-self.m.fitarg.values().count(False))
+                errordef1 = self.fval/(3*observations-list(self.m.fitarg.values()).count(False))
                 self.m = Minuit(fcn.FCN_fitga,errordef=errordef1,pedantic=False,print_level=-1,**self.m.fitarg)
                 self.m.tol = self.m.tol/errordef1
             self.m.migrad()

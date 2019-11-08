@@ -1,4 +1,4 @@
-from __future__ import absolute_import
+
 import numpy as n
 from xfab import tools
 from xfab import symmetry
@@ -8,7 +8,7 @@ import sys
 import logging
 from . import conversion
 from copy import deepcopy
-from string import split
+# from string import split
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
         
@@ -316,7 +316,7 @@ def write_errors(lsqr,i):
     rodx_err = 0
     rody_err = 0
     rodz_err = 0
-    for key in lsqr.mg.covariance.keys():
+    for key in list(lsqr.mg.covariance.keys()):
         if 'epsaa%s' %i in key:
             eps_ref = True
             break
@@ -325,9 +325,9 @@ def write_errors(lsqr,i):
         cov_eps = n.zeros((6,6))
     else:
         try:
-            free = lsqr.mg.fixed.values().count(False)
+            free = list(lsqr.mg.fixed.values()).count(False)
         except:
-            free = lsqr.mg.fitarg.values().count(False)
+            free = list(lsqr.mg.fitarg.values()).count(False)
         assert free >= 6, 'wrong dimensions of covariance matrix'
         covariance = n.zeros((free,free))
         j1 = 0

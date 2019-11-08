@@ -1,5 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 import numpy as n
 from . import check_input_multidet
 from . import write_output_multidet
@@ -8,6 +8,7 @@ from . import reject_multidet
 from . import fit_multidet
 import fcn
 import time
+import importlib
 try:
     from iminuit import Minuit
 except ImportError:
@@ -15,6 +16,7 @@ except ImportError:
 import sys
 import logging
 from copy import deepcopy
+from importlib import reload
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
 
@@ -77,7 +79,7 @@ class fit_minuit():
             self.inp.values['cz%s' %i] = self.inp.values['cz%s' %i] + zcom/self.inp.values['pz%s' %i]
 
         #refinement update
-        reload(fcn)
+        importlib.reload(fcn)
         self.m = Minuit(fcn.FCN)
         self.m.values = self.inp.values
         self.m.errors = self.inp.errors

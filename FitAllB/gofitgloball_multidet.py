@@ -1,5 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 import sys
 from FitAllB import check_input_multidet 
 import logging
@@ -7,6 +7,8 @@ from optparse import OptionParser
 from copy import deepcopy
 import numpy as n
 import os
+from importlib import reload
+import importlib
 
 def get_options(parser):
     parser.add_option("-i", "--input", action="store",
@@ -183,7 +185,7 @@ def run(options):
  #       if k==0:
  #           far.fit['reforder'] = ['start%s' %k,'end'] 
         far.fit['goon'] = far.fit['reforder'][0]
-        far.fit['newreject_grain'] = range(far.no_grains+1)
+        far.fit['newreject_grain'] = list(range(far.no_grains+1))
         # refine grains
         from FitAllB import fit_multidet
         far.residual = []
@@ -201,7 +203,7 @@ def run(options):
         from FitAllB import build_fcn_multidet
         build_fcn_multidet.FCN(far)
         import fcn
-        reload(fcn)
+        importlib.reload(fcn)
         fit_multidet.refine(far)
         # refine globals
         far.fit['reforder'] = ['globals%s' %k,'end'] 

@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import numpy as n
 from xfab import tools
 from xfab import detector
@@ -61,7 +61,7 @@ def find_refl(inp):
                         for solution in range(len(Omega)):
                             omega = Omega[solution]
                             eta = Eta[solution]
-                            for i in range(len(inp.fit['w_limit'])/2):
+                            for i in range(len(inp.fit['w_limit'])//2):
                                 if  (inp.fit['w_limit'][2*i]*n.pi/180) < omega and\
                                     omega < (inp.fit['w_limit'][2*i+1]*n.pi/180):
                                 # form Omega rotation matrix

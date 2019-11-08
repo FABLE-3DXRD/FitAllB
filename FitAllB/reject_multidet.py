@@ -1,16 +1,18 @@
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 import numpy as n
 from xfab import tools
 from polyxsim import reflections
 from copy import deepcopy
 import time
+import importlib
 try:
     from iminuit import Minuit
 except ImportError:
     from minuit import Minuit
 import sys
 import logging
+from importlib import reload
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
 
@@ -123,7 +125,7 @@ def mean_ia(inp,limit,only=None):
         from . import build_fcn_multidet
         build_fcn_multidet.FCN(inp)
         import fcn
-        reload(fcn)
+        importlib.reload(fcn)
 
         delete = 0
         for i in range(inp.no_grains):
@@ -169,7 +171,7 @@ def mean_ia_old(inp,limit,only=None):
         from . import build_fcn
         build_fcn.FCN(inp)
         import fcn
-        reload(fcn)
+        importlib.reload(fcn)
 
         for i in range(inp.no_grains):
             if i+1 in inp.fit['skip']:
@@ -214,7 +216,7 @@ def mean_ia_old(inp,limit,only=None):
         
         delete = 0
         if only==None:
-            only = range(1,1+inp.no_grains)        
+            only = list(range(1,1+inp.no_grains))        
         for i in range(inp.no_grains):
             if i+1 in inp.fit['skip'] or i+1 not in only:
                 pass
@@ -356,7 +358,7 @@ def residual(inp,limit,only=None):
         build_fcn_multidet.FCN(inp)
         #refinement update
         import fcn
-        reload(fcn)
+        importlib.reload(fcn)
         for i in range(inp.no_grains):
             if i+1 in inp.fit['skip']:
                 pass
@@ -402,7 +404,7 @@ def residual(inp,limit,only=None):
         
         delete = 0
         if only==None:
-            only = range(1,1+inp.no_grains)        
+            only = list(range(1,1+inp.no_grains))        
         for i in range(inp.no_grains):
             if i+1 in inp.fit['skip'] or i+1 not in only:
                 pass

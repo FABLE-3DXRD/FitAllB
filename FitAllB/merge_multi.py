@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 import os
 from copy import deepcopy
 from . import merge
@@ -9,7 +9,7 @@ import time
 
 
 
-layer = range(28-1,-1,-1)
+layer = list(range(28-1,-1,-1))
 ranges = ['c','d','a','b']
 thresholds = [200,500,1000,2000,5000,10000,20000]
 

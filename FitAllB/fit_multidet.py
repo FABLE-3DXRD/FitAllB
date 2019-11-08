@@ -1,5 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 import numpy as n
 from . import check_input_multidet
 from . import write_output_multidet
@@ -7,6 +7,7 @@ from . import reject
 from . import reject_multidet
 import fcn
 import time
+import importlib
 try:
     from iminuit import Minuit
 except ImportError:
@@ -14,6 +15,7 @@ except ImportError:
 import sys
 import logging
 from copy import deepcopy
+from importlib import reload
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
 
@@ -51,7 +53,7 @@ class fit_minuit():
                                 "epsaa%s" %i,"epsbb%s" %i,"epscc%s" %i,"epsbc%s" %i,"epsac%s" %i,"epsab%s" %i])
 
         #refinement update
-        reload(fcn)
+        importlib.reload(fcn)
         self.m = Minuit(fcn.FCN,errordef=1,pedantic=False,print_level=-1,**self.inp.fitarg)
         try:
             self.m.values = self.inp.values
@@ -271,7 +273,7 @@ def grain_values(lsqr):
         from . import build_fcn_multidet
         build_fcn_multidet.FCN(lsqr.inp)
         import fcn
-        reload(fcn)
+        importlib.reload(fcn)
         # save values before making a new lsqr of minuit
 #        temp1 = deepcopy(lsqr.m.values)        
 #        temp2 = deepcopy(lsqr.m.errors)        
@@ -483,7 +485,7 @@ def refine(inp,killfile=None):
         from FitAllB import build_fcn_multidet
         build_fcn_multidet.FCN(inp)
         #import fcn
-        reload(fcn)
+        importlib.reload(fcn)
         # minuit fitting
         from FitAllB import fit_multidet
         lsqr = fit_multidet.fit_minuit(inp)

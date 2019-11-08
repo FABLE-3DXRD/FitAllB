@@ -2,7 +2,7 @@
 # stuff for representations of tensor components: tens.py
 
 
-from __future__ import print_function
+
 from copy import deepcopy
 from numpy import *
 

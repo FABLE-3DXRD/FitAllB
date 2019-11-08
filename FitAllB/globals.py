@@ -1,11 +1,12 @@
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 import numpy as n
 from . import check_input
 from . import write_output
 from . import reject
 import fcn
 import time
+import importlib
 try:
     from iminuit import Minuit
 except ImportError:
@@ -13,6 +14,7 @@ except ImportError:
 import sys
 import logging
 from copy import deepcopy
+from importlib import reload
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
 
@@ -42,7 +44,7 @@ class fit_minuit():
                                 "epsaa%s" %i,"epsbb%s" %i,"epscc%s" %i,"epsbc%s" %i,"epsac%s" %i,"epsab%s" %i])
 
         #refinement update
-        reload(fcn)
+        importlib.reload(fcn)
 
 		# determine whether to refine
         self.ref = False
@@ -284,7 +286,7 @@ def refine(inp):
         from FitAllB import build_fcn
         build_fcn.FCN(inp)
         import fcn
-        reload(fcn)
+        importlib.reload(fcn)
         # minuit fitting
         from FitAllB import globals
         lsqr = globals.fit_minuit(inp)

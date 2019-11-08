@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
 # Modules to import 
-from __future__ import print_function
+
 from FitAllB import gofitgloball_multidet
 
 import logging

@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import sys
 from FitAllB import check_input
 import logging
@@ -54,7 +54,7 @@ def run(options):
         assert far.files['near_par_file'] != None, 'near_par_file parameter file for near-field detector is missing'
         near = deepcopy(far)
         # take special care of near-field keywords (eg copy near_dety_size to dety_size)
-        for key in near.fit.keys():
+        for key in list(near.fit.keys()):
             if key[0:5] == 'near_': 
                 near.fit[key[5:len(key)]] = near.fit[key]
         near.fit['stem'] = far.fit['stem'] + '_near'

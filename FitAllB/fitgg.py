@@ -1,5 +1,5 @@
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 import numpy as n
 from . import check_input
 from . import write_output
@@ -7,6 +7,7 @@ from . import reject
 from . import fit
 import fcn
 import time
+import importlib
 try:
     from iminuit import Minuit
 except ImportError:
@@ -14,6 +15,7 @@ except ImportError:
 import sys
 import logging
 from copy import deepcopy
+from importlib import reload
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
 
@@ -43,7 +45,7 @@ class fit_minuit():
                                 "epsaa%s" %i,"epsbb%s" %i,"epscc%s" %i,"epsbc%s" %i,"epsac%s" %i,"epsab%s" %i])
 
         #refinement update
-        reload(fcn)
+        importlib.reload(fcn)
 
         # determine whether to refine
         self.ref = False
@@ -102,7 +104,7 @@ class fit_minuit():
                         print('\rRefining grain %i' %(i+1), end=' ')
                         sys.stdout.flush()
                         try:
-                            errordef1 = self.g_old[i]/(3*self.inp.nrefl[i]-self.mg.fitarg.values().count(False))   # Best alternative to scale_errors which is not possible by changing up with hesse in iminiut
+                            errordef1 = self.g_old[i]/(3*self.inp.nrefl[i]-list(self.mg.fitarg.values()).count(False))   # Best alternative to scale_errors which is not possible by changing up with hesse in iminiut
                             self.mg = Minuit(fcn.FCNgrain,errordef=errordef1,pedantic=False,print_level=-1,**self.mg.fitarg)
                             self.mg.tol = self.mg.tol/errordef1
                         except:
@@ -152,7 +154,7 @@ class fit_minuit():
                 self.m.errors = self.mg.errors
                 self.m.values = self.mg.values
             except:
-                for entries in self.mg.fitarg.keys():
+                for entries in list(self.mg.fitarg.keys()):
                     if "_i" in entries or entries == "i":
                         self.mg.fitarg.__delitem__(entries)
                 self.m = Minuit(fcn.FCN,errordef=1,pedantic=False,print_level=-1,**self.mg.fitarg)
@@ -212,7 +214,7 @@ def refine(inp):
         from FitAllB import build_fcn
         build_fcn.FCN(inp)
         import fcn
-        reload(fcn)
+        importlib.reload(fcn)
         # minuit fitting
         from FitAllB import fitgg
         lsqr = fitgg.fit_minuit(inp)

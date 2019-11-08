@@ -1,17 +1,20 @@
-from __future__ import print_function
-from __future__ import absolute_import
+
+
 import numpy as n
 from . import check_input
 from . import write_output
 from . import reject
 import fcn
 import time
+import pdb
+import importlib
 try:
     from iminuit import Minuit
 except ImportError:
     from minuit import Minuit
 import sys
 import logging
+from importlib import reload
 from copy import deepcopy
 logging.basicConfig(level=logging.DEBUG,format='%(levelname)s %(message)s')
 
@@ -41,7 +44,7 @@ class fit_minuit():
                                 "epsaa%s" %i,"epsbb%s" %i,"epscc%s" %i,"epsbc%s" %i,"epsac%s" %i,"epsab%s" %i])
 
         #refinement update
-        reload(fcn)
+        importlib.reload(fcn)
         self.m = Minuit(fcn.FCN,errordef=1,pedantic=False,print_level=-1,**self.inp.fitarg)
         try:
             self.m.values = self.inp.values
@@ -77,7 +80,10 @@ class fit_minuit():
             print('\n\n*****Now fitting %s*****' %self.inp.fit['goon'])
             print('newreject_grain', self.inp.fit['newreject_grain'])
             # calculate starting values
+#            fucksake = n.zeros((lsqr.inp.no_grains))
+#            print(fucksake)
             g = grain_values(self)
+            print(g)
             self.g_old = deepcopy(g)
             self.fval = sum(g)
             print('\n%s starting value %e' %(self.inp.fit['goon'],self.fval))
@@ -114,14 +120,14 @@ class fit_minuit():
                         try:
                             self.mg.fitarg['i'] = i
                             self.mg.fitarg["fix_i"] = True
-                            errordef1 = self.g_old[i]/(3*self.inp.nrefl[i]-self.mg.fitarg.values().count(False))   # Best alternative to scale_errors which is not possible by changing up with hesse in iminiut
+                            errordef1 = self.g_old[i]/(3*self.inp.nrefl[i]-list(self.mg.fitarg.values()).count(False))   # Best alternative to scale_errors which is not possible by changing up with hesse in iminiut
                             self.mg = Minuit(fcn.FCNgrain,errordef=errordef1,pedantic=False,print_level=-1,**self.mg.fitarg)
                             self.mg.tol = self.mg.tol/errordef1
                         except:
                             pass
                         #print self.mg.list_of_vary_param()
                         #print self.mg.list_of_fixed_param()
-                        print('\rRefining grain %i' %(i+1), end=' ')
+                        print('\rRefining grain %i' %(i+1))
                         sys.stdout.flush()
                         self.mg.migrad()
                         try:
@@ -133,7 +139,7 @@ class fit_minuit():
                             self.m.errors = self.mg.errors
                             self.m.values = self.mg.values
                         except:
-                            for entries in self.mg.fitarg.keys():
+                            for entries in list(self.mg.fitarg.keys()):
                                 if "_i" in entries or entries == "i":
                                     self.mg.fitarg.__delitem__(entries)
                             self.m = Minuit(fcn.FCN,errordef=1,pedantic=False,print_level=-1,**self.mg.fitarg)
@@ -152,7 +158,7 @@ class fit_minuit():
             try:
                 self.m.errors = self.inp.errors 
             except:
-                for keys in self.inp.fitarg.keys():
+                for keys in list(self.inp.fitarg.keys()):
                     if "error_" not in keys:
                         self.inp.fitarg[keys] = self.m.fitarg[keys]
             self.inp.values = self.m.values #iminuit does not inherit values from m per default as pyminuit
@@ -364,12 +370,13 @@ def grain_values(lsqr):
         from . import build_fcn
         build_fcn.FCN(lsqr.inp)
         import fcn
-        reload(fcn)
+        importlib.reload(fcn)
         # save values before making a new lsqr of minuit
 #        temp1 = deepcopy(lsqr.m.values)        
 #        temp2 = deepcopy(lsqr.m.errors)        
 #        temp3 = deepcopy(lsqr.m.fixed)
 #        temp4 = deepcopy(lsqr.mg.tol)
+        pdb.set_trace()
         g = n.zeros((lsqr.inp.no_grains))
         lsqr.inp.fit['poor'] = []
         lsqr.poor_value = []
@@ -410,7 +417,7 @@ def grain_values(lsqr):
         reject.mad(data,poor,lsqr.inp.fit['rej_vol']**2)
         for i in range(lsqr.inp.no_grains):
             if i+1 not in lsqr.inp.fit['skip']:                
-                print('Grain %i %i: %e %f' %(i+1,lsqr.inp.nrefl[i],g[i],g[i]/lsqr.inp.nrefl[i]))
+                print('Did we get here? ' + 'Grain %i %i: %e %f' %(i+1,lsqr.inp.nrefl[i],g[i],g[i]/lsqr.inp.nrefl[i]))
         # give back old values  
 #        lsqr.m.errors = temp2      
 #        lsqr.m.fixed = temp3       
@@ -576,7 +583,7 @@ def refine(inp,killfile=None):
         from FitAllB import build_fcn
         build_fcn.FCN(inp)
         import fcn
-        reload(fcn)
+        importlib.reload(fcn)
         # minuit fitting
         from FitAllB import fit
         lsqr = fit.fit_minuit(inp)

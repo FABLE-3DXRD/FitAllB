@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 import sys
 from FitAllB import check_input
 import logging
@@ -65,7 +65,7 @@ def run(options):
         far.fit['goon'] = far.fit['reforder'][0]
         if k==0: #start with globals in stead of grain refinement
             far.fit['reforder'] = ['start%s' %k,'end'] 
-        far.fit['newreject_grain'] = range(far.no_grains+1)
+        far.fit['newreject_grain'] = list(range(far.no_grains+1))
         from FitAllB import fit
         fit.refine(far)
         # refine globals
@@ -103,7 +103,7 @@ def run(options):
         assert far.files['near_par_file'] != None, 'near_par_file parameter file for near-field detector is missing'
         near = deepcopy(far)
         # take special care of near-field keywords (eg copy near_dety_size to dety_size)
-        for key in near.fit.keys():
+        for key in list(near.fit.keys()):
             if key[0:5] == 'near_': 
                 near.fit[key[5:len(key)]] = near.fit[key]
         near.fit['stem'] = far.fit['stem'] + '_near'
@@ -135,7 +135,7 @@ def run(options):
             # refine grain paramters
             near.fit['reforder'] = ['start%s' %k,'rotpos%s' %k,'end'] 
             near.fit['goon'] = near.fit['reforder'][0]
-            near.fit['newreject_grain'] = range(near.no_grains+1)
+            near.fit['newreject_grain'] = list(range(near.no_grains+1))
             from FitAllB import fit
             fit.refine(near)
             # refine globals
